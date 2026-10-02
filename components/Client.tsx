@@ -1,7 +1,7 @@
 "use client";
 import { FontAwesomeIcon as FA } from "@fortawesome/react-fontawesome";
 import { faChevronLeft, faChevronRight } from "@fortawesome/free-solid-svg-icons";
-import { ICONS } from "../lib/logos";
+import { ICONS, isLive } from "../lib/logos";
 import { Children, useEffect, useRef, useState, type ReactNode } from "react";
 
 export function Header({ children }: { children: ReactNode }) {
@@ -81,9 +81,12 @@ export function Integrations({ groups }: { groups: { name: string; items: Int[] 
             <div className="eyebrow" style={{ color: "var(--tint-fg, var(--green-fg))" }}>{g.name}</div>
             <div className="ilist">
               {g.items.map((it) => (
-                <div className="int" key={it.name}>
+                <div className="int" data-soon={!isLive(it.name)} key={it.name}>
                   <div className="tile" style={{ background: "var(--surface-muted)" }}><Logo name={it.name} size={34} /></div>
-                  <div><div className="card-title" style={{ lineHeight: 1.2 }}>{it.name}</div><div className="meta">{it.use}</div></div>
+                  <div>
+                    <div className="card-title" style={{ lineHeight: 1.2 }}>{it.name}</div>
+                    {isLive(it.name) ? <div className="meta">{it.use}</div> : <span className="soon">Coming soon</span>}
+                  </div>
                 </div>
               ))}
             </div>
@@ -219,4 +222,38 @@ export function FaqList({ items }: { items: string[][] }) {
       })}
     </div>
   );
+}
+
+/** Sticky stack items move when stuck, so native #anchor jumps land in the wrong place.
+ *  Compute each item's natural (unstuck) position from the container instead. */
+export function StackAnchors() {
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      const a = (e.target as HTMLElement).closest('a[href^="#"]') as HTMLAnchorElement | null;
+      if (!a) return;
+      const id = a.getAttribute("href")!.slice(1);
+      if (!id) return;
+      const target = document.getElementById(id);
+      const item = target?.closest(".stack-item") as HTMLElement | null;
+      const col = item?.parentElement;
+      if (!item || !col) return;
+      const stuck = getComputedStyle(item).position === "sticky";
+      if (!stuck) return;
+      e.preventDefault();
+      const gap = parseFloat(getComputedStyle(col).rowGap) || 0;
+      const items = Array.from(col.children) as HTMLElement[];
+      const colTop = col.getBoundingClientRect().top + window.scrollY;
+      let y = colTop;
+      for (const it of items) {
+        if (it === item) break;
+        y += it.offsetHeight + gap;
+      }
+      const offset = parseFloat(getComputedStyle(item).top) || 80;
+      window.scrollTo({ top: y - offset, behavior: "smooth" });
+      history.replaceState(null, "", `#${id}`);
+    };
+    document.addEventListener("click", onClick);
+    return () => document.removeEventListener("click", onClick);
+  }, []);
+  return null;
 }

@@ -3,9 +3,10 @@ import { FontAwesomeIcon as FA } from "@fortawesome/react-fontawesome";
 import {
   faArrowRight, faBan, faBookOpen, faCalendarDays, faCheck, faClockRotateLeft, faDiagramProject, faEnvelope, faHouse, faKey, faLink, faListCheck, faLock, faMicrophone, faPenToSquare, faPlug, faPlus, faRightLeft, faScissors, faTable, faTableColumns, faWallet, faWandMagicSparkles,
 } from "@fortawesome/free-solid-svg-icons";
-import { Header, Reveal, Integrations, Logo, MobileMenu, CountUp, MobileCarousel, FaqList } from "../components/Client";
+import { Header, Reveal, Integrations, Logo, MobileMenu, CountUp, MobileCarousel, FaqList, StackAnchors } from "../components/Client";
 import AiSwitcher from "../components/AiSwitcher";
 import HeroApp from "../components/HeroApp";
+import { isLive } from "../lib/logos";
 import Areas from "../components/Areas";
 
 const nav = [["Journal", "#journal"], ["Notes", "#notes"], ["Email", "#email"], ["Calendar", "#calendar"], ["Integrations", "#integrations"], ["AI", "#ai"], ["FAQ", "#faq"]];
@@ -55,6 +56,7 @@ const Check_ = () => <FA icon={faCheck} aria-hidden />;
 export default function Page() {
   return (
     <>
+      <StackAnchors />
       <Header>
         <div className="container row">
           <a href="#" className="logo"><i />untitled project</a>
@@ -84,7 +86,7 @@ export default function Page() {
         {/* MARQUEE */}
         <section style={{ padding: "48px 0 0" }} aria-label="Integrations">
           <div className="marquee"><div className="marquee-track">
-            {[...allInts, ...allInts].map((n, k) => <span className="chip" key={k}><Logo name={n} size={18} />{n}</span>)}
+            {[...allInts, ...allInts].map((n, k) => <span className="chip" data-soon={!isLive(n)} key={k}><Logo name={n} size={18} />{n}{!isLive(n) && <em className="soon-tag">Soon</em>}</span>)}
           </div></div>
         </section>
 
@@ -139,7 +141,8 @@ export default function Page() {
             </div>
           </div>
           <div className="stack-item" style={{ ["--i" as string]: 2 }}>
-            <div className="split panel" id="email" data-tone="accent">
+            <div className="panel split" id="email" data-tone="accent">
+            <MobileCarousel className="split-inner">
               <div className="stack">
                 <div className="eyebrow">Email</div>
                 <h2 className="h2">Your email, <span className="quiet">fully connected.</span></h2>
@@ -160,10 +163,12 @@ export default function Page() {
                 ))}
                 <div className="pillrow" style={{ marginTop: 14 }}><span className="chip">Reply</span><span className="chip">Reply all</span><span className="chip">Forward</span></div>
               </div>
+            </MobileCarousel>
             </div>
           </div>
           <div className="stack-item" style={{ ["--i" as string]: 3 }}>
-            <div className="split panel" id="calendar" data-tone="amber" style={{ marginTop: 14 }}>
+            <div className="panel split" id="calendar" data-tone="amber">
+            <MobileCarousel className="split-inner">
               <div className="card" style={{ order: 0, gap: 8 }}>
                 <div className="eyebrow">This week · Work + Personal</div>
                 {[["Mon", "Planning", "green"], ["Tue", "1:1 with Sam", "amber"], ["Wed", "Gym", "violet"], ["Thu", "Launch review", "green"], ["Fri", "Team lunch", "clay"]].map(([d, e, c]) => (
@@ -180,6 +185,7 @@ export default function Page() {
                 <ul className="feat-list">{["Sync events", "Unified schedule view", "Work and personal in one place", "Multiple calendars"].map((x) => <li key={x}><Check_ />{x}</li>)}</ul>
                 <p className="body">Pro supports up to 5 calendars, so work and personal schedules don’t have to live in separate worlds.</p>
               </div>
+            </MobileCarousel>
             </div>
           </div>
           <div className="stack-item" id="integrations" style={{ ["--i" as string]: 4 }}>
