@@ -1,1 +1,1 @@
-export default {outputFileTracingRoot: import.meta.dirname};
+export default { outputFileTracingRoot: import.meta.dirname };

@@ -25,11 +25,11 @@ npm install
 npm run dev      # http://localhost:3000
 ```
 
-| Script          | What it does                          |
-| --------------- | ------------------------------------- |
-| `npm run dev`   | Start the dev server with hot reload  |
-| `npm run build` | Production build                      |
-| `npm start`     | Serve the production build            |
+| Script          | What it does                         |
+| --------------- | ------------------------------------ |
+| `npm run dev`   | Start the dev server with hot reload |
+| `npm run build` | Production build                     |
+| `npm start`     | Serve the production build           |
 
 > Don't run `npm run build` while `npm run dev` is running — both write to `.next` and the dev server will start throwing `__webpack_modules__[moduleId] is not a function`. Stop the dev server (or delete `.next`) first.
 
