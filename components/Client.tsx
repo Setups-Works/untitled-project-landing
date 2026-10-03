@@ -8,6 +8,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { ICONS, isLive } from "../lib/logos";
 import type { MegaItem } from "../lib/site";
+import MegaPreview from "./MegaPreview";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Children, useEffect, useRef, useState, type ReactNode } from "react";
@@ -468,11 +469,12 @@ export function NavMenu({
   mega,
   links,
 }: {
-  mega: { featured: MegaItem[]; workspace: MegaItem[] };
+  mega: { featured: MegaItem[]; workspace: MegaItem[]; explore: MegaItem[] };
   links: { href: string; t: string }[];
 }) {
   const path = usePathname();
   const [open, setOpen] = useState(false);
+  const [kind, setKind] = useState("demo");
   const wrap = useRef<HTMLDivElement>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hold = () => { if (timer.current) clearTimeout(timer.current); };
@@ -506,11 +508,23 @@ export function NavMenu({
               <div className="mega-in">
                 <div className="mega-col">
                   <div className="eyebrow">Features</div>
-                  <div className="mega-feat">
-                    {mega.featured.map((f) => (
-                      <Link key={f.href} href={f.href} className={`mega-card at-${f.tone}`} aria-current={path === f.href ? "page" : undefined}>
+                  <div className="mega-feat" onMouseLeave={() => setKind("demo")}>
+                    {mega.featured.map((f, n) => (
+                      <Link
+                        key={f.href}
+                        href={f.href}
+                        className={`mega-card at-${f.tone}`}
+                        style={{ ["--d" as string]: `${n * 70}ms` }}
+                        aria-current={path === f.href ? "page" : undefined}
+                        onMouseEnter={() => setKind(f.kind ?? "demo")}
+                        onFocus={() => setKind(f.kind ?? "demo")}
+                      >
                         <span className="mega-ico"><FA icon={f.icon} /></span>
-                        <span className="mega-txt"><b>{f.t}</b><small>{f.d}</small></span>
+                        <span className="mega-txt">
+                          <b>{f.t}</b>
+                          <small>{f.d}</small>
+                          <span className="mega-tags">{f.tags?.map((t) => <i key={t}>{t}</i>)}</span>
+                        </span>
                         <span className="mega-go" aria-hidden><FA icon={faArrowRight} /></span>
                       </Link>
                     ))}
@@ -519,8 +533,8 @@ export function NavMenu({
                 <div className="mega-col">
                   <div className="eyebrow">The workspace</div>
                   <ul className="mega-list">
-                    {mega.workspace.map((w) => (
-                      <li key={w.t}>
+                    {mega.workspace.map((w, n) => (
+                      <li key={w.t} style={{ ["--d" as string]: `${120 + n * 45}ms` }}>
                         <Link href={w.href}>
                           <span className="mega-mini"><FA icon={w.icon} /></span>
                           <span><b>{w.t}</b><small>{w.d}</small></span>
@@ -530,15 +544,18 @@ export function NavMenu({
                   </ul>
                 </div>
                 <div className="mega-promo">
-                  <div className="eyebrow">Try it</div>
-                  <h3 className="h3">See the workspace <span className="quiet">in action.</span></h3>
-                  <p className="body">Click around a live preview — no sign-up needed.</p>
+                  <div className="mega-live"><span className="live-dot" /> {kind === "demo" ? "Live preview" : "How it works"}</div>
+                  <MegaPreview key={kind} kind={kind} />
                   <Link href="/demo" className="btn btn-primary btn-sm"><FA icon={faPlay} /> Open the product demo</Link>
-                  <div className="mega-links">
-                    <Link href="/#ai">AI on your terms <FA icon={faArrowRight} /></Link>
-                    <Link href="/privacy-security">Privacy & Security <FA icon={faArrowRight} /></Link>
-                  </div>
                 </div>
+              </div>
+              <div className="mega-foot">
+                <div className="mega-explore">
+                  {mega.explore.map((x) => (
+                    <Link key={x.href} href={x.href}><FA icon={x.icon} />{x.t}</Link>
+                  ))}
+                </div>
+                <span className="mega-status"><span className="live-dot" /> Gmail &amp; Google Calendar live · more integrations soon</span>
               </div>
             </div>
           </>

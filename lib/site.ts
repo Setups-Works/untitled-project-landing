@@ -1,6 +1,6 @@
 import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import {
-  faMagnifyingGlass, faCircleNodes, faNewspaper, faBookOpen, faPenToSquare, faEnvelope, faCalendarDays, faMicrophone, faPlug,
+  faMagnifyingGlass, faCircleNodes, faNewspaper, faBookOpen, faPenToSquare, faEnvelope, faCalendarDays, faMicrophone, faPlug, faRoute, faTag, faShieldHalved, faSeedling,
 } from "@fortawesome/free-solid-svg-icons";
 export const FEATURES = [
   { href: "/universal-search", t: "Universal Search", d: "Find anything across notes, tasks, mail and meetings." },
@@ -65,14 +65,14 @@ export const FOOTER_COLS: { title: string; links: [string, string][] }[] = [
   },
 ];
 
-export type MegaItem = { href: string; t: string; d: string; icon: IconDefinition; tone?: string };
+export type MegaItem = { href: string; t: string; d: string; icon: IconDefinition; tone?: string; kind?: string; tags?: string[] };
 
 /** Content of the "Features" mega menu */
-export const MEGA: { featured: MegaItem[]; workspace: MegaItem[] } = {
+export const MEGA: { featured: MegaItem[]; workspace: MegaItem[]; explore: MegaItem[] } = {
   featured: [
-    { href: "/universal-search", t: "Universal Search", d: "Find anything across notes, tasks, mail and meetings from one box.", icon: faMagnifyingGlass, tone: "blue" },
-    { href: "/context-graph", t: "Context Graph", d: "See how your notes, threads, meetings and tasks connect.", icon: faCircleNodes, tone: "violet" },
-    { href: "/daily-brief", t: "Daily Brief", d: "Start the day with events, tasks and mail on one page.", icon: faNewspaper, tone: "amber" },
+    { href: "/universal-search", t: "Universal Search", d: "Find anything across notes, tasks, mail and meetings from one box.", icon: faMagnifyingGlass, tone: "blue", kind: "search", tags: ["Notes", "Mail", "Meetings", "Works without AI"] },
+    { href: "/context-graph", t: "Context Graph", d: "See how your notes, threads, meetings and tasks connect.", icon: faCircleNodes, tone: "violet", kind: "graph", tags: ["Backlinks", "Atlas", "Context"] },
+    { href: "/daily-brief", t: "Daily Brief", d: "Start the day with events, tasks and mail on one page.", icon: faNewspaper, tone: "amber", kind: "brief", tags: ["Calendar", "Tasks", "AI optional"] },
   ],
   workspace: [
     { href: "/#journal", t: "Journal", d: "A private record of your days", icon: faBookOpen },
@@ -81,5 +81,11 @@ export const MEGA: { featured: MegaItem[]; workspace: MegaItem[] } = {
     { href: "/#calendar", t: "Calendar", d: "One view of your time", icon: faCalendarDays },
     { href: "/#areas", t: "Meetings", d: "Capture, transcribe, follow through", icon: faMicrophone },
     { href: "/#integrations", t: "Integrations", d: "Connect the tools you use", icon: faPlug },
+  ],
+  explore: [
+    { href: "/how-it-works", t: "How it works", d: "", icon: faRoute },
+    { href: "/pricing", t: "Pricing", d: "", icon: faTag },
+    { href: "/privacy-security", t: "Privacy & Security", d: "", icon: faShieldHalved },
+    { href: "/early-users", t: "Early users", d: "", icon: faSeedling },
   ],
 };
