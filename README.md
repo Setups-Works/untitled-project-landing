@@ -12,6 +12,7 @@ Built with **Next.js 15 (App Router)**, **React 19** and **TypeScript**. Styling
 - **Integrations carousel** – every integration grouped by category with its real full-colour logo.
 - **AI switcher** – shows the workspace staying put while the AI behind it changes (supported account, your own API key, pay-as-you-go, or no AI).
 - **Pro stats** – count-up numbers for email accounts, calendars and bundled AI subscriptions.
+- **Inner pages** – How it works, Universal Search, Context Graph and Daily Brief (each with an interactive demo), Product demo, Pricing, Early users, and Privacy & Security.
 - **Animated FAQ** accordion, a closing call to action and a footer.
 - **Responsive** – mobile menu, card grids that become swipeable carousels, no horizontal overflow.
 - **Accessible** – keyboard-operable controls, `aria` states, visible focus rings and `prefers-reduced-motion` support.
@@ -37,17 +38,23 @@ npm run dev      # http://localhost:3000
 
 ```
 app/
-  layout.tsx        Fonts (Geist, Geist Mono, Instrument Serif, Noto Sans Tamil) and metadata
-  page.tsx          The whole page, section by section
+  layout.tsx        Fonts, metadata, shared site header and footer
+  page.tsx          Home page, section by section
+  how-it-works/  universal-search/  context-graph/  daily-brief/
+  demo/  pricing/  early-users/  privacy-security/      Inner pages
   globals.css       Design tokens and all styles
   icon.svg          Favicon (the green dot from the logo)
 components/
   Client.tsx        Header, Reveal, Integrations carousel, mobile menu, CountUp, FaqList, MobileCarousel, Logo
-  HeroApp.tsx       Interactive app preview in the hero
+  SiteChrome.tsx    Site header (with Features dropdown) and the multi-column footer
+  PageKit.tsx       Shared inner-page pieces: hero, section heading, feature cards, closing CTA
+  demos/            Interactive Universal Search, Context Graph and Daily Brief demos
+  HeroApp.tsx       Interactive app preview in the hero and on /demo
   Areas.tsx         Workspace areas carousel + details popup
   AiSwitcher.tsx    "Your AI can change. Your workspace shouldn't." demo
 lib/
-  logos.ts          Brand-colour marks used where no image file exists
+  site.ts           Navigation and footer link data
+  logos.ts          Brand-colour marks, and which integrations are live
 public/logos/       Integration logos (SVG/PNG)
 ```
 

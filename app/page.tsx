@@ -26,30 +26,18 @@ import {
   faWandMagicSparkles,
 } from "@fortawesome/free-solid-svg-icons";
 import {
-  Header,
   Reveal,
   Integrations,
   Logo,
-  MobileMenu,
   CountUp,
   MobileCarousel,
   FaqList,
-  StackAnchors,
 } from "../components/Client";
 import AiSwitcher from "../components/AiSwitcher";
 import HeroApp from "../components/HeroApp";
 import { isLive } from "../lib/logos";
 import Areas from "../components/Areas";
 
-const nav = [
-  ["Journal", "#journal"],
-  ["Notes", "#notes"],
-  ["Email", "#email"],
-  ["Calendar", "#calendar"],
-  ["Integrations", "#integrations"],
-  ["AI", "#ai"],
-  ["FAQ", "#faq"],
-];
 
 const noteFeats = [
   [
@@ -194,27 +182,6 @@ const Check_ = () => <FA icon={faCheck} aria-hidden />;
 export default function Page() {
   return (
     <>
-      <StackAnchors />
-      <Header>
-        <div className="container row">
-          <a href="#" className="logo">
-            <i />
-            untitled project
-          </a>
-          <nav className="nav" aria-label="Primary">
-            {nav.map(([l, h]) => (
-              <a key={h} href={h}>
-                {l}
-              </a>
-            ))}
-          </nav>
-          <a href="#start" className="btn btn-primary btn-sm hide-sm">
-            Get started
-          </a>
-          <MobileMenu links={nav} />
-        </div>
-      </Header>
-
       <main>
         {/* HERO */}
         <section className="hero">
@@ -747,31 +714,6 @@ export default function Page() {
         </section>
       </main>
 
-      <footer className="footer">
-        <div className="container row">
-          <a href="#" className="logo">
-            <i />
-            untitled project
-          </a>
-          <nav className="nav" aria-label="Footer">
-            {nav.map(([l, h]) => (
-              <a key={h} href={h}>
-                {l}
-              </a>
-            ))}
-          </nav>
-          <span className="meta">
-            © {new Date().getFullYear()} untitled project
-          </span>
-        </div>
-        <div className="container footer-back">
-          <span className="eyebrow">Backed by</span>
-          <span className="footer-brand">Setups Works</span>
-          <span className="footer-ta" lang="ta">
-            செட்டப்ஸ் வொர்க்ஸ்
-          </span>
-        </div>
-      </footer>
     </>
   );
 }

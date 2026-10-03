@@ -5,6 +5,8 @@ import {
   faChevronRight,
 } from "@fortawesome/free-solid-svg-icons";
 import { ICONS, isLive } from "../lib/logos";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Children, useEffect, useRef, useState, type ReactNode } from "react";
 
 export function Header({ children }: { children: ReactNode }) {
@@ -278,17 +280,17 @@ export function MobileMenu({ links }: { links: string[][] }) {
       </button>
       <div id="mobile-menu" className="mmenu" data-open={open} hidden={!open}>
         {links.map(([l, h]) => (
-          <a key={h} href={h} onClick={() => setOpen(false)}>
+          <Link key={h} href={h} onClick={() => setOpen(false)}>
             {l}
-          </a>
+          </Link>
         ))}
-        <a
-          href="#start"
+        <Link
+          href="/#start"
           className="btn btn-primary"
           onClick={() => setOpen(false)}
         >
           Get started
-        </a>
+        </Link>
       </div>
     </>
   );
@@ -421,34 +423,90 @@ export function FaqList({ items }: { items: string[][] }) {
  *  Compute each item's natural (unstuck) position from the container instead. */
 export function StackAnchors() {
   useEffect(() => {
-    const onClick = (e: MouseEvent) => {
-      const a = (e.target as HTMLElement).closest(
-        'a[href^="#"]',
-      ) as HTMLAnchorElement | null;
-      if (!a) return;
-      const id = a.getAttribute("href")!.slice(1);
-      if (!id) return;
+    const toId = (a: HTMLAnchorElement | null) => {
+      const h = a?.getAttribute("href") ?? "";
+      if (h.startsWith("#")) return h.slice(1);
+      if (h.startsWith("/#") && window.location.pathname === "/") return h.slice(2);
+      return "";
+    };
+    const jump = (id: string, smooth: boolean) => {
       const target = document.getElementById(id);
       const item = target?.closest(".stack-item") as HTMLElement | null;
       const col = item?.parentElement;
-      if (!item || !col) return;
-      const stuck = getComputedStyle(item).position === "sticky";
-      if (!stuck) return;
-      e.preventDefault();
+      if (!item || !col) return false;
+      if (getComputedStyle(item).position !== "sticky") return false;
       const gap = parseFloat(getComputedStyle(col).rowGap) || 0;
-      const items = Array.from(col.children) as HTMLElement[];
-      const colTop = col.getBoundingClientRect().top + window.scrollY;
-      let y = colTop;
-      for (const it of items) {
+      let y = col.getBoundingClientRect().top + window.scrollY;
+      for (const it of Array.from(col.children) as HTMLElement[]) {
         if (it === item) break;
         y += it.offsetHeight + gap;
       }
       const offset = parseFloat(getComputedStyle(item).top) || 80;
-      window.scrollTo({ top: y - offset, behavior: "smooth" });
-      history.replaceState(null, "", `#${id}`);
+      window.scrollTo({ top: y - offset, behavior: smooth ? "smooth" : "auto" });
+      return true;
+    };
+    const onClick = (e: MouseEvent) => {
+      const a = (e.target as HTMLElement).closest("a") as HTMLAnchorElement | null;
+      const id = toId(a);
+      if (id && jump(id, true)) {
+        e.preventDefault();
+        history.replaceState(null, "", `#${id}`);
+      }
     };
     document.addEventListener("click", onClick);
+    const h = window.location.hash.slice(1);
+    if (h) setTimeout(() => jump(h, false), 350);
     return () => document.removeEventListener("click", onClick);
   }, []);
   return null;
+}
+
+export function NavMenu({
+  features,
+  links,
+}: {
+  features: { href: string; t: string; d: string }[];
+  links: { href: string; t: string }[];
+}) {
+  const path = usePathname();
+  const [open, setOpen] = useState(false);
+  const wrap = useRef<HTMLDivElement>(null);
+  useEffect(() => setOpen(false), [path]);
+  useEffect(() => {
+    const out = (e: MouseEvent) => {
+      if (wrap.current && !wrap.current.contains(e.target as Node)) setOpen(false);
+    };
+    const k = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    document.addEventListener("mousedown", out);
+    window.addEventListener("keydown", k);
+    return () => {
+      document.removeEventListener("mousedown", out);
+      window.removeEventListener("keydown", k);
+    };
+  }, []);
+  const inFeatures = features.some((f) => f.href === path);
+  const first = links[0];
+  return (
+    <nav className="nav" aria-label="Primary">
+      <Link href={first.href} aria-current={path === first.href ? "page" : undefined}>{first.t}</Link>
+      <div className="navdrop" ref={wrap}>
+        <button aria-expanded={open} aria-haspopup="true" data-active={inFeatures} onClick={() => setOpen(!open)}>
+          Features <span className="caret" aria-hidden />
+        </button>
+        {open && (
+          <div className="navdrop-menu">
+            {features.map((f) => (
+              <Link key={f.href} href={f.href} aria-current={path === f.href ? "page" : undefined}>
+                <b>{f.t}</b>
+                <small>{f.d}</small>
+              </Link>
+            ))}
+          </div>
+        )}
+      </div>
+      {links.slice(1).map((l) => (
+        <Link key={l.href} href={l.href} aria-current={path === l.href ? "page" : undefined}>{l.t}</Link>
+      ))}
+    </nav>
+  );
 }

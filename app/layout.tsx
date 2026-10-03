@@ -8,6 +8,7 @@ import {
 import "@fortawesome/fontawesome-svg-core/styles.css";
 import { config } from "@fortawesome/fontawesome-svg-core";
 import "./globals.css";
+import { SiteHeader, SiteFooter } from "../components/SiteChrome";
 
 config.autoAddCss = false;
 
@@ -41,7 +42,11 @@ export default function RootLayout({
       lang="en"
       className={`${geist.variable} ${mono.variable} ${serif.variable} ${tamil.variable}`}
     >
-      <body>{children}</body>
+      <body>
+        <SiteHeader />
+        {children}
+        <SiteFooter />
+      </body>
     </html>
   );
 }
