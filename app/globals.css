@@ -3486,3 +3486,10 @@ kbd{font:500 11px/1 var(--mono);padding:4px 7px;border-radius:6px;background:var
 .nf-num{font-size:clamp(90px,min(20vw,24vh),240px)}
 @media(max-height:900px){.nf-log{display:none}.nf{padding:16px 0}.nf-in{gap:10px}.nf-quip{min-height:2.6em;font-size:16px}}
 @media(max-height:700px){.nf .h2{font-size:clamp(26px,3.4vw,38px)}.nf-poke{min-height:1.2em;font-size:13px}.nf-search{height:48px}.nf-cta .btn{height:46px}}
+
+/* 404 search bar: button sits centred inside the pill */
+.nf-search{--h:56px;height:var(--h);padding:0 6px 0 22px;gap:12px;align-items:center}
+.nf-search>svg{flex:none;width:16px;height:16px;display:block}
+.nf-search input{height:100%;line-height:1}
+.nf-search .btn{height:calc(var(--h) - 12px);padding:0 26px;flex:none;margin:0;box-shadow:none}
+@media(max-height:700px){.nf-search{--h:48px}}
