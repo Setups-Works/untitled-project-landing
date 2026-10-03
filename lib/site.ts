@@ -35,7 +35,8 @@ export const FOOTER_COLS: { title: string; links: [string, string][] }[] = [
       ["Product demo", "/demo"],
       ["Pricing", "/pricing"],
       ["Early users", "/early-users"],
-    ],
+      ["Join the waitlist", "/waitlist"],
+        ],
   },
   {
     title: "Features",

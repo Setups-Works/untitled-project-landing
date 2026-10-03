@@ -51,7 +51,7 @@ export default function Page() {
         </div>
       </section>
 
-      <CtaPanel title="Questions about" quiet="your data?" lead="Start with the notes, connect only what you want, and keep AI off until you’re ready." primary={["Get started", "/#start"]} secondary={["Read the FAQ", "/#faq"]} />
+      <CtaPanel title="Questions about" quiet="your data?" lead="Start with the notes, connect only what you want, and keep AI off until you’re ready." primary={["Join the waitlist", "/waitlist"]} secondary={["Read the FAQ", "/#faq"]} />
     </main>
   );
 }

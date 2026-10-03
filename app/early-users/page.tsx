@@ -16,7 +16,7 @@ export default function Page() {
   return (
     <main>
       <PageHero eyebrow="Early users" title="Built with the people" quiet="who use it first." lead="untitled project is in its early days. The first people to try it shape what it becomes — and we’ll share what they tell us right here.">
-        <Link className="btn btn-primary" href="/#start">Become an early user <FA icon={faArrowRight} /></Link>
+        <Link className="btn btn-primary" href="/waitlist">Join the waitlist <FA icon={faArrowRight} /></Link>
       </PageHero>
 
       <section className="section" style={{ paddingTop: 0 }}>

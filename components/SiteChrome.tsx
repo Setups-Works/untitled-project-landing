@@ -13,8 +13,8 @@ export function SiteHeader() {
             untitled project
           </Link>
           <NavMenu mega={MEGA} links={NAV_LINKS} />
-          <Link href="/#start" className="btn btn-primary btn-sm hide-sm">
-            Get started
+          <Link href="/waitlist" className="btn btn-primary btn-sm hide-sm">
+            Join the waitlist
           </Link>
           <MobileMenu links={MENU} />
         </div>
@@ -37,8 +37,8 @@ export function SiteFooter() {
               One workspace for your notes, tasks, journal, email, calendar and
               meetings. Your AI can change. Your workspace shouldn’t.
             </p>
-            <Link href="/#start" className="btn btn-primary btn-sm">
-              Get started
+            <Link href="/waitlist" className="btn btn-primary btn-sm">
+              Join the waitlist
             </Link>
           </div>
           <div className="sfoot-cols">

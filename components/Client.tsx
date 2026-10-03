@@ -289,11 +289,11 @@ export function MobileMenu({ links }: { links: string[][] }) {
           </Link>
         ))}
         <Link
-          href="/#start"
+          href="/waitlist"
           className="btn btn-primary"
           onClick={() => setOpen(false)}
         >
-          Get started
+          Join the waitlist
         </Link>
       </div>
     </>

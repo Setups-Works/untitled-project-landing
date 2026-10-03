@@ -13,6 +13,8 @@ Built with **Next.js 15 (App Router)**, **React 19** and **TypeScript**. Styling
 - **AI switcher** – shows the workspace staying put while the AI behind it changes (supported account, your own API key, pay-as-you-go, or no AI).
 - **Pro stats** – count-up numbers for email accounts, calendars and bundled AI subscriptions.
 - **Inner pages** – How it works, Universal Search, Context Graph and Daily Brief (each with an interactive demo), Product demo, Pricing, Early users, and Privacy & Security.
+- **Waitlist + survey in one flow** (`/waitlist`) – join in ten seconds, then an optional nine-step survey whose card changes colour each step. Entries are stored in MongoDB.
+- **Admin** (`/admin`) – password-protected dashboard with stats, colourful survey insights, searchable waitlist and survey tables, delete and CSV export.
 - **Animated FAQ** accordion, a closing call to action and a footer.
 - **Responsive** – mobile menu, card grids that become swipeable carousels, no horizontal overflow.
 - **Accessible** – keyboard-operable controls, `aria` states, visible focus rings and `prefers-reduced-motion` support.
@@ -33,6 +35,21 @@ npm run dev      # http://localhost:3000
 | `npm start`     | Serve the production build           |
 
 > Don't run `npm run build` while `npm run dev` is running — both write to `.next` and the dev server will start throwing `__webpack_modules__[moduleId] is not a function`. Stop the dev server (or delete `.next`) first.
+
+## Waitlist, survey and admin
+
+Data lives in MongoDB (`waitlist`, `surveys` and `admins` collections). Copy `.env.example` to `.env.local` and fill it in:
+
+| Variable | Purpose |
+| --- | --- |
+| `MONGODB_URI` | MongoDB connection string |
+| `MONGODB_DB` | Database name (default `untitled_project`) |
+| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | The admin account. It is created on first sign-in and stored **hashed** (scrypt), never in plain text |
+| `SESSION_SECRET` | Random string that signs the admin session cookie |
+
+Set the same variables in your host (for example Vercel → Project → Settings → Environment Variables). `.env.local` is git-ignored — never commit real values. In MongoDB Atlas, allow your host's IPs under Network Access.
+
+Admin sign-in is at `/admin/login`. Sessions are signed, `httpOnly` cookies that last eight hours, and login attempts are throttled per IP. Public forms use a honeypot field and server-side validation.
 
 ## Project structure
 

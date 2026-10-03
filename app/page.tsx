@@ -201,8 +201,8 @@ export default function Page() {
               doesn’t.
             </p>
             <div className="cta" id="start">
-              <a className="btn btn-primary" href="#start">
-                Get started <FA icon={faArrowRight} />
+              <a className="btn btn-primary" href="/waitlist">
+                Join the waitlist <FA icon={faArrowRight} />
               </a>
               <a className="btn btn-secondary" href="#notes">
                 See what’s inside
@@ -668,10 +668,10 @@ export default function Page() {
               </div>
               <a
                 className="btn btn-primary"
-                href="#start"
+                href="/waitlist"
                 style={{ marginTop: 22 }}
               >
-                Get started <FA icon={faArrowRight} />
+                Join the waitlist <FA icon={faArrowRight} />
               </a>
             </Reveal>
             <Reveal>
@@ -701,8 +701,8 @@ export default function Page() {
                     flexWrap: "wrap",
                   }}
                 >
-                  <a className="btn btn-primary" href="#start">
-                    Get started <FA icon={faArrowRight} />
+                  <a className="btn btn-primary" href="/waitlist">
+                    Join the waitlist <FA icon={faArrowRight} />
                   </a>
                   <a className="btn btn-secondary" href="#integrations">
                     Browse integrations

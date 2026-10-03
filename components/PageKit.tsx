@@ -79,7 +79,7 @@ export function CtaPanel({
   title,
   quiet,
   lead,
-  primary = ["Get started", "/#start"],
+  primary = ["Join the waitlist", "/waitlist"],
   secondary,
 }: {
   title: string;

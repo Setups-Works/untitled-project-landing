@@ -6,3 +6,4 @@ tsconfig.tsbuildinfo
 .DS_Store
 .env*
 npm-debug.log*
+!.env.example
