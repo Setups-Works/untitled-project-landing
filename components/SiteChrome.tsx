@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Header, MobileMenu, NavMenu, StackAnchors } from "./Client";
-import { FEATURES, FOOTER_COLS, MENU, NAV_LINKS } from "../lib/site";
+import { FOOTER_COLS, MEGA, MENU, NAV_LINKS } from "../lib/site";
 
 export function SiteHeader() {
   return (
@@ -12,7 +12,7 @@ export function SiteHeader() {
             <i />
             untitled project
           </Link>
-          <NavMenu features={FEATURES} links={NAV_LINKS} />
+          <NavMenu mega={MEGA} links={NAV_LINKS} />
           <Link href="/#start" className="btn btn-primary btn-sm hide-sm">
             Get started
           </Link>

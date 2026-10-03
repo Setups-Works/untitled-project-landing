@@ -3029,3 +3029,41 @@ mark{background:#fae9bd;color:inherit;border-radius:4px;padding:0 2px}
 @media(max-width:800px){.ps-grid{grid-template-columns:1fr}.ps-grid .h2{text-align:center}}
 
 .demo-wrap{max-width:1100px;margin:0 auto}
+
+/* ===== mega menu ===== */
+.navdrop{position:static}
+.mega-scrim{position:fixed;inset:68px 0 0 0;background:#191d1a40;backdrop-filter:blur(3px);z-index:55;animation:mfade .2s ease}
+.mega{position:absolute;top:100%;left:50%;transform:translateX(-50%);width:min(1120px,calc(100vw - 40px));z-index:60;padding-top:6px;animation:megaIn .25s var(--ease)}
+@keyframes megaIn{from{opacity:0;transform:translate(-50%,-8px)}}
+.mega-in{display:grid;grid-template-columns:1.25fr 1fr .85fr;gap:8px;padding:10px;border-radius:var(--r5);background:var(--surface);box-shadow:inset 0 0 0 1px var(--line),0 40px 90px -30px #28230acc}
+.mega-col{padding:18px 18px 14px}
+.mega-col .eyebrow{display:block;margin-bottom:14px}
+.mega-feat{display:flex;flex-direction:column;gap:8px}
+.mega-card{display:flex;align-items:center;gap:14px;padding:14px;border-radius:var(--r3);background:var(--ab);box-shadow:inset 0 0 0 1px var(--abl);color:var(--fg);transition:transform .2s var(--ease),box-shadow .2s}
+.mega-card:hover{transform:translateX(3px);box-shadow:inset 0 0 0 1px var(--abf)}
+.mega-card[aria-current=page]{box-shadow:inset 0 0 0 1.5px var(--abf)}
+.mega-ico{width:46px;height:46px;border-radius:var(--r2);display:grid;place-items:center;background:#ffffffb8;color:var(--abf);font-size:18px;flex:none}
+.mega-txt{flex:1;display:flex;flex-direction:column;gap:2px;min-width:0}
+.mega-txt b{font-size:15px;font-weight:600;letter-spacing:-.01em}
+.mega-txt small{font-size:13px;color:var(--fg-muted);line-height:1.4}
+.mega-go{opacity:0;transform:translateX(-6px);transition:all .2s var(--ease);color:var(--abf);font-size:13px}
+.mega-card:hover .mega-go{opacity:1;transform:none}
+.mega-list{display:grid;grid-template-columns:1fr;gap:2px}
+.mega-list a{display:flex;align-items:center;gap:12px;padding:9px 10px;border-radius:var(--r2);color:var(--fg);transition:background .16s}
+.mega-list a:hover{background:var(--surface-muted)}
+.mega-mini{width:34px;height:34px;border-radius:var(--r1);display:grid;place-items:center;background:var(--green-bg);color:var(--green-fg);font-size:14px;flex:none}
+.mega-list b{display:block;font-size:14px;font-weight:600}
+.mega-list small{display:block;font-size:12.5px;color:var(--fg-subtle)}
+.mega-promo{display:flex;flex-direction:column;gap:12px;padding:24px;border-radius:var(--r4);background:#ece5f2;box-shadow:inset 0 0 0 1px #5f4a7a33;justify-content:center;align-items:flex-start}
+.mega-promo .h3{font-size:26px}
+.mega-promo .body{font-size:14px}
+.mega-links{display:flex;flex-direction:column;gap:8px;margin-top:6px;padding-top:14px;border-top:1px solid #5f4a7a33;width:100%}
+.mega-links a{font-size:13.5px;color:var(--violet-fg);display:flex;align-items:center;gap:8px;font-weight:500}
+.mega-links a:hover{color:var(--fg)}
+@media(prefers-reduced-motion:reduce){.mega,.mega-scrim{animation:none}.mega-card,.mega-go{transition:none}}
+
+/* mega menu: keep button text readable (nav link colours were overriding it) */
+.nav .mega .btn-primary,.nav .mega .btn-primary:hover{color:var(--on-dark)}
+.nav .mega .mega-card,.nav .mega .mega-card:hover{color:var(--fg)}
+.nav .mega .mega-links a{color:var(--violet-fg)}
+.nav .mega .mega-links a:hover{color:var(--fg)}

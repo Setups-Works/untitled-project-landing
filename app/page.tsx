@@ -231,7 +231,7 @@ export default function Page() {
         </section>
 
         {/* AREAS */}
-        <section className="section">
+        <section className="section" id="areas">
           <div className="container">
             <Reveal className="center stack">
               <div className="eyebrow">The workspace</div>

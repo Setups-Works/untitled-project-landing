@@ -3,8 +3,11 @@ import { FontAwesomeIcon as FA } from "@fortawesome/react-fontawesome";
 import {
   faChevronLeft,
   faChevronRight,
+  faArrowRight,
+  faPlay,
 } from "@fortawesome/free-solid-svg-icons";
 import { ICONS, isLive } from "../lib/logos";
+import type { MegaItem } from "../lib/site";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Children, useEffect, useRef, useState, type ReactNode } from "react";
@@ -462,15 +465,19 @@ export function StackAnchors() {
 }
 
 export function NavMenu({
-  features,
+  mega,
   links,
 }: {
-  features: { href: string; t: string; d: string }[];
+  mega: { featured: MegaItem[]; workspace: MegaItem[] };
   links: { href: string; t: string }[];
 }) {
   const path = usePathname();
   const [open, setOpen] = useState(false);
   const wrap = useRef<HTMLDivElement>(null);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const hold = () => { if (timer.current) clearTimeout(timer.current); };
+  const show = () => { hold(); setOpen(true); };
+  const hide = () => { hold(); timer.current = setTimeout(() => setOpen(false), 140); };
   useEffect(() => setOpen(false), [path]);
   useEffect(() => {
     const out = (e: MouseEvent) => {
@@ -484,24 +491,57 @@ export function NavMenu({
       window.removeEventListener("keydown", k);
     };
   }, []);
-  const inFeatures = features.some((f) => f.href === path);
+  const inFeatures = mega.featured.some((f) => f.href === path);
   const first = links[0];
   return (
     <nav className="nav" aria-label="Primary">
       <Link href={first.href} aria-current={path === first.href ? "page" : undefined}>{first.t}</Link>
-      <div className="navdrop" ref={wrap}>
-        <button aria-expanded={open} aria-haspopup="true" data-active={inFeatures} onClick={() => setOpen(!open)}>
+      <div className="navdrop" ref={wrap} onMouseEnter={show} onMouseLeave={hide}>
+        <button aria-expanded={open} aria-haspopup="true" aria-controls="mega" data-active={inFeatures} onClick={() => setOpen(!open)}>
           Features <span className="caret" aria-hidden />
         </button>
         {open && (
-          <div className="navdrop-menu">
-            {features.map((f) => (
-              <Link key={f.href} href={f.href} aria-current={path === f.href ? "page" : undefined}>
-                <b>{f.t}</b>
-                <small>{f.d}</small>
-              </Link>
-            ))}
-          </div>
+          <>
+            <div className="mega" id="mega" onMouseEnter={show}>
+              <div className="mega-in">
+                <div className="mega-col">
+                  <div className="eyebrow">Features</div>
+                  <div className="mega-feat">
+                    {mega.featured.map((f) => (
+                      <Link key={f.href} href={f.href} className={`mega-card at-${f.tone}`} aria-current={path === f.href ? "page" : undefined}>
+                        <span className="mega-ico"><FA icon={f.icon} /></span>
+                        <span className="mega-txt"><b>{f.t}</b><small>{f.d}</small></span>
+                        <span className="mega-go" aria-hidden><FA icon={faArrowRight} /></span>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+                <div className="mega-col">
+                  <div className="eyebrow">The workspace</div>
+                  <ul className="mega-list">
+                    {mega.workspace.map((w) => (
+                      <li key={w.t}>
+                        <Link href={w.href}>
+                          <span className="mega-mini"><FA icon={w.icon} /></span>
+                          <span><b>{w.t}</b><small>{w.d}</small></span>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+                <div className="mega-promo">
+                  <div className="eyebrow">Try it</div>
+                  <h3 className="h3">See the workspace <span className="quiet">in action.</span></h3>
+                  <p className="body">Click around a live preview — no sign-up needed.</p>
+                  <Link href="/demo" className="btn btn-primary btn-sm"><FA icon={faPlay} /> Open the product demo</Link>
+                  <div className="mega-links">
+                    <Link href="/#ai">AI on your terms <FA icon={faArrowRight} /></Link>
+                    <Link href="/privacy-security">Privacy & Security <FA icon={faArrowRight} /></Link>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </>
         )}
       </div>
       {links.slice(1).map((l) => (
