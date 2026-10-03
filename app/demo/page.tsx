@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { faHandPointer, faCheckDouble, faToggleOn, faEnvelopeOpenText } from "@fortawesome/free-solid-svg-icons";
 import { PageHero, SectionHead, FeatureCards, CtaPanel } from "../../components/PageKit";
-import HeroApp from "../../components/HeroApp";
+import DemoApp from "../../components/demo/DemoApp";
 import { Reveal } from "../../components/Client";
 
 export const metadata: Metadata = {
@@ -12,13 +12,13 @@ export const metadata: Metadata = {
 export default function Page() {
   return (
     <main>
-      <PageHero eyebrow="Product demo" title="Try the workspace" quiet="right here." lead="This is an interactive preview. Switch between areas, tick off tasks, open a thread and flip an automation — nothing to install, nothing to sign up for.">
+      <PageHero eyebrow="Product demo" title="Try the workspace" quiet="right here." lead="A working preview of the whole workspace. Search with ⌘K, write notes, reply to mail, plan your week, record a meeting and turn AI off — it all responds. Nothing to install, nothing to sign up for.">
         <a className="btn btn-primary" href="#demo">Start clicking</a>
       </PageHero>
 
       <section className="section" id="demo" style={{ paddingTop: 0 }}>
         <div className="container">
-          <Reveal><div className="demo-wrap"><HeroApp /></div></Reveal>
+          <Reveal><div className="demo-wrap" style={{ maxWidth: 1240 }}><DemoApp /></div></Reveal>
           <p className="meta" style={{ textAlign: "center", marginTop: 14 }}>Preview with sample data. The real workspace connects to your own notes, mail and calendar.</p>
         </div>
       </section>
