@@ -139,7 +139,7 @@ export default function AuthForm({ mode }: { mode: Mode }) {
       <p className="body">{c.sub}</p>
 
       {!supabaseConfigured && (
-        <p className="au-note" role="note"><FA icon={faTriangleExclamation} /> Supabase isn’t connected yet. Add <code>NEXT_PUBLIC_SUPABASE_URL</code> and <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code> to <code>.env.local</code>.</p>
+        <p className="au-note" role="note"><FA icon={faTriangleExclamation} /> <span>Supabase isn’t connected yet. Add <code>NEXT_PUBLIC_SUPABASE_URL</code> and <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code> to <code>.env.local</code>.</span></p>
       )}
 
       {(mode === "login" || mode === "signup") && (

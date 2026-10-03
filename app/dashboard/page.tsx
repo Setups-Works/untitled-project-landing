@@ -16,7 +16,7 @@ export default async function Page() {
       <main className="section">
         <div className="container" style={{ maxWidth: 640 }}>
           <div className="panel" data-tone="amber">
-            <p className="au-note"><FA icon={faTriangleExclamation} /> Supabase isn’t connected yet. Add your project keys to <code>.env.local</code> and restart.</p>
+            <p className="au-note"><FA icon={faTriangleExclamation} /> <span>Supabase isn’t connected yet. Add your project keys to <code>.env.local</code> and restart.</span></p>
           </div>
         </div>
       </main>
