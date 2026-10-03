@@ -51,6 +51,17 @@ Set the same variables in your host (for example Vercel → Project → Settings
 
 Admin sign-in is at `/admin/login`. Sessions are signed, `httpOnly` cookies that last eight hours, and login attempts are throttled per IP. Public forms use a honeypot field and server-side validation.
 
+## Accounts (Supabase Auth)
+
+`/login`, `/signup`, `/forgot-password` and `/reset-password` use [Supabase Auth](https://supabase.com/docs/guides/auth) with email + password and Google sign-in. `/dashboard` is protected by middleware.
+
+1. Create a Supabase project and copy **Project URL** and **anon public key** (Project Settings → API) into `.env.local` as `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
+2. In **Authentication → URL Configuration** set *Site URL* to your site (for example `http://localhost:3000`) and add `http://localhost:3000/auth/callback` and your production `/auth/callback` URL to *Redirect URLs*.
+3. For Google sign-in, enable the Google provider under **Authentication → Providers** and add your OAuth client ID and secret.
+4. Email confirmation links and password-reset links go through `/auth/callback`, which exchanges the code for a session and then redirects.
+
+Without the keys the pages still render and show a setup notice instead of failing.
+
 ## Project structure
 
 ```

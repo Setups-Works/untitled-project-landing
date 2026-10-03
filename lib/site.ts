@@ -25,6 +25,8 @@ export const MENU: [string, string][] = [
   ["Pricing", "/pricing"],
   ["Privacy & Security", "/privacy-security"],
   ["Early users", "/early-users"],
+  ["Log in", "/login"],
+  ["Sign up", "/signup"],
 ];
 
 export const FOOTER_COLS: { title: string; links: [string, string][] }[] = [
@@ -62,6 +64,8 @@ export const FOOTER_COLS: { title: string; links: [string, string][] }[] = [
     links: [
       ["Privacy & Security", "/privacy-security"],
       ["FAQ", "/#faq"],
+      ["Log in", "/login"],
+      ["Sign up", "/signup"],
     ],
   },
 ];

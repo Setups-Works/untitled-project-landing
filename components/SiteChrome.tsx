@@ -13,6 +13,9 @@ export function SiteHeader() {
             untitled project
           </Link>
           <NavMenu mega={MEGA} links={NAV_LINKS} />
+          <Link href="/login" className="nav-login hide-sm">
+            Log in
+          </Link>
           <Link href="/waitlist" className="btn btn-primary btn-sm hide-sm">
             Join the waitlist
           </Link>
