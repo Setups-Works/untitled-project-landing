@@ -6,7 +6,7 @@ import { FontAwesomeIcon as FA } from "@fortawesome/react-fontawesome";
 import { faArrowRight, faCircleCheck, faEnvelopeOpenText, faEye, faEyeSlash, faSpinner, faTriangleExclamation } from "@fortawesome/free-solid-svg-icons";
 import { supabaseBrowser } from "../../lib/supabase/client";
 import { EMAIL_RE } from "../../lib/validate";
-import { safeNext, supabaseConfigured } from "../../lib/supabase/config";
+import { safeNext, supabaseConfigured, supabaseProblem } from "../../lib/supabase/config";
 
 type Mode = "login" | "signup" | "forgot" | "reset";
 
@@ -139,7 +139,7 @@ export default function AuthForm({ mode }: { mode: Mode }) {
       <p className="body">{c.sub}</p>
 
       {!supabaseConfigured && (
-        <p className="au-note" role="note"><FA icon={faTriangleExclamation} /> <span>Supabase isn’t connected yet. Add <code>NEXT_PUBLIC_SUPABASE_URL</code> and <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code> to <code>.env.local</code>.</span></p>
+        <p className="au-note" role="note"><FA icon={faTriangleExclamation} /> <span>{supabaseProblem ?? <>Supabase isn’t connected yet. Add <code>NEXT_PUBLIC_SUPABASE_URL</code> and <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code> to <code>.env.local</code>.</>}</span></p>
       )}
 
       {(mode === "login" || mode === "signup") && (

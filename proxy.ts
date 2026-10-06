@@ -1,11 +1,12 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { SUPABASE_KEY, SUPABASE_URL, supabaseConfigured } from "./lib/supabase/config";
 
 export async function proxy(request: NextRequest) {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-  // Without Supabase keys there is no session to manage — let the pages show their setup notice.
-  if (!url || !key) return NextResponse.next({ request });
+  const url = SUPABASE_URL;
+  const key = SUPABASE_KEY;
+  // Without valid Supabase keys there is no session to manage — let the pages show their setup notice.
+  if (!supabaseConfigured || !url || !key) return NextResponse.next({ request });
 
   let response = NextResponse.next({ request });
   const supabase = createServerClient(url, key, {
