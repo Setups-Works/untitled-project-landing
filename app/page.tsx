@@ -37,6 +37,7 @@ import AiSwitcher from "../components/AiSwitcher";
 import HeroApp from "../components/HeroApp";
 import { isLive } from "../lib/logos";
 import Areas from "../components/Areas";
+import AuthLink from "../components/auth/AuthLink";
 
 
 const noteFeats = [
@@ -201,9 +202,7 @@ export default function Page() {
               doesn’t.
             </p>
             <div className="cta" id="start">
-              <a className="btn btn-primary" href="/waitlist">
-                Join the waitlist <FA icon={faArrowRight} />
-              </a>
+              <AuthLink arrow />
               <a className="btn btn-secondary" href="#notes">
                 See what’s inside
               </a>
@@ -666,13 +665,7 @@ export default function Page() {
                   </p>
                 </div>
               </div>
-              <a
-                className="btn btn-primary"
-                href="/waitlist"
-                style={{ marginTop: 22 }}
-              >
-                Join the waitlist <FA icon={faArrowRight} />
-              </a>
+              <AuthLink arrow style={{ marginTop: 22 }} />
             </Reveal>
             <Reveal>
               <FaqList items={faqs} />
@@ -701,9 +694,7 @@ export default function Page() {
                     flexWrap: "wrap",
                   }}
                 >
-                  <a className="btn btn-primary" href="/waitlist">
-                    Join the waitlist <FA icon={faArrowRight} />
-                  </a>
+                  <AuthLink arrow />
                   <a className="btn btn-secondary" href="#integrations">
                     Browse integrations
                   </a>

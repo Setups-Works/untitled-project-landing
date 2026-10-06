@@ -10,6 +10,8 @@ import { ICONS, isLive } from "../lib/logos";
 import type { MegaItem } from "../lib/site";
 import MegaPreview from "./MegaPreview";
 import Link from "next/link";
+import AuthLink from "./auth/AuthLink";
+import { useAuthState } from "./auth/useAuthState";
 import { usePathname } from "next/navigation";
 import { Children, useEffect, useRef, useState, type ReactNode } from "react";
 
@@ -261,6 +263,7 @@ export function AiSwap({ models }: { models: string[] }) {
 
 export function MobileMenu({ links }: { links: string[][] }) {
   const [open, setOpen] = useState(false);
+  const auth = useAuthState();
   useEffect(() => {
     document.body.style.overflow = open ? "hidden" : "";
     const k = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
@@ -288,13 +291,12 @@ export function MobileMenu({ links }: { links: string[][] }) {
             {l}
           </Link>
         ))}
-        <Link
-          href="/waitlist"
-          className="btn btn-primary"
-          onClick={() => setOpen(false)}
-        >
-          Join the waitlist
-        </Link>
+        {auth === "out" && (
+          <Link href="/login" onClick={() => setOpen(false)}>
+            Log in
+          </Link>
+        )}
+        <AuthLink onClick={() => setOpen(false)} />
       </div>
     </>
   );

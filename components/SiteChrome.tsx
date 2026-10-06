@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { Header, MobileMenu, NavMenu, StackAnchors } from "./Client";
 import { FOOTER_COLS, MEGA, MENU, NAV_LINKS } from "../lib/site";
+import HeaderAuth from "./auth/HeaderAuth";
+import AuthLink from "./auth/AuthLink";
 
 export function SiteHeader() {
   return (
@@ -13,12 +15,7 @@ export function SiteHeader() {
             untitled project
           </Link>
           <NavMenu mega={MEGA} links={NAV_LINKS} />
-          <Link href="/login" className="nav-login hide-sm">
-            Log in
-          </Link>
-          <Link href="/waitlist" className="btn btn-primary btn-sm hide-sm">
-            Join the waitlist
-          </Link>
+          <HeaderAuth />
           <MobileMenu links={MENU} />
         </div>
       </Header>
@@ -40,9 +37,7 @@ export function SiteFooter() {
               One workspace for your notes, tasks, journal, email, calendar and
               meetings. Your AI can change. Your workspace shouldn’t.
             </p>
-            <Link href="/waitlist" className="btn btn-primary btn-sm">
-              Join the waitlist
-            </Link>
+            <AuthLink className="btn btn-primary btn-sm" />
           </div>
           <div className="sfoot-cols">
             {FOOTER_COLS.map((c) => (

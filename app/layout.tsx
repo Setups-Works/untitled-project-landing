@@ -9,6 +9,7 @@ import "@fortawesome/fontawesome-svg-core/styles.css";
 import { config } from "@fortawesome/fontawesome-svg-core";
 import "./globals.css";
 import { SiteHeader, SiteFooter } from "../components/SiteChrome";
+import HideInApp from "../components/HideInApp";
 
 config.autoAddCss = false;
 
@@ -43,9 +44,13 @@ export default function RootLayout({
       className={`${geist.variable} ${mono.variable} ${serif.variable} ${tamil.variable}`}
     >
       <body>
-        <SiteHeader />
+        <HideInApp>
+          <SiteHeader />
+        </HideInApp>
         {children}
-        <SiteFooter />
+        <HideInApp>
+          <SiteFooter />
+        </HideInApp>
       </body>
     </html>
   );

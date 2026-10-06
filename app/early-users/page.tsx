@@ -4,6 +4,7 @@ import { FontAwesomeIcon as FA } from "@fortawesome/react-fontawesome";
 import { faArrowRight, faQuoteLeft, faComments, faHandshake, faSeedling } from "@fortawesome/free-solid-svg-icons";
 import { PageHero, SectionHead, FeatureCards, CtaPanel } from "../../components/PageKit";
 import { Reveal } from "../../components/Client";
+import AuthLink from "../../components/auth/AuthLink";
 
 export const metadata: Metadata = {
   title: "Early users — untitled project",
@@ -16,7 +17,7 @@ export default function Page() {
   return (
     <main>
       <PageHero eyebrow="Early users" title="Built with the people" quiet="who use it first." lead="untitled project is in its early days. The first people to try it shape what it becomes — and we’ll share what they tell us right here.">
-        <Link className="btn btn-primary" href="/waitlist">Join the waitlist <FA icon={faArrowRight} /></Link>
+        <AuthLink arrow />
       </PageHero>
 
       <section className="section" style={{ paddingTop: 0 }}>

@@ -4,6 +4,7 @@ import { FontAwesomeIcon as FA } from "@fortawesome/react-fontawesome";
 import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import { faArrowRight } from "@fortawesome/free-solid-svg-icons";
 import { Reveal } from "./Client";
+import AuthLink from "./auth/AuthLink";
 
 export function PageHero({
   eyebrow,
@@ -79,7 +80,7 @@ export function CtaPanel({
   title,
   quiet,
   lead,
-  primary = ["Join the waitlist", "/waitlist"],
+  primary = ["Get started", "/signup"],
   secondary,
 }: {
   title: string;
@@ -98,9 +99,13 @@ export function CtaPanel({
             </h2>
             <p className="lead">{lead}</p>
             <div className="cta" style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-              <Link className="btn btn-primary" href={primary[1]}>
-                {primary[0]} <FA icon={faArrowRight} />
-              </Link>
+              {primary[1] === "/signup" ? (
+                <AuthLink arrow>{primary[0]}</AuthLink>
+              ) : (
+                <Link className="btn btn-primary" href={primary[1]}>
+                  {primary[0]} <FA icon={faArrowRight} />
+                </Link>
+              )}
               {secondary && (
                 <Link className="btn btn-secondary" href={secondary[1]}>
                   {secondary[0]}

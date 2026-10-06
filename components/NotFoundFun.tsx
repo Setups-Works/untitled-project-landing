@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import AuthLink from "./auth/AuthLink";
 import { useEffect, useState } from "react";
 import { FontAwesomeIcon as FA } from "@fortawesome/react-fontawesome";
 import {
@@ -89,7 +90,7 @@ export default function NotFoundFun() {
         <div className="nf-cta">
           <Link className="btn btn-primary" href="/"><FA icon={faHouse} /> Take me home</Link>
           <Link className="btn btn-secondary" href="/demo"><FA icon={faPlay} /> Try the demo (it exists, promise)</Link>
-          <Link className="btn btn-secondary" href="/waitlist">Join the waitlist <FA icon={faArrowRight} /></Link>
+          <AuthLink className="btn btn-secondary" arrow />
         </div>
 
         <pre className="nf-log" aria-hidden>

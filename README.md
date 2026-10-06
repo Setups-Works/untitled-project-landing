@@ -13,8 +13,8 @@ Built with **Next.js 15 (App Router)**, **React 19** and **TypeScript**. Styling
 - **AI switcher** – shows the workspace staying put while the AI behind it changes (supported account, your own API key, pay-as-you-go, or no AI).
 - **Pro stats** – count-up numbers for email accounts, calendars and bundled AI subscriptions.
 - **Inner pages** – How it works, Universal Search, Context Graph and Daily Brief (each with an interactive demo), Product demo, Pricing, Early users, and Privacy & Security.
-- **Waitlist + survey in one flow** (`/waitlist`) – join in ten seconds, then an optional nine-step survey whose card changes colour each step. Entries are stored in MongoDB.
-- **Admin** (`/admin`) – password-protected dashboard with stats, colourful survey insights, searchable waitlist and survey tables, delete and CSV export.
+- **Accounts** – log in, sign up, forgot/reset password and Google sign-in, all on Supabase Auth.
+- **Admin panel** (`/admin`) – overview stats and sign-up chart, plus a Users page to search, promote, ban and delete accounts.
 - **Animated FAQ** accordion, a closing call to action and a footer.
 - **Responsive** – mobile menu, card grids that become swipeable carousels, no horizontal overflow.
 - **Accessible** – keyboard-operable controls, `aria` states, visible focus rings and `prefers-reduced-motion` support.
@@ -36,24 +36,24 @@ npm run dev      # http://localhost:3000
 
 > Don't run `npm run build` while `npm run dev` is running — both write to `.next` and the dev server will start throwing `__webpack_modules__[moduleId] is not a function`. Stop the dev server (or delete `.next`) first.
 
-## Waitlist, survey and admin
+## Admin panel
 
-Data lives in MongoDB (`waitlist`, `surveys` and `admins` collections). Copy `.env.example` to `.env.local` and fill it in:
+`/admin` uses the same Supabase login as the rest of the app — there is no separate admin password. Copy `.env.example` to `.env.local` and set:
 
 | Variable | Purpose |
 | --- | --- |
-| `MONGODB_URI` | MongoDB connection string |
-| `MONGODB_DB` | Database name (default `untitled_project`) |
-| `ADMIN_EMAIL` / `ADMIN_PASSWORD` | The admin account. It is created on first sign-in and stored **hashed** (scrypt), never in plain text |
-| `SESSION_SECRET` | Random string that signs the admin session cookie |
+| `SUPABASE_SERVICE_ROLE_KEY` | Server-only key that lets the panel list, ban and delete users. Never prefix it with `NEXT_PUBLIC_` |
+| `ADMIN_EMAILS` | Comma-separated emails that are always admins. Use it to bootstrap the first admin |
 
-Set the same variables in your host (for example Vercel → Project → Settings → Environment Variables). `.env.local` is git-ignored — never commit real values. In MongoDB Atlas, allow your host's IPs under Network Access.
+Further admins are promoted from **Admin → Users** (stored in `app_metadata.role`, which users can't edit themselves). Every admin page and server action re-checks the role on the server. Accounts in `ADMIN_EMAILS` and your own account are protected from demote/ban/delete in the panel.
 
-Admin sign-in is at `/admin/login`. Sessions are signed, `httpOnly` cookies that last eight hours, and login attempts are throttled per IP. Public forms use a honeypot field and server-side validation.
+Sections: **Overview** (user and content stats, sign-up and activity charts), **Users** (search, filters, sorting, paging, CSV export, invite, and a detail drawer with usage counts, plan, password-reset/resend emails, admin/ban/delete), **Usage** (item counts per user — never content), **Announcements** (banners shown to every signed-in user) and **Audit log** (every admin action is recorded).
+
+To add a section, create `app/admin/<section>/page.tsx` and add one line to `SECTIONS` in `components/admin/AdminNav.tsx`.
 
 ## Accounts (Supabase Auth)
 
-`/login`, `/signup`, `/forgot-password` and `/reset-password` use [Supabase Auth](https://supabase.com/docs/guides/auth) with email + password and Google sign-in. `/dashboard` is protected by middleware.
+`/login`, `/signup`, `/forgot-password` and `/reset-password` use [Supabase Auth](https://supabase.com/docs/guides/auth) with email + password and Google sign-in. `/dashboard` and `/admin` are protected by the proxy (`proxy.ts`).
 
 1. Create a Supabase project and copy **Project URL** and **anon public key** (Project Settings → API) into `.env.local` as `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
 2. In **Authentication → URL Configuration** set *Site URL* to your site (for example `http://localhost:3000`) and add `http://localhost:3000/auth/callback` and your production `/auth/callback` URL to *Redirect URLs*.
