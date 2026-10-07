@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import { FontAwesomeIcon as FA } from "@fortawesome/react-fontawesome";
 import { faBookOpen, faComments, faPenToSquare, faListCheck, faPlus, faMessage } from "@fortawesome/free-solid-svg-icons";
-import { supabaseBrowser } from "../../lib/supabase/client";
+import { api } from "../../lib/api/client";
 import { qk } from "../../lib/query/keys";
 import { useRealtimeInvalidate } from "../../hooks/useRealtimeInvalidate";
 import { useTaskActions } from "../../features/tasks/queries";
@@ -27,7 +27,7 @@ const QUICK = [
 ];
 
 export default function HomeView({ name }: { name: string }) {
-  const sb = useMemo(supabaseBrowser, []);
+  const sb = useMemo(api, []);
   const qc = useQueryClient();
   const today = useMemo(() => isoDate(), []);
   const [err, setErr] = useState("");

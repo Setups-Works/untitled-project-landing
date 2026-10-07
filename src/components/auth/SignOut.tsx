@@ -1,7 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { supabaseBrowser } from "../../lib/supabase/client";
+import { authClient } from "../../lib/auth/client";
 
 export default function SignOut() {
   const router = useRouter();
@@ -12,7 +12,7 @@ export default function SignOut() {
       disabled={busy}
       onClick={async () => {
         setBusy(true);
-        await supabaseBrowser().auth.signOut();
+        await authClient.signOut();
         router.push("/");
         router.refresh();
       }}

@@ -23,7 +23,8 @@ import {
   faUser,
   faUserShield,
 } from "@fortawesome/free-solid-svg-icons";
-import { supabaseBrowser } from "../../lib/supabase/client";
+import { api } from "../../lib/api/client";
+import { authClient } from "../../lib/auth/client";
 import { EMAIL_RE } from "../../lib/validate";
 import { CATEGORIES } from "../../lib/notes";
 import { writePrefs, type Prefs } from "../../lib/prefs";
@@ -84,7 +85,7 @@ const friendly = (m: string) =>
         : m;
 
 export default function SettingsView({ account, prefs: initial }: { account: Account; prefs: Prefs }) {
-  const sb = useMemo(supabaseBrowser, []);
+  const sb = useMemo(api, []);
   const router = useRouter();
   const { ask, dialog } = useConfirm();
 
@@ -94,6 +95,7 @@ export default function SettingsView({ account, prefs: initial }: { account: Acc
   const [emailMsg, setEmailMsg] = useState<Msg>(null);
   const [prefs, setPrefs] = useState(initial);
   const [prefMsg, setPrefMsg] = useState<Msg>(null);
+  const [oldPw, setOldPw] = useState("");
   const [pw, setPw] = useState("");
   const [pw2, setPw2] = useState("");
   const [show, setShow] = useState(false);
@@ -125,11 +127,11 @@ export default function SettingsView({ account, prefs: initial }: { account: Acc
       const { data: u } = await sb.auth.getUser();
       if (!u.user) return;
       const path = `${u.user.id}/avatar-${Date.now()}.${f.type.split("/")[1].replace("jpeg", "jpg")}`;
-      const { error } = await sb.storage.from("avatars").upload(path, f, { contentType: f.type, cacheControl: "31536000" });
+      const { error } = await sb.storage.from("avatars").upload(path, f, { contentType: f.type });
       if (error) return setAvatarMsg({ ok: false, text: "Couldn’t upload that picture." });
       const url = sb.storage.from("avatars").getPublicUrl(path).data.publicUrl;
-      const { error: e2 } = await sb.auth.updateUser({ data: { avatar_url: url } });
-      if (e2) return setAvatarMsg({ ok: false, text: friendly(e2.message) });
+      const { error: e2 } = await authClient.updateUser({ image: url });
+      if (e2) return setAvatarMsg({ ok: false, text: friendly(e2.message ?? "") });
       const old = avatarPath(avatar);
       if (old) await sb.storage.from("avatars").remove([old]);
       setAvatar(url);
@@ -140,8 +142,8 @@ export default function SettingsView({ account, prefs: initial }: { account: Acc
   const removeAvatar = () =>
     run("avatar", async () => {
       const old = avatarPath(avatar);
-      const { error } = await sb.auth.updateUser({ data: { avatar_url: null } });
-      if (error) return setAvatarMsg({ ok: false, text: friendly(error.message) });
+      const { error } = await authClient.updateUser({ image: null });
+      if (error) return setAvatarMsg({ ok: false, text: friendly(error.message ?? "") });
       if (old) await sb.storage.from("avatars").remove([old]);
       setAvatar(null);
       setAvatarMsg({ ok: true, text: "Picture removed." });
@@ -180,17 +182,8 @@ export default function SettingsView({ account, prefs: initial }: { account: Acc
       setDataMsg({ ok: true, text: `Exported ${data?.length ?? 0} notes.` });
     });
 
-  /** Delete every file under a storage folder, however deeply nested. */
-  const wipe = async (bucket: string, prefix: string) => {
-    const store = sb.storage.from(bucket);
-    const { data } = await store.list(prefix, { limit: 1000 });
-    const files: string[] = [];
-    for (const item of data ?? []) {
-      if (item.id) files.push(`${prefix}/${item.name}`);
-      else await wipe(bucket, `${prefix}/${item.name}`);
-    }
-    if (files.length) await store.remove(files);
-  };
+  /** Delete every file under one of the user's storage folders, however deeply nested. */
+  const wipe = (bucket: string, prefix: string) => sb.storage.from(bucket).removeFolder(prefix);
 
   const resetWorkspace = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -233,8 +226,8 @@ export default function SettingsView({ account, prefs: initial }: { account: Acc
     const v = name.trim();
     if (!v) return setNameMsg({ ok: false, text: "Please enter your name." });
     run("name", async () => {
-      const { error } = await sb.auth.updateUser({ data: { full_name: v } });
-      setNameMsg(error ? { ok: false, text: friendly(error.message) } : { ok: true, text: "Name updated." });
+      const { error } = await authClient.updateUser({ name: v });
+      setNameMsg(error ? { ok: false, text: friendly(error.message ?? "") } : { ok: true, text: "Name updated." });
       if (!error) router.refresh();
     });
   };
@@ -245,13 +238,10 @@ export default function SettingsView({ account, prefs: initial }: { account: Acc
     if (!EMAIL_RE.test(v)) return setEmailMsg({ ok: false, text: "Please enter a valid email address." });
     if (v === account.email.toLowerCase()) return setEmailMsg({ ok: false, text: "That’s already your email." });
     run("email", async () => {
-      const { error } = await sb.auth.updateUser(
-        { email: v },
-        { emailRedirectTo: `${location.origin}/auth/callback?next=/dashboard/settings` },
-      );
+      const { error } = await authClient.changeEmail({ newEmail: v, callbackURL: "/dashboard" });
       setEmailMsg(
         error
-          ? { ok: false, text: friendly(error.message) }
+          ? { ok: false, text: friendly(error.message ?? "") }
           : { ok: true, text: "Check your inbox — confirm the change from the link we sent. Your email stays the same until you do." },
       );
     });
@@ -261,18 +251,24 @@ export default function SettingsView({ account, prefs: initial }: { account: Acc
     const next = { ...prefs, ...patch };
     setPrefs(next);
     writePrefs(next);
-    const { error } = await sb.auth.updateUser({ data: { preferences: next } });
+    const { error } = await sb.from("profiles").upsert({ preferences: next }, { onConflict: "user_id" });
     setPrefMsg(error ? { ok: false, text: "Couldn’t save that preference." } : { ok: true, text: "Saved." });
     if (!error) router.refresh();
   };
 
   const savePw = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!oldPw) return setPwMsg({ ok: false, text: "Enter your current password." });
     if (pw.length < 8) return setPwMsg({ ok: false, text: "Your password needs at least 8 characters." });
     if (pw !== pw2) return setPwMsg({ ok: false, text: "The two passwords don’t match." });
     run("pw", async () => {
-      const { error } = await sb.auth.updateUser({ password: pw });
-      if (error) return setPwMsg({ ok: false, text: friendly(error.message) });
+      const { error } = await authClient.changePassword({ currentPassword: oldPw, newPassword: pw, revokeOtherSessions: true });
+      if (error)
+        return setPwMsg({
+          ok: false,
+          text: /invalid/i.test(error.message ?? "") ? "Your current password isn’t right." : friendly(error.message ?? ""),
+        });
+      setOldPw("");
       setPw("");
       setPw2("");
       setPwMsg({ ok: true, text: "Password updated." });
@@ -281,8 +277,8 @@ export default function SettingsView({ account, prefs: initial }: { account: Acc
 
   const signOutOthers = () =>
     run("others", async () => {
-      const { error } = await sb.auth.signOut({ scope: "others" });
-      setSessMsg(error ? { ok: false, text: friendly(error.message) } : { ok: true, text: "Signed out of all your other devices." });
+      const { error } = await authClient.revokeOtherSessions();
+      setSessMsg(error ? { ok: false, text: friendly(error.message ?? "") } : { ok: true, text: "Signed out of all your other devices." });
     });
 
   const signOutEverywhere = async () => {
@@ -293,7 +289,8 @@ export default function SettingsView({ account, prefs: initial }: { account: Acc
     });
     if (!yes) return;
     await run("global", async () => {
-      await sb.auth.signOut({ scope: "global" });
+      await authClient.revokeSessions();
+      await authClient.signOut();
       router.push("/login");
       router.refresh();
     });
@@ -340,7 +337,7 @@ export default function SettingsView({ account, prefs: initial }: { account: Acc
     await run("delete", async () => {
       const r = await deleteMyAccount(typed);
       if (!r.ok) return setDelMsg({ ok: false, text: r.error });
-      await sb.auth.signOut();
+      await authClient.signOut();
       router.push("/");
       router.refresh();
     });
@@ -557,6 +554,15 @@ export default function SettingsView({ account, prefs: initial }: { account: Acc
             <div className="st-body">
               {account.hasPassword ? (
                 <form className="st-stack" onSubmit={savePw}>
+                  <label>
+                    <span>Current password</span>
+                    <input
+                      type={show ? "text" : "password"}
+                      value={oldPw}
+                      onChange={(e) => setOldPw(e.target.value)}
+                      autoComplete="current-password"
+                    />
+                  </label>
                   <div className="st-two">
                     <label>
                       <span>New password</span>

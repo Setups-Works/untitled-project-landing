@@ -1,24 +1,24 @@
-import { isAdmin, isRootAdmin, listAllUsers, serviceConfigured, currentUser, supabaseAdmin } from "../../../lib/supabase/admin";
+import { isAdmin, isRootAdmin, listAllUsers, serverConfigured, currentUser, adminDb } from "../../../server/session";
 import SetupNotice from "../../../components/admin/SetupNotice";
 import UsersTable, { type Row } from "../../../components/admin/UsersTable";
 
 export default async function Page() {
-  if (!serviceConfigured) return <SetupNotice />;
-  const [users, me, profiles] = await Promise.all([listAllUsers(), currentUser(), supabaseAdmin().from("profiles").select("user_id,plan")]);
+  if (!serverConfigured()) return <SetupNotice />;
+  const [users, me, profiles] = await Promise.all([listAllUsers(), currentUser(), adminDb().from("profiles").select("user_id,plan")]);
   const plans = new Map((profiles.data ?? []).map((p) => [p.user_id as string, p.plan as string]));
   const rows: Row[] = users.map((u) => ({
     id: u.id,
-    email: u.email ?? "",
-    name: (u.user_metadata?.full_name as string) || "",
-    avatar: (u.user_metadata?.avatar_url as string) || null,
-    provider: String(u.app_metadata?.provider || "email"),
-    confirmed: !!u.email_confirmed_at,
+    email: u.email,
+    name: u.name || "",
+    avatar: u.image || null,
+    provider: u.providers[0] ?? "email",
+    confirmed: !!u.emailVerified,
     admin: isAdmin(u),
-    banned: !!u.banned_until && new Date(u.banned_until) > new Date(),
+    banned: u.banned,
     protected: isRootAdmin(u.email) || u.id === me?.id,
     plan: plans.get(u.id) ?? "free",
-    createdAt: u.created_at,
-    lastSignIn: u.last_sign_in_at ?? null,
+    createdAt: u.createdAt,
+    lastSignIn: u.lastSignIn ?? null,
   }));
   return (
     <div className="dash">

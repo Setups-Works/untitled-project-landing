@@ -1,10 +1,10 @@
-import { serviceConfigured, supabaseAdmin } from "../../../lib/supabase/admin";
+import { serverConfigured, adminDb } from "../../../server/session";
 import SetupNotice from "../../../components/admin/SetupNotice";
 import Announcements, { type Announcement } from "../../../components/admin/Announcements";
 
 export default async function Page() {
-  if (!serviceConfigured) return <SetupNotice />;
-  const { data, error } = await supabaseAdmin()
+  if (!serverConfigured()) return <SetupNotice />;
+  const { data, error } = await adminDb()
     .from("announcements")
     .select("id,message,tone,active,created_at")
     .order("created_at", { ascending: false })

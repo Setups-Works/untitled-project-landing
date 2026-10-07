@@ -17,7 +17,7 @@ api/v1/
 ## Rules
 
 - Every handler is built with the shared `handler({ auth, schema, rateLimit })` helper: Zod-validated input, resolves the user + active workspace, maps typed service errors to `{ error: { code, message } }`.
-- Handlers call **services**, never repositories or Supabase directly. No business logic here.
+- Handlers call **services**, never repositories or the database directly (the generic `db`, `storage`, `realtime` routes are the documented exceptions). No business logic here.
 - Cursor pagination (`?cursor=&limit=`), stable ordering, max limit enforced.
 - Streaming endpoints (AI) use Server-Sent Events and honour `request.signal` for cancellation.
 - Webhook and job routes verify a signature/secret _before_ doing anything and are idempotent.

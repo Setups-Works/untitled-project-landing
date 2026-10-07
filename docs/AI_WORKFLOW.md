@@ -47,7 +47,7 @@ Creating follow-up tasks you discovered: `node scripts/jira/jira.mjs create --ep
 ## 3. Rules the agent must follow
 
 - **Never merge, force-push, delete branches you didn't create, or approve its own PR.** Branch protection requires CI + one human approval — don't try to bypass it.
-- Never run destructive commands (drop tables, `supabase db reset`, deleting storage, rotating keys) without the developer's explicit say-so for that command.
+- Never run destructive commands (drop tables, `docker compose down -v`, deleting storage, rotating keys) without the developer's explicit say-so for that command.
 - Use **dev** credentials only. Never read, print, or copy production secrets. Never put secrets in code, PR text, Jira comments or logs.
 - Don't touch another track's folders unless the task says so; if you must, say it in the PR.
 - If requirements are unclear, comment on the Jira task and ask — don't invent behaviour.

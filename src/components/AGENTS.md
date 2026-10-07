@@ -18,6 +18,6 @@
 
 ## Rules
 
-- Components here don't know about Supabase tables or services. They receive data and callbacks.
+- Components here don't know about database tables or services. They receive data and callbacks.
 - Accessibility is part of "done" (roles, labels, focus, keyboard). Reuse before you build.
 - Styling: existing CSS tokens/classes in `src/app/globals.css`; no new UI libraries without a PR discussion.

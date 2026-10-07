@@ -19,7 +19,7 @@ import {
   faGear,
   faCompass,
 } from "@fortawesome/free-solid-svg-icons";
-import { supabaseBrowser } from "../../lib/supabase/client";
+import { authClient } from "../../lib/auth/client";
 
 /** One line per workspace section — pages live in app/dashboard/<section>. */
 const TABS = [
@@ -80,7 +80,7 @@ export default function AppNav({
   }, []);
 
   async function signOut() {
-    await supabaseBrowser().auth.signOut();
+    await authClient.signOut();
     router.push("/");
     router.refresh();
   }

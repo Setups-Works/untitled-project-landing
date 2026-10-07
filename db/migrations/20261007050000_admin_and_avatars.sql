@@ -25,12 +25,4 @@ alter table public.announcements enable row level security;
 drop policy if exists "read active" on public.announcements;
 create policy "read active" on public.announcements for select to authenticated using (active);
 
--- Profile pictures: public bucket (so <img> works), but each user can only write inside their own folder.
-insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
-values ('avatars', 'avatars', true, 2097152, array['image/png', 'image/jpeg', 'image/webp', 'image/gif'])
-on conflict (id) do update set public = true, file_size_limit = 2097152, allowed_mime_types = excluded.allowed_mime_types;
-
-drop policy if exists "avatars owner" on storage.objects;
-create policy "avatars owner" on storage.objects for all to authenticated
-  using (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text)
-  with check (bucket_id = 'avatars' and (storage.foldername(name))[1] = auth.uid()::text);
+-- Profile pictures live in the public-read `avatars` bucket; each user can only write under their own id (see src/server/storage).

@@ -1,4 +1,4 @@
-import { serviceConfigured, supabaseAdmin } from "../../../lib/supabase/admin";
+import { serverConfigured, adminDb } from "../../../server/session";
 import SetupNotice from "../../../components/admin/SetupNotice";
 
 const LABELS: Record<string, string> = {
@@ -18,8 +18,8 @@ const LABELS: Record<string, string> = {
 };
 
 export default async function Page() {
-  if (!serviceConfigured) return <SetupNotice />;
-  const { data, error } = await supabaseAdmin()
+  if (!serverConfigured()) return <SetupNotice />;
+  const { data, error } = await adminDb()
     .from("admin_audit")
     .select("id,admin_email,action,target,meta,created_at")
     .order("created_at", { ascending: false })

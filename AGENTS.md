@@ -6,7 +6,7 @@ You are working on **untitled project**: one workspace for notes, tasks, journal
 
 ## 1. Stack
 
-Next.js 16 (App Router, React 19, TypeScript strict) · Supabase (Postgres + Auth + Storage + Realtime) · Composio (OAuth + tools + triggers for Gmail, Calendar, Slack, GitHub) · AI providers behind a router (Groq on the server, Puter.js in the browser) · Cloudflare (DNS/WAF/CDN) in front of Vercel · Sentry + PostHog (observability). Styling is migrating from hand-written CSS (`src/app/globals.css`, wrapped in the `legacy` cascade layer) to **Tailwind v4** (`src/styles/tailwind.css`, no preflight). Design tokens stay defined once in `:root` and are exposed as utilities (`bg-surface`, `text-fg-muted`, `rounded-r2`, `shadow-e2`). **New and touched screens use Tailwind utilities; when you convert a screen, delete its legacy rules in the same PR and keep the look pixel-identical.** Don't mix a legacy class and a utility that set the same property. No UI kit. Icons: Font Awesome Free (solid).
+Next.js 16 (App Router, React 19, TypeScript strict) · PostgreSQL + Better Auth (email/password + Google) + S3-compatible object storage + Redis, **all self-hosted in Docker** (no Supabase) · Composio (OAuth + tools + triggers for Gmail, Calendar, Slack, GitHub) · AI providers behind a router (Groq on the server, Puter.js in the browser) · Cloudflare (DNS/WAF/CDN) in front of Vercel · Sentry + PostHog (observability). Styling is migrating from hand-written CSS (`src/app/globals.css`, wrapped in the `legacy` cascade layer) to **Tailwind v4** (`src/styles/tailwind.css`, no preflight). Design tokens stay defined once in `:root` and are exposed as utilities (`bg-surface`, `text-fg-muted`, `rounded-r2`, `shadow-e2`). **New and touched screens use Tailwind utilities; when you convert a screen, delete its legacy rules in the same PR and keep the look pixel-identical.** Don't mix a legacy class and a utility that set the same property. No UI kit. Icons: Font Awesome Free (solid).
 
 ## 2. Commands
 
@@ -15,8 +15,8 @@ npm install
 npm run dev                    # http://localhost:3000   (do NOT run `next build` while dev is running)
 npx tsc --noEmit               # typecheck — must pass before every push
 npx next build                 # production build — must pass before every PR
-npx supabase db push --linked  # apply new migrations to the linked Supabase project
-npx supabase migration new <name>
+docker compose --env-file .env.selfhost up -d   # PostgreSQL, Redis, object storage, Mailpit (see docs/SELF_HOSTING.md)
+npm run db:migrate             # apply new SQL migrations from db/migrations
 ```
 
 Copy `.env.example` to `.env.local`. Never commit `.env*` (only `.env.example`). Never paste secrets into chats, tickets, code or commits.
@@ -29,11 +29,12 @@ src/
   components/     Presentational, feature-agnostic UI (ui, layout, navigation, shared).
   features/       One folder per product feature (notes, tasks, ...): its components, hooks, client logic.
   server/         Server-only code: services (business rules), repositories (DB access), providers (AI), jobs.
-  lib/            Small shared libraries: supabase clients, composio vocabulary, ai provider list, auth, utils.
+  lib/            Small shared libraries: composio vocabulary, ai provider list, auth, utils.
   hooks/          Hooks used by 2+ features.
   types/          Types used by 2+ places.
   config/         Typed env, feature flags, constants.
-supabase/migrations/   SQL migrations (append-only).
+db/migrations/         SQL migrations (append-only).
+docker-compose.yml     the whole local/production stack.
 docs/                  Architecture, phases, workflow, data model, security, Jira guide.
 ```
 
@@ -41,12 +42,12 @@ docs/                  Architecture, phases, workflow, data model, security, Jir
 
 ## 4. Architecture rules (non-negotiable)
 
-1. **Layering and direction of dependencies:** `UI component → feature hook → API v1 route / server action → service → repository → Supabase`. A layer may import only from layers to its right. Components never import from `src/server`.
-2. **Server-only secrets stay on the server.** `SUPABASE_SERVICE_ROLE_KEY`, `GROQ_API_KEY`, `COMPOSIO_API_KEY`, Stripe keys: only in `src/server/**`, route handlers and server actions, via `serverEnv()` from `src/config`. Files that must never reach the browser import `"server-only"`.
+1. **Layering and direction of dependencies:** `UI component → feature hook → API v1 route / server action → service → repository → PostgreSQL`. A layer may import only from layers to its right. Components never import from `src/server`.
+2. **Server-only secrets stay on the server.** `DATABASE_URL`, `BETTER_AUTH_SECRET`, `S3_SECRET_KEY`, `GROQ_API_KEY`, `COMPOSIO_API_KEY`, Stripe keys: only in `src/server/**`, route handlers and server actions, via `serverEnv()` from `src/config`. Files that must never reach the browser import `"server-only"`.
 3. **The browser never calls Composio or an AI provider with a secret.** It calls our `/api/v1/*` routes. (Exception: Puter.js runs in the browser by design, using the _user's_ Puter account.)
 4. **Every table has Row-Level Security.** Data is scoped to a workspace (`workspace_id`) or, for private data like journal entries, to the author. Never rely on UI checks for authorisation. Service-role queries must re-check permissions in code first.
 5. **Business rules live in services**, not in components or route handlers. A service exposes plain async functions with typed inputs/outputs so UI, API routes, background jobs and AI tools can all reuse them.
-6. **Repositories contain only data access** (Supabase queries), no rules. One repository per aggregate.
+6. **Repositories contain only data access** (SQL queries), no rules. One repository per aggregate.
 7. **External content is untrusted** (emails, web pages, transcripts, tool output). Never let it act as an instruction to the AI or run without user confirmation when it can write (send mail, create events, delete).
 8. **Don't add dependencies lightly.** Prefer what is already installed; justify new packages in the PR.
 
@@ -63,7 +64,7 @@ docs/                  Architecture, phases, workflow, data model, security, Jir
 
 ## 6. Database rules
 
-- New schema = a **new** file `supabase/migrations/<timestamp>_<name>.sql`. Never edit a migration that has been applied.
+- New schema = a **new** file `db/migrations/<timestamp>_<name>.sql`. Never edit a migration that has been applied.
 - Every new table: `enable row level security`, explicit policies, indexes for the columns you filter by, `on delete cascade` to `auth.users`/`workspaces` where appropriate.
 - Storage buckets are private unless there is a strong reason; paths start with the owner's id/workspace id and are protected by storage policies.
 - Update `docs/DATA_MODEL.md` in the same PR.
@@ -86,7 +87,7 @@ Acceptance criteria met · typecheck and build pass · works on mobile · access
 
 ## 9. Things AI agents get wrong here — avoid them
 
-- Calling Supabase with the **service role from a client component**, or importing `src/server/**` into a component.
+- Running queries as the database owner (`adminDb()`, `withOwner()`) from anything a normal user can trigger, or importing `src/server/**` into a component.
 - Editing an already-applied migration instead of adding a new one.
 - Writing business logic in a route handler or component "just this once".
 - Adding a table without RLS, or a policy that only checks `auth.uid() is not null`.
@@ -105,8 +106,19 @@ Acceptance criteria met · typecheck and build pass · works on mobile · access
 | `docs/TEAM_AND_WORKFLOW.md` | Branching, PRs, reviews, environments, releases                                                                                                                                 |
 | `docs/CURRENT_STATE.md`     | You want to know what exists today and where it lives                                                                                                                           |
 | `docs/DATA_MODEL.md`        | You touch the database                                                                                                                                                          |
+| `docs/SELF_HOSTING.md`      | You run, deploy or back up the stack (Docker, env, storage, auth, Supabase data import)                                                                                         |
 | `docs/SECURITY.md`          | You touch auth, uploads, sharing, admin, AI tools or secrets                                                                                                                    |
 | `docs/CONVENTIONS.md`       | Naming, UI patterns, error handling, testing                                                                                                                                    |
 | `docs/AI_WORKFLOW.md`       | **You are an AI agent taking a Jira task** — the exact loop, the Jira helper (`node scripts/jira/jira.mjs`) and what you must not do (never merge; never handle tokens in chat) |
 | `docs/JIRA_GUIDE.md`        | You write or refine tasks                                                                                                                                                       |
 | `docs/JIRA_BACKLOG.md`      | You want the full task list offline                                                                                                                                             |
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

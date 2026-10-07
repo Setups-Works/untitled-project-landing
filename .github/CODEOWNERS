@@ -6,13 +6,12 @@
 *                          @nitheeshdr
 
 # Track A — Platform, Admin & Infrastructure
-# /supabase/               @dev-a
+# /db/                     @dev-a
 # /src/app/api/            @dev-a
 # /src/app/admin/          @dev-a
 # /src/server/repositories/ @dev-a
 # /src/server/jobs/        @dev-a
 # /src/lib/auth/           @dev-a
-# /src/lib/supabase/       @dev-a
 # /.github/                @dev-a
 
 # Track B — Workspace features
@@ -37,6 +36,6 @@
 # /src/lib/composio/       @dev-c
 
 # Migrations always need the tech lead
-/supabase/migrations/      @nitheeshdr
+/db/migrations/            @nitheeshdr
 /docs/SECURITY.md          @nitheeshdr
 /AGENTS.md                 @nitheeshdr

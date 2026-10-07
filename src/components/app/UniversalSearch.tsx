@@ -21,7 +21,7 @@ import {
   faSpinner,
   faSquareCheck,
 } from "@fortawesome/free-solid-svg-icons";
-import { supabaseBrowser } from "../../lib/supabase/client";
+import { api } from "../../lib/api/client";
 import { displayTitle } from "../../lib/notes";
 import { dayLabel, isoDate } from "../../lib/dates";
 import Modal from "../ui/Modal";
@@ -61,7 +61,7 @@ function Marked({ text, q }: { text: string; q: string }): ReactNode {
 }
 
 export default function UniversalSearch({ admin }: { admin: boolean }) {
-  const sb = useMemo(supabaseBrowser, []);
+  const sb = useMemo(api, []);
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
@@ -162,7 +162,7 @@ export default function UniversalSearch({ admin }: { admin: boolean }) {
           .limit(8),
         sb
           .from("notes")
-          .select("id,title,body")
+          .select<{ id: string; title: string; body: string }>("id,title,body")
           .or(`title.ilike."${p}",body.ilike."${p}"`)
           .order("updated_at", { ascending: false })
           .limit(8),

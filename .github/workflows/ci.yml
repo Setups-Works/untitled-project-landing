@@ -33,12 +33,10 @@ jobs:
         env:
           # The app must build (and show its setup notice) without any secrets.
           NEXT_TELEMETRY_DISABLED: "1"
-          NEXT_PUBLIC_SUPABASE_URL: ""
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ""
 
       - name: Guard against committed secrets
         run: |
-          if git ls-files | grep -E '(^|/)\.env($|\.)' | grep -v '^\.env\.example$'; then
+          if git ls-files | grep -E '(^|/)\.env($|\.)' | grep -vE '^\.env(\.[a-z]+)?\.example$'; then
             echo "A .env file is tracked by git. Remove it and rotate any keys it contained."; exit 1
           fi
           if git grep -nE 'eyJhbGciOi[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}' -- . ':!package-lock.json' ; then

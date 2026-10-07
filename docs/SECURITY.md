@@ -11,21 +11,21 @@ Rules for everyone (and every AI agent). The checklist at the bottom is finished
 
 ## Secrets inventory (names only)
 
-| Variable                                                    | Where used                                             | Exposure                                                                        |
-| ----------------------------------------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------- |
-| `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` | browser + server                                       | public by design (RLS protects data); validated in `src/lib/supabase/config.ts` |
-| `SUPABASE_SERVICE_ROLE_KEY`                                 | admin panel, share page, account deletion, server jobs | **server only**                                                                 |
-| `ADMIN_EMAILS`                                              | bootstrap admins                                       | server only                                                                     |
-| `GROQ_API_KEY`, `COMPOSIO_API_KEY`                          | AI / integrations services                             | server only (Phase 3–4)                                                         |
-| `CRON_SECRET`                                               | protects `/api/v1/jobs/*`                              | server only                                                                     |
-| `SENTRY_*`, `NEXT_PUBLIC_POSTHOG_KEY`                       | observability                                          | DSN/keys are public identifiers; auth tokens server only                        |
-| Stripe keys                                                 | billing                                                | server only (Phase 6)                                                           |
+| Variable                                          | Where used                           | Exposure                                                 |
+| ------------------------------------------------- | ------------------------------------ | -------------------------------------------------------- |
+| `DATABASE_URL`, `REDIS_URL`                       | server only                          | **server only**                                          |
+| `BETTER_AUTH_SECRET`, `S3_SECRET_KEY`, `SMTP_URL` | sessions/tokens, file storage, email | **server only**                                          |
+| `ADMIN_EMAILS`                                    | bootstrap admins                     | server only                                              |
+| `GROQ_API_KEY`, `COMPOSIO_API_KEY`                | AI / integrations services           | server only (Phase 3–4)                                  |
+| `CRON_SECRET`                                     | protects `/api/v1/jobs/*`            | server only                                              |
+| `SENTRY_*`, `NEXT_PUBLIC_POSTHOG_KEY`             | observability                        | DSN/keys are public identifiers; auth tokens server only |
+| Stripe keys                                       | billing                              | server only (Phase 6)                                    |
 
-Rotation: Supabase dashboard → Settings → API / Database; Vercel → Environment Variables; then redeploy **without build cache** (NEXT_PUBLIC values are baked at build). A pasted value containing characters like “…” or spaces breaks every request — the app now detects this and says which variable is wrong.
+Rotation: change the value in `.env.selfhost` / your secret manager and recreate the containers (rotating `BETTER_AUTH_SECRET` signs everyone out); hosting dashboard → Environment Variables; Vercel → Environment Variables; then redeploy **without build cache** (NEXT_PUBLIC values are baked at build). A pasted value containing characters like “…” or spaces breaks every request — the app now detects this and says which variable is wrong.
 
 ## Auth and sessions
 
-- Supabase Auth with email+password and Google; sessions refreshed by `src/proxy.ts`.
+- Better Auth with email+password and Google; sessions stored in PostgreSQL (cookie `better-auth.session_token`); `src/proxy.ts` only redirects, every page re-verifies the session.
 - Redirect targets (`?next=`) are validated by `safeNext` (same-site relative paths only).
 - Admin = `app_metadata.role = 'admin'` or an email in `ADMIN_EMAILS`. Every `/admin/*` page and server action re-checks on the server (`requireAdmin` / `assertAdmin`). Admins can't demote/ban/delete themselves or `ADMIN_EMAILS` accounts.
 - Account deletion and "reset workspace" remove rows **and** storage files.
@@ -77,4 +77,4 @@ Found a vulnerability or leaked secret? Tell the tech lead immediately, rotate f
 
 ### Service-role usage (keep this list current)
 
-`src/lib/supabase/admin.ts` (admin panel, share page, announcements, audit) · `src/app/admin/actions.ts` · `src/app/dashboard/settings/actions.ts` (delete account) · `src/app/share/[token]/page.tsx`.
+`src/server/session.ts` `adminDb()` / `withOwner()` (admin panel, share page, announcements, audit) · `src/app/admin/actions.ts` · `src/app/dashboard/settings/actions.ts` (delete account) · `src/app/share/[token]/page.tsx`.

@@ -1,4 +1,4 @@
-import { listAllUsers, serviceConfigured, supabaseAdmin } from "../../../lib/supabase/admin";
+import { contentCounts, listAllUsers, serverConfigured } from "../../../server/session";
 import SetupNotice from "../../../components/admin/SetupNotice";
 
 const TABLES = [
@@ -10,18 +10,9 @@ const TABLES = [
 ] as const;
 
 export default async function Page() {
-  if (!serviceConfigured) return <SetupNotice />;
-  const sb = supabaseAdmin();
-  const [users, ...rows] = await Promise.all([listAllUsers(), ...TABLES.map(([t]) => sb.from(t).select("user_id").limit(50000))]);
-  // Counts per user per table. Only ids are read — never anyone's content.
-  const counts = new Map<string, number[]>();
-  rows.forEach((r, ti) =>
-    (r.data ?? []).forEach((row) => {
-      const c = counts.get(row.user_id as string) ?? TABLES.map(() => 0);
-      c[ti]++;
-      counts.set(row.user_id as string, c);
-    }),
-  );
+  if (!serverConfigured()) return <SetupNotice />;
+  // Counts per user per table, computed by the database. Only counts are read — never anyone's content.
+  const [users, counts] = await Promise.all([listAllUsers(), contentCounts(TABLES.map(([t]) => t))]);
   const table = users
     .map((u) => {
       const c = counts.get(u.id) ?? TABLES.map(() => 0);
@@ -69,7 +60,7 @@ export default async function Page() {
             {table.map(({ u, c, total }) => (
               <tr key={u.id}>
                 <td>
-                  <b>{(u.user_metadata?.full_name as string) || "—"}</b>
+                  <b>{u.name || "—"}</b>
                   <br />
                   <span className="meta">{u.email}</span>
                 </td>

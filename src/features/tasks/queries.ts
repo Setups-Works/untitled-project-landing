@@ -1,7 +1,7 @@
 "use client";
 import { useMutation, useQuery, useQueryClient, type QueryKey } from "@tanstack/react-query";
 import { useMemo } from "react";
-import { supabaseBrowser } from "../../lib/supabase/client";
+import { api } from "../../lib/api/client";
 import { qk } from "../../lib/query/keys";
 import { nextDue, type Draft } from "../../lib/tasks";
 import type { Task, TaskList } from "../../lib/workspace";
@@ -11,10 +11,10 @@ import type { Task, TaskList } from "../../lib/workspace";
  *   - reads are `useQuery` (cached, deduplicated, refetched on focus/reconnect, refreshed by realtime)
  *   - writes are `useMutation` with an optimistic cache update, rollback on error, and invalidation when settled
  *   - every cached list of tasks (To-do page AND Home card) is updated at once, because they share the ["tasks"] key prefix
- * Components never call Supabase for tasks directly; they use these hooks.
+ * Components never query tasks directly; they use these hooks.
  *
- * Today the queries talk to Supabase straight from the browser (RLS protects them). When the API v1 layer lands
- * (UNT-56/57/61) only the `queryFn` / `mutationFn` bodies change — components and cache logic stay the same.
+ * Today the queries go through the generic `/api/v1/db` endpoint (PostgreSQL row-level security protects them). When dedicated
+ * task endpoints (UNT-56/57/61) land, only the `queryFn` / `mutationFn` bodies change — components and cache logic stay the same.
  */
 
 const TASK_COLS = "id,title,description,priority,list_id,due_date,done,done_at,cancelled,archived,recurrence,created_at";
@@ -23,7 +23,7 @@ const EMPTY_TASKS: Task[] = [];
 const EMPTY_LISTS: TaskList[] = [];
 
 export function useTasks() {
-  const sb = useMemo(supabaseBrowser, []);
+  const sb = useMemo(api, []);
   const q = useQuery({
     queryKey: qk.tasks.list,
     queryFn: async () => {
@@ -36,7 +36,7 @@ export function useTasks() {
 }
 
 export function useTaskLists() {
-  const sb = useMemo(supabaseBrowser, []);
+  const sb = useMemo(api, []);
   const q = useQuery({
     queryKey: qk.taskLists,
     queryFn: async () => {
@@ -52,7 +52,7 @@ type Snapshot = [QueryKey, Task[] | undefined][];
 
 /** All task mutations. `onError` receives a friendly message to show the user. Each action resolves to its result, or `undefined` if it failed. */
 export function useTaskActions(onError: (message: string) => void, today: string) {
-  const sb = useMemo(supabaseBrowser, []);
+  const sb = useMemo(api, []);
   const qc = useQueryClient();
 
   // Apply a change to every cached task list (To-do page, Home card…) at once.

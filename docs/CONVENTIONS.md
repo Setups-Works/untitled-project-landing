@@ -44,17 +44,17 @@ Small rules that keep a three-developer codebase readable. When in doubt, match 
 
 ## Data fetching on the client (until services land)
 
-- Use the browser Supabase client from `src/lib/supabase/client.ts`; select only needed columns; add `.limit()`.
+- Use the browser data client `api()` from `src/lib/api/client.ts` (`api().from("tasks").select(...)` — same chaining as before; it posts to `/api/v1/db`); select only needed columns; add `.limit()`.
 - Use **TanStack Query** (`useQuery`/`useMutation`); never hand-roll load/reload `useEffect` fetching. Keys live in `src/lib/query/keys.ts` (`qk`).
 - Optimistic updates: `cancelQueries` → snapshot with `getQueriesData` → `setQueriesData` → roll back in `onError` → `invalidateQueries` in `onSettled`. Reference: `src/features/tasks/queries.ts`.
-- Realtime: call `useRealtimeInvalidate(table, [keys])` (`src/hooks`); it debounces invalidation when rows change. The table must be in the `supabase_realtime` publication (see migration `20261007080000_realtime.sql`).
+- Realtime: call `useRealtimeInvalidate(table, [keys])` (`src/hooks`); it debounces invalidation when rows change. The table needs the notify trigger from migration `20261007080000_realtime.sql`.
 - Overlays/menus/tabs use the Radix wrappers in `src/components/ui` — don't build custom ones.
 - Don't put business rules in components — if you catch yourself writing one, it belongs in a service (even if the service is a TODO — leave a comment referencing the Jira task).
 
 ## Testing (UNT-33)
 
 - Pure logic (`dates`, `tasks` recurrence/grouping, `insights`, `prefs`, sanitisers): Vitest, table-driven.
-- Services: test against a local/dev Supabase with a throwaway user.
+- Services: test against the Docker Postgres with a throwaway user.
 - E2E: Playwright for sign-up → note → task → sign-out; add one test per major feature.
 - A bug fix includes a test that fails without the fix when practical.
 

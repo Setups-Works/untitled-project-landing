@@ -3,11 +3,9 @@ import type { ReactNode } from "react";
 import { FontAwesomeIcon as FA } from "@fortawesome/react-fontawesome";
 import { faTriangleExclamation } from "@fortawesome/free-solid-svg-icons";
 import { redirect } from "next/navigation";
-import { supabaseConfigured } from "../../lib/supabase/config";
-import { currentUser, isAdmin } from "../../lib/supabase/admin";
+import { accountInfo, currentUser, isAdmin, serverConfigured, userDb } from "../../server/session";
 import { CATEGORIES } from "../../lib/notes";
 import { cleanPrefs } from "../../lib/prefs";
-import { supabaseServer } from "../../lib/supabase/server";
 import AppNav from "../../components/app/AppNav";
 import QueryProvider from "../../components/providers/QueryProvider";
 import AnnouncementBanner from "../../components/app/AnnouncementBanner";
@@ -18,7 +16,7 @@ export const metadata: Metadata = { title: "Dashboard — untitled project", rob
 export const dynamic = "force-dynamic";
 
 export default async function Layout({ children }: { children: ReactNode }) {
-  if (!supabaseConfigured)
+  if (!serverConfigured())
     return (
       <main className="section">
         <div className="container" style={{ maxWidth: 640 }}>
@@ -26,7 +24,8 @@ export default async function Layout({ children }: { children: ReactNode }) {
             <p className="au-note">
               <FA icon={faTriangleExclamation} />{" "}
               <span>
-                Supabase isn’t connected yet. Add your project keys to <code>.env.local</code> and restart.
+                The server isn’t connected yet. Run <code>docker compose up -d</code>, copy <code>.env.example</code> to{" "}
+                <code>.env.local</code> and restart.
               </span>
             </p>
           </div>
@@ -35,41 +34,33 @@ export default async function Layout({ children }: { children: ReactNode }) {
     );
   const user = await currentUser();
   if (!user) redirect("/login?next=/dashboard");
-  const name = (user.user_metadata?.full_name as string | undefined) || (user.email ?? "").split("@")[0];
-  const providers = (user.app_metadata?.providers as string[] | undefined) ?? [String(user.app_metadata?.provider || "email")];
-  // Active admin announcements (readable by any signed-in user via RLS). A failure here must never break the app.
-  let announcements: { id: string; message: string; tone: string }[] = [];
-  try {
-    const { data } = await (
-      await supabaseServer()
-    )
-      .from("announcements")
-      .select("id,message,tone")
-      .eq("active", true)
-      .order("created_at", { ascending: false })
-      .limit(3);
-    announcements = data ?? [];
-  } catch {
-    /* ignore */
-  }
-  const prefs = cleanPrefs(user.user_metadata?.preferences, CATEGORIES);
-  const onboarding = cleanOnboarding(user.user_metadata?.onboarding);
+  const name = user.name || user.email.split("@")[0];
+  const db = userDb(user.id);
+  // Settings, onboarding progress and announcements are read with the user's own permissions. A failure must never break the app.
+  const [profile, ann, info] = await Promise.all([
+    db.from("profiles").select("preferences,onboarding").maybeSingle(),
+    db.from("announcements").select("id,message,tone").eq("active", true).order("created_at", { ascending: false }).limit(3),
+    accountInfo(user.id),
+  ]);
+  const announcements = (ann.data ?? []) as { id: string; message: string; tone: string }[];
+  const prefs = cleanPrefs(profile.data?.preferences, CATEGORIES);
+  const onboarding = cleanOnboarding(profile.data?.onboarding);
   return (
     <QueryProvider>
       <div className="ap">
         <AppNav
           name={name}
-          email={user.email ?? ""}
+          email={user.email}
           admin={isAdmin(user)}
           prefs={prefs}
           account={{
-            name: (user.user_metadata?.full_name as string | undefined) ?? "",
-            email: user.email ?? "",
-            hasPassword: providers.includes("email"),
-            providers,
-            createdAt: user.created_at,
-            avatarUrl: (user.user_metadata?.avatar_url as string | null | undefined) ?? null,
-            lastSignIn: user.last_sign_in_at ?? null,
+            name: user.name,
+            email: user.email,
+            hasPassword: info.providers.includes("email"),
+            providers: info.providers,
+            createdAt: user.createdAt,
+            avatarUrl: user.image,
+            lastSignIn: info.lastSignIn,
           }}
         />
         <AnnouncementBanner items={announcements} />

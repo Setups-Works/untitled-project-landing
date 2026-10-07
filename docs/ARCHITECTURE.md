@@ -24,7 +24,7 @@ APPLICATION SERVICES (src/server/services)
   Auth · Workspace · Notes · Tasks · Calendar · Email · Journal · Meetings ·
   Automation · Search · Notifications · Integrations · AI Orchestrator
   │
-  ├──────────────► SUPABASE         PostgreSQL (RLS, functions, triggers) · Auth · Storage · Realtime
+  ├──────────────► SELF-HOSTED      PostgreSQL (RLS, triggers) · Better Auth · S3 object storage · Redis · SSE realtime (all Docker)
   ├──────────────► COMPOSIO         OAuth · tools · triggers · connections → Gmail, Google Calendar, Slack, GitHub
   └──────────────► AI PROVIDER ROUTER   provider abstraction → Groq (server) · Puter.js (browser)
 
@@ -34,33 +34,33 @@ OBSERVABILITY: Sentry (errors) · PostHog (product analytics) · audit logs · A
 ## 2. Layers and the one rule that matters
 
 ```
-UI component  →  feature hook  →  API v1 route / server action  →  service  →  repository  →  Supabase
+UI component  →  feature hook  →  API v1 route / server action  →  service  →  repository  →  PostgreSQL
 (src/components, (src/features)    (src/app/api/v1)                (src/server/   (src/server/
  src/features)                                                      services)      repositories)
 ```
 
 A layer may only import from the layer to its right. Concretely:
 
-| Layer                          | May import                                                | Must not                                        |
-| ------------------------------ | --------------------------------------------------------- | ----------------------------------------------- |
-| Components / features (client) | hooks, `src/lib`, `src/types`, `src/config` (public part) | `src/server/**`, secrets, Supabase service role |
-| API routes / server actions    | services, `src/lib`, zod schemas                          | repositories directly, UI                       |
-| Services                       | repositories, providers, other services, `src/config`     | `next/*` UI APIs, React                         |
-| Repositories                   | Supabase client, `src/types`                              | business rules, other services                  |
-| Providers (AI)                 | `src/config`, SDK                                         | feature services                                |
+| Layer                          | May import                                                | Must not                                          |
+| ------------------------------ | --------------------------------------------------------- | ------------------------------------------------- |
+| Components / features (client) | hooks, `src/lib`, `src/types`, `src/config` (public part) | `src/server/**`, secrets, the database owner role |
+| API routes / server actions    | services, `src/lib`, zod schemas                          | repositories directly, UI                         |
+| Services                       | repositories, providers, other services, `src/config`     | `next/*` UI APIs, React                           |
+| Repositories                   | `src/server/db`, `src/types`                              | business rules, other services                    |
+| Providers (AI)                 | `src/config`, SDK                                         | feature services                                  |
 
 Why: services are reused by the UI (through routes), background jobs, automations and **AI tools**. If rules live in a component, the AI can't use them safely.
 
 ## 3. Runtime boundaries
 
-| Where it runs                                       | What                                                                    | Secrets?                   |
-| --------------------------------------------------- | ----------------------------------------------------------------------- | -------------------------- |
-| Browser                                             | React UI, Supabase _anon_ client (RLS-protected reads/writes), Puter.js | None. Only `NEXT_PUBLIC_*` |
-| Vercel server (route handlers, server actions, RSC) | Services, repositories, Groq calls, Composio calls, Stripe              | Yes — via `serverEnv()`    |
-| Vercel Cron → `/api/v1/jobs/*`                      | Background jobs (sync, transcription, automations, digests)             | Yes, plus `CRON_SECRET`    |
-| Supabase                                            | Postgres (RLS, SQL functions, triggers), Auth, Storage, Realtime        | Managed                    |
+| Where it runs                                       | What                                                                     | Secrets?                   |
+| --------------------------------------------------- | ------------------------------------------------------------------------ | -------------------------- |
+| Browser                                             | React UI, the `/api/v1/db` client (RLS-protected reads/writes), Puter.js | None. Only `NEXT_PUBLIC_*` |
+| Vercel server (route handlers, server actions, RSC) | Services, repositories, Groq calls, Composio calls, Stripe               | Yes — via `serverEnv()`    |
+| Vercel Cron → `/api/v1/jobs/*`                      | Background jobs (sync, transcription, automations, digests)              | Yes, plus `CRON_SECRET`    |
+| Supabase                                            | Postgres (RLS, triggers), Better Auth, S3 storage, Redis, realtime       | Docker                     |
 
-**Direct browser → Supabase** is allowed for simple, RLS-covered CRUD (current notes/tasks/journal/chat code does this). It is **not** allowed for anything with business rules, side effects, third-party calls, or multi-table atomicity — those go through a service. Phase 1 migrates notes as the reference and the rest follow.
+**Browser → `/api/v1/db`** (validated, allow-listed, run as the user so RLS applies) is allowed for simple, RLS-covered CRUD (current notes/tasks/journal/chat code does this). It is **not** allowed for anything with business rules, side effects, third-party calls, or multi-table atomicity — those go through a service. Phase 1 migrates notes as the reference and the rest follow.
 
 ## 4. Multi-tenancy (Phase 1)
 
@@ -94,7 +94,7 @@ Browser → our `/api/v1/integrations/*` → `src/server/services/composio` → 
 
 ## 8. Realtime, search, jobs
 
-- **Realtime:** Supabase Realtime filtered by workspace for notes/tasks/chat.
+- **Realtime:** Postgres `pg_notify` triggers → Server-Sent Events (`/api/v1/realtime`) → TanStack Query invalidation.
 - **Search:** Postgres full-text (tsvector + GIN) first; pgvector hybrid later.
 - **Jobs:** `jobs` table + Vercel Cron; locking prevents double runs; retries with backoff.
 

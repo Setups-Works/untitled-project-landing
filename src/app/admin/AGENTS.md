@@ -17,7 +17,7 @@ Add a section: create `app/admin/<section>/page.tsx` and one line in `components
 ## Rules (security-critical)
 
 - `layout.tsx` calls `requireAdmin()` for every page; every server action in `actions.ts` calls `assertAdmin()` first. **Never skip either.**
-- Admin code uses the service role (`supabaseAdmin()` from `src/lib/supabase/admin.ts`) — keep that usage inside this folder and `src/server`.
+- Admin code uses owner-level database access (`adminDb()` from `src/server/session.ts`, runs as the database owner) — keep that usage inside this folder and `src/server`.
 - **Admins must not see user content** (notes, journal, chat text). Show counts and metadata only.
 - Every state-changing action writes to `admin_audit` via `audit()`.
 - Protect against self-harm: no demote/ban/delete of yourself or `ADMIN_EMAILS` accounts (see `guard()`).

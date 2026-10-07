@@ -1,10 +1,10 @@
-import { currentUser } from "../../lib/supabase/admin";
+import { currentUser } from "../../server/session";
 import ClientOnly from "../../components/app/ClientOnly";
 import HomeView from "../../components/app/HomeView";
 
 export default async function Page() {
   const user = await currentUser();
-  const name = (user?.user_metadata?.full_name as string | undefined) || (user?.email ?? "there").split("@")[0];
+  const name = user?.name || (user?.email ?? "there").split("@")[0];
   return (
     <ClientOnly>
       <HomeView name={name} />

@@ -1,0 +1,112 @@
+# Self-hosted stack: everything the app needs runs in Docker. No Supabase.
+#
+#   cp .env.selfhost.example .env.selfhost       # then change the passwords
+#   docker compose --env-file .env.selfhost up -d                 # data services only; run the app with `npm run dev`
+#   docker compose --env-file .env.selfhost --profile app up -d --build   # data services + the Next.js app in Docker
+#
+# Data services bind to 127.0.0.1 only. Never expose them publicly. See docs/SELF_HOSTING.md.
+name: untitled
+
+x-app-env: &app-env
+  DATABASE_URL: postgres://${POSTGRES_USER:-app}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-untitled}
+  REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
+  S3_ENDPOINT: http://storage:8333
+  S3_ACCESS_KEY: ${S3_ACCESS_KEY:-untitled}
+  S3_SECRET_KEY: ${S3_SECRET_KEY}
+  SMTP_URL: ${SMTP_URL:-smtp://mailpit:1025}
+  MAIL_FROM: ${MAIL_FROM:-}
+  BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+  BETTER_AUTH_URL: ${BETTER_AUTH_URL:-http://localhost:3000}
+  NEXT_PUBLIC_SITE_URL: ${BETTER_AUTH_URL:-http://localhost:3000}
+  GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+  GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+  ADMIN_EMAILS: ${ADMIN_EMAILS:-}
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env.selfhost}
+      POSTGRES_DB: ${POSTGRES_DB:-untitled}
+    ports: ["127.0.0.1:5432:5432"]
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/postgres/init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-app} -d ${POSTGRES_DB:-untitled}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command: ["redis-server", "--requirepass", "${REDIS_PASSWORD:?set REDIS_PASSWORD in .env.selfhost}", "--appendonly", "yes"]
+    ports: ["127.0.0.1:6379:6379"]
+    volumes: [redisdata:/data]
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a $$REDIS_PASSWORD ping | grep PONG"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+
+  # S3-compatible object storage (SeaweedFS). MinIO stopped publishing Docker images, so we use SeaweedFS; the app only speaks
+  # the S3 API, so any S3 store (MinIO, Garage, RustFS, AWS S3) can replace it by changing S3_* variables.
+  storage:
+    image: chrislusf/seaweedfs:latest
+    restart: unless-stopped
+    environment:
+      S3_ACCESS_KEY: ${S3_ACCESS_KEY:-untitled}
+      S3_SECRET_KEY: ${S3_SECRET_KEY:?set S3_SECRET_KEY in .env.selfhost}
+    entrypoint:
+      - /bin/sh
+      - -c
+      - |
+        cat > /tmp/s3.json <<EOF
+        {"identities":[{"name":"app","credentials":[{"accessKey":"$$S3_ACCESS_KEY","secretKey":"$$S3_SECRET_KEY"}],"actions":["Admin","Read","Write","List","Tagging"]}]}
+        EOF
+        exec weed server -dir=/data -master.volumeSizeLimitMB=1024 -s3 -s3.port=8333 -s3.config=/tmp/s3.json -ip.bind=0.0.0.0
+    ports: ["127.0.0.1:8333:8333"]
+    volumes: [storagedata:/data]
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:9333/cluster/status || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 30
+
+  # Catches outgoing email (verification, password reset) so nothing real is sent in dev. UI: http://localhost:8025
+  mailpit:
+    image: axllent/mailpit:latest
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:1025:1025"
+      - "127.0.0.1:8025:8025"
+
+  # Applies db/migrations, then exits. The app container waits for it.
+  migrate:
+    profiles: ["app"]
+    build: { context: ., target: tools }
+    command: ["node", "scripts/db/migrate.mjs"]
+    environment: *app-env
+    depends_on:
+      postgres: { condition: service_healthy }
+
+  web:
+    profiles: ["app"]
+    build: { context: ., target: runner }
+    restart: unless-stopped
+    environment: *app-env
+    ports: ["127.0.0.1:3000:3000"]
+    depends_on:
+      migrate: { condition: service_completed_successfully }
+      redis: { condition: service_healthy }
+      storage: { condition: service_healthy }
+
+volumes:
+  pgdata:
+  redisdata:
+  storagedata:

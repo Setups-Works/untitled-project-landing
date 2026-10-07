@@ -2,7 +2,7 @@
 
 **Does:** universal search (Ctrl/⌘+K) over pages, actions, tasks, notes, journal, chats; later a `/search` page. **Track B. Phase 2.**
 
-**Today (legacy):** `components/app/UniversalSearch.tsx` — queries Supabase with `ilike` from the browser (debounced, stale-result guard). `openSearch()` opens it from anywhere.
+**Today (legacy):** `components/app/UniversalSearch.tsx` — queries `/api/v1/db` with `ilike` from the browser (debounced, stale-result guard). `openSearch()` opens it from anywhere.
 
 **Target:** `GET /api/v1/search` backed by `search_workspace()` (tsvector + GIN, ranking, highlighted snippets), later hybrid with pgvector (UNT-86).
 

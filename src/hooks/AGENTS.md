@@ -2,7 +2,7 @@
 
 **Purpose:** React hooks used by **two or more** features: `useAutosave`, `useRecorder` (voice), `useAuthState`, `useRealtimeTable` (UNT-68), `useUpload` (UNT-67), `useMediaQuery`. Feature-specific hooks live in `src/features/<name>/hooks`.
 
-**Done:** `useRealtimeInvalidate(table, queryKeys)` — subscribes to Supabase Realtime changes and invalidates TanStack Query keys (debounced). Needs the table in the `supabase_realtime` publication.
+**Done:** `useRealtimeInvalidate(table, queryKeys)` — listens to one shared Server-Sent Events stream (`/api/v1/realtime`) and invalidates TanStack Query keys (debounced). The table needs the notify trigger (see the realtime migration).
 
 **Today (legacy):** `components/app/useAutosave.ts`, `components/app/useRecorder.ts`, `components/auth/useAuthState.ts` — move here when touched.
 

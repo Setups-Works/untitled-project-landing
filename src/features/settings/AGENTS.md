@@ -4,7 +4,7 @@
 
 **Today (legacy):** `components/app/{SettingsView,SettingsModal,PrefsSync}.tsx`, `lib/prefs.ts`, `app/dashboard/settings/actions.ts`.
 
-**Backed by:** Supabase auth metadata (`user_metadata.preferences`, `avatar_url`), bucket `avatars`, `profiles`.
+**Backed by:** Better Auth (`name`, `image`, email, password), `profiles.preferences`, bucket `avatars`.
 
 **Rules**
 

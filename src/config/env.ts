@@ -5,7 +5,6 @@
  * - `serverEnv()` — secrets. Only call it from server code (src/server, route handlers, server actions).
  *
  * Missing optional integrations return `undefined`; use `requireEnv` when a feature cannot work without a value.
- * Supabase URL/key are validated separately in src/lib/supabase/config.ts (they are used before this module on the edge).
  */
 
 export const publicEnv = {
@@ -38,7 +37,17 @@ const optional = (name: string) => process.env[name]?.trim() || undefined;
 export function serverEnv() {
   if (typeof window !== "undefined") throw new Error("serverEnv() was called in the browser. Secrets must stay on the server.");
   return {
-    supabaseServiceRoleKey: optional("SUPABASE_SERVICE_ROLE_KEY"),
+    databaseUrl: optional("DATABASE_URL"),
+    redisUrl: optional("REDIS_URL"),
+    s3: {
+      endpoint: optional("S3_ENDPOINT"),
+      accessKey: optional("S3_ACCESS_KEY"),
+      secretKey: optional("S3_SECRET_KEY"),
+    },
+    smtpUrl: optional("SMTP_URL"),
+    authSecret: optional("BETTER_AUTH_SECRET"),
+    authUrl: optional("BETTER_AUTH_URL") ?? optional("NEXT_PUBLIC_SITE_URL") ?? "http://localhost:3000",
+    google: { clientId: optional("GOOGLE_CLIENT_ID"), clientSecret: optional("GOOGLE_CLIENT_SECRET") },
     adminEmails: (optional("ADMIN_EMAILS") ?? "")
       .split(",")
       .map((e) => e.trim().toLowerCase())
