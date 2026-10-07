@@ -1,0 +1,65 @@
+name: Jira sync
+
+# Keeps Jira in step with pull requests, using the key in the PR title (e.g. "UNT-61 Migrate tasks"):
+#   PR opened / ready / reopened  → issue moves to "In Review" and gets a comment with the PR link
+#   PR merged                     → issue moves to "Done"
+#   PR closed without merging     → comment only (status unchanged)
+#
+# Needs three repository secrets (Settings → Secrets and variables → Actions). Use a dedicated Jira
+# service account, not a person's token:
+#   JIRA_BASE_URL      https://setups-works.atlassian.net
+#   JIRA_USER_EMAIL    the account's Atlassian email
+#   JIRA_API_TOKEN     an API token for that account
+# Without them the workflow skips quietly (so forks and fresh clones don't fail).
+
+on:
+  pull_request:
+    types: [opened, ready_for_review, reopened, closed]
+
+permissions:
+  contents: read
+
+jobs:
+  jira:
+    name: Update Jira
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false || github.event.action == 'closed'
+    steps:
+      - name: Sync issue status
+        env:
+          # Untrusted text goes through env vars, never straight into the script.
+          TITLE: ${{ github.event.pull_request.title }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          ACTION: ${{ github.event.action }}
+          MERGED: ${{ github.event.pull_request.merged }}
+          JIRA_BASE_URL: ${{ secrets.JIRA_BASE_URL }}
+          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_API_TOKEN }}
+        run: |
+          if [ -z "$JIRA_BASE_URL" ] || [ -z "$JIRA_USER_EMAIL" ] || [ -z "$JIRA_API_TOKEN" ]; then
+            echo "::notice::Jira secrets are not set — skipping Jira sync."; exit 0
+          fi
+          KEYS=$(printf '%s' "$TITLE" | grep -oE '[A-Z]+-[0-9]+' | sort -u || true)
+          if [ -z "$KEYS" ]; then echo "::notice::No Jira key in the PR title — nothing to sync."; exit 0; fi
+
+          api() { curl -sS -u "$JIRA_USER_EMAIL:$JIRA_API_TOKEN" -H 'Accept: application/json' -H 'Content-Type: application/json' "$@"; }
+
+          comment() { # $1 key, $2 text
+            api -X POST "$JIRA_BASE_URL/rest/api/3/issue/$1/comment" \
+              -d "$(jq -n --arg t "$2" '{body:{type:"doc",version:1,content:[{type:"paragraph",content:[{type:"text",text:$t}]}]}}')" >/dev/null || echo "::warning::could not comment on $1"
+          }
+          move() { # $1 key, $2 transition name
+            ID=$(api "$JIRA_BASE_URL/rest/api/3/issue/$1/transitions" | jq -r --arg n "$2" '.transitions[]? | select(.name|ascii_downcase==($n|ascii_downcase)) | .id' | head -1)
+            if [ -z "$ID" ]; then echo "::warning::$1 cannot move to '$2' from its current status"; return; fi
+            api -X POST "$JIRA_BASE_URL/rest/api/3/issue/$1/transitions" -d "{\"transition\":{\"id\":\"$ID\"}}" >/dev/null || echo "::warning::transition failed for $1"
+          }
+
+          for K in $KEYS; do
+            case "$ACTION" in
+              opened|ready_for_review|reopened) move "$K" "In Review"; comment "$K" "Pull request ready for review: $PR_URL" ;;
+              closed)
+                if [ "$MERGED" = "true" ]; then move "$K" "Done"; comment "$K" "Merged: $PR_URL"
+                else comment "$K" "Pull request closed without merging: $PR_URL"; fi ;;
+            esac
+            echo "synced $K ($ACTION)"
+          done

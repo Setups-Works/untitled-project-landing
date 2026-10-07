@@ -107,5 +107,6 @@ Acceptance criteria met · typecheck and build pass · works on mobile · access
 | `docs/DATA_MODEL.md` | You touch the database |
 | `docs/SECURITY.md` | You touch auth, uploads, sharing, admin, AI tools or secrets |
 | `docs/CONVENTIONS.md` | Naming, UI patterns, error handling, testing |
+| `docs/AI_WORKFLOW.md` | **You are an AI agent taking a Jira task** — the exact loop, the Jira helper (`node scripts/jira/jira.mjs`) and what you must not do (never merge; never handle tokens in chat) |
 | `docs/JIRA_GUIDE.md` | You write or refine tasks |
 | `docs/JIRA_BACKLOG.md` | You want the full task list offline |

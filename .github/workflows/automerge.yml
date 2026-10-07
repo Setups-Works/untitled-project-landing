@@ -1,0 +1,33 @@
+name: Auto-merge
+
+# Label a PR `automerge` and GitHub merges it (squash) the moment every branch-protection rule is satisfied:
+# required CI checks are green AND the required human approval is in. This workflow never bypasses review —
+# it only switches on GitHub's built-in auto-merge, which waits for the rules.
+# Remove the label (or push a draft) to cancel.
+
+on:
+  pull_request:
+    types: [labeled, unlabeled, reopened, ready_for_review, synchronize]
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  automerge:
+    name: Enable or cancel auto-merge
+    runs-on: ubuntu-latest
+    steps:
+      - name: Enable auto-merge
+        if: contains(github.event.pull_request.labels.*.name, 'automerge') && github.event.pull_request.draft == false
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        run: gh pr merge --auto --squash "$PR_URL" || echo "::warning::Could not enable auto-merge (is it allowed in repo settings, and is branch protection on?)"
+
+      - name: Cancel auto-merge
+        if: "!contains(github.event.pull_request.labels.*.name, 'automerge') || github.event.pull_request.draft == true"
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        run: gh pr merge --disable-auto "$PR_URL" || true

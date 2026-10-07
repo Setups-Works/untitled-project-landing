@@ -12,6 +12,7 @@ Start with the root **`AGENTS.md`** (rules for humans and AI agents), then:
 | [DATA_MODEL.md](DATA_MODEL.md) | Tables, RLS, storage, migrations |
 | [SECURITY.md](SECURITY.md) | Secrets, RLS, uploads, sharing, AI safety, checklist |
 | [CONVENTIONS.md](CONVENTIONS.md) | Naming, UI patterns, errors, testing |
+| [AI_WORKFLOW.md](AI_WORKFLOW.md) | How AI agents take Jira tasks to PRs safely (and what is automated) |
 | [JIRA_GUIDE.md](JIRA_GUIDE.md) | How tasks are written and worked |
 | [JIRA_BACKLOG.md](JIRA_BACKLOG.md) | The whole plan, offline |
 
