@@ -1,9 +1,10 @@
 "use client";
 import { useRef, useState } from "react";
 import { FontAwesomeIcon as FA } from "@fortawesome/react-fontawesome";
-import { faArrowUp, faChevronDown, faMicrophone, faPaperclip, faStop, faXmark } from "@fortawesome/free-solid-svg-icons";
+import { faArrowUp, faChevronDown, faMicrophone, faPaperclip, faStop } from "@fortawesome/free-solid-svg-icons";
 import { PROVIDERS } from "../../../lib/ai";
 import Menu, { MenuLabel, MenuRadioGroup, MenuRadioItem } from "../../ui/Menu";
+import FilePreviewList from "../../ui/FilePreviewList";
 import { useRecorder } from "../useRecorder";
 
 const MAX_BYTES = 10 * 1024 * 1024;
@@ -57,18 +58,7 @@ export default function Composer({
         submit();
       }}
     >
-      {files.length > 0 && (
-        <ul className="jr-pending" aria-label="Attachments to send">
-          {files.map((f, i) => (
-            <li key={`${f.name}${i}`}>
-              {f.type.startsWith("audio/") ? <FA icon={faMicrophone} /> : <FA icon={faPaperclip} />} <span>{f.name}</span>
-              <button type="button" aria-label={`Remove ${f.name}`} onClick={() => setFiles((x) => x.filter((_, j) => j !== i))}>
-                <FA icon={faXmark} />
-              </button>
-            </li>
-          ))}
-        </ul>
-      )}
+      <FilePreviewList files={files} onRemove={(i) => setFiles((x) => x.filter((_, j) => j !== i))} />
       <textarea
         ref={ta}
         value={text}

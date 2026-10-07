@@ -11,7 +11,6 @@ import {
   faPen,
   faStop,
   faTrash,
-  faXmark,
 } from "@fortawesome/free-solid-svg-icons";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../lib/api/client";
@@ -24,6 +23,7 @@ import type { Attachment, Entry } from "../../lib/workspace";
 import Markdown from "./Markdown";
 import JournalCalendar from "./JournalCalendar";
 import { useConfirm } from "../ui/Confirm";
+import FilePreviewList from "../ui/FilePreviewList";
 import { useRecorder } from "./useRecorder";
 
 const COLS = "id,entry_date,body,created_at,updated_at,kind,attachments";
@@ -333,18 +333,7 @@ export default function JournalView() {
             send();
           }}
         >
-          {files.length > 0 && (
-            <ul className="jr-pending" aria-label="Attachments to add">
-              {files.map((f, i) => (
-                <li key={`${f.name}${i}`}>
-                  {f.type.startsWith("audio/") ? <FA icon={faMicrophone} /> : <FA icon={faPaperclip} />} <span>{f.name}</span>
-                  <button type="button" aria-label={`Remove ${f.name}`} onClick={() => setFiles((x) => x.filter((_, j) => j !== i))}>
-                    <FA icon={faXmark} />
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
+          <FilePreviewList label="Attachments to add" files={files} onRemove={(i) => setFiles((x) => x.filter((_, j) => j !== i))} />
           <textarea
             ref={ta}
             value={text}
