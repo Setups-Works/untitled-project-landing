@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Typecheck and build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      - name: Build
+        run: npx next build
+        env:
+          # The app must build (and show its setup notice) without any secrets.
+          NEXT_TELEMETRY_DISABLED: "1"
+          NEXT_PUBLIC_SUPABASE_URL: ""
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ""
+
+      - name: Guard against committed secrets
+        run: |
+          if git ls-files | grep -E '(^|/)\.env($|\.)' | grep -v '^\.env\.example$'; then
+            echo "A .env file is tracked by git. Remove it and rotate any keys it contained."; exit 1
+          fi
+          if git grep -nE 'eyJhbGciOi[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}' -- . ':!package-lock.json' ; then
+            echo "Something that looks like a JWT/API key is committed. Remove it and rotate it."; exit 1
+          fi
