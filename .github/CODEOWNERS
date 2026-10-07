@@ -1,0 +1,42 @@
+# Code owners are asked to review pull requests that touch their paths.
+# Replace the placeholder handles with real GitHub usernames when developers join, then
+# enable "Require review from Code Owners" in branch protection (see docs/TEAM_AND_WORKFLOW.md).
+
+# Default: the tech lead
+*                          @nitheeshdr
+
+# Track A — Platform, Admin & Infrastructure
+# /supabase/               @dev-a
+# /src/app/api/            @dev-a
+# /src/app/admin/          @dev-a
+# /src/server/repositories/ @dev-a
+# /src/server/jobs/        @dev-a
+# /src/lib/auth/           @dev-a
+# /src/lib/supabase/       @dev-a
+# /.github/                @dev-a
+
+# Track B — Workspace features
+# /src/features/notes/     @dev-b
+# /src/features/tasks/     @dev-b
+# /src/features/journal/   @dev-b
+# /src/features/calendar/  @dev-b
+# /src/features/email/     @dev-b
+# /src/features/meetings/  @dev-b
+# /src/features/search/    @dev-b
+# /src/features/insights/  @dev-b
+# /src/components/         @dev-b
+
+# Track C — AI & Integrations
+# /src/server/providers/   @dev-c
+# /src/server/services/ai/ @dev-c
+# /src/server/services/composio/ @dev-c
+# /src/server/services/calendar/ @dev-c
+# /src/server/services/automation/ @dev-c
+# /src/features/ai/        @dev-c
+# /src/features/integrations/ @dev-c
+# /src/lib/composio/       @dev-c
+
+# Migrations always need the tech lead
+/supabase/migrations/      @nitheeshdr
+/docs/SECURITY.md          @nitheeshdr
+/AGENTS.md                 @nitheeshdr

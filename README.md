@@ -1,119 +1,91 @@
-# untitled project — landing page
+# untitled project
 
-A responsive, interactive marketing page for **untitled project**: one workspace for notes, tasks, journal, email, calendar, meetings and automations — with an AI layer you can swap, bring your own key to, or switch off entirely.
+One workspace for **notes, tasks, journal, chat, calendar, email, meetings and automations** — with an AI layer you can swap, bring your own account to, or switch off entirely.
 
-Built with **Next.js 15 (App Router)**, **React 19** and **TypeScript**. Styling is hand-written CSS driven by design tokens — no Tailwind, no UI kit.
+This repository contains the marketing site **and** the signed-in app (user panel + admin panel). Built with **Next.js 16 (App Router)**, **React 19**, **TypeScript**, **Supabase** (Postgres, Auth, Storage, Realtime). Styling is hand-written CSS with design tokens — no Tailwind, no UI kit.
 
-## Highlights
+> **Working on this project?** Read [`AGENTS.md`](AGENTS.md) (rules for humans *and* AI agents), then [`docs/ONBOARDING.md`](docs/ONBOARDING.md). Plan and tasks live in Jira: https://setups-works.atlassian.net/jira/software/projects/UNT/boards
 
-- **Interactive hero** – a working app preview: switch between Home, Journal, Notes, To-do, Email, Calendar, Meetings and Automations, tick tasks, open emails and flip automation switches.
-- **Workspace areas carousel** – tall colour-coded cards, each with a round **+** button that opens a details popup (Esc, ✕ or a click outside closes it).
-- **Scroll stack** – Journal → Notes → Email → Calendar → Integrations panels stick one after another as you scroll.
-- **Integrations carousel** – every integration grouped by category with its real full-colour logo.
-- **AI switcher** – shows the workspace staying put while the AI behind it changes (supported account, your own API key, pay-as-you-go, or no AI).
-- **Pro stats** – count-up numbers for email accounts, calendars and bundled AI subscriptions.
-- **Inner pages** – How it works, Universal Search, Context Graph and Daily Brief (each with an interactive demo), Product demo, Pricing, Early users, and Privacy & Security.
-- **Accounts** – log in, sign up, forgot/reset password and Google sign-in, all on Supabase Auth.
-- **Admin panel** (`/admin`) – overview stats and sign-up chart, plus a Users page to search, promote, ban and delete accounts.
-- **Animated FAQ** accordion, a closing call to action and a footer.
-- **Responsive** – mobile menu, card grids that become swipeable carousels, no horizontal overflow.
-- **Accessible** – keyboard-operable controls, `aria` states, visible focus rings and `prefers-reduced-motion` support.
+## What's built
+
+- **Marketing site** — home, how it works, product demo, pricing, early users, privacy & security, feature pages with interactive demos.
+- **Accounts** — email + password, Google sign-in, forgot/reset password (Supabase Auth).
+- **App** — Home, **Journal** (many timestamped entries per day, calendar, voice, attachments), **Notes** (colour cards, editor, slash commands, voice, attachments, history), **To-do** (lists, priorities, repeat, Inbox/Today/Upcoming/Filters, board and calendar layouts, shortcuts), **Chat** (folders, pin, unread, share links — AI replies come in Phase 4), **universal search** (Ctrl/⌘+K), **settings** popup, personality insights computed from your own data.
+- **Admin panel** — overview, users (invite, plan, ban, delete), usage, announcements, audit log.
+
+What's planned (workspaces, Calendar, Email, AI, Meetings, Automations, billing…) is in [`docs/PHASES.md`](docs/PHASES.md) and the Jira board.
 
 ## Getting started
 
-Requires Node.js 18.18 or newer.
+Requires Node.js 20+ (CI uses 22).
 
 ```bash
 npm install
-npm run dev      # http://localhost:3000
+cp .env.example .env.local    # fill in the dev values — see below
+npm run dev                   # http://localhost:3000
 ```
 
-| Script          | What it does                         |
-| --------------- | ------------------------------------ |
-| `npm run dev`   | Start the dev server with hot reload |
-| `npm run build` | Production build                     |
-| `npm start`     | Serve the production build           |
-
-> Don't run `npm run build` while `npm run dev` is running — both write to `.next` and the dev server will start throwing `__webpack_modules__[moduleId] is not a function`. Stop the dev server (or delete `.next`) first.
-
-## Admin panel
-
-`/admin` uses the same Supabase login as the rest of the app — there is no separate admin password. Copy `.env.example` to `.env.local` and set:
-
-| Variable | Purpose |
+| Command | Purpose |
 | --- | --- |
-| `SUPABASE_SERVICE_ROLE_KEY` | Server-only key that lets the panel list, ban and delete users. Never prefix it with `NEXT_PUBLIC_` |
-| `ADMIN_EMAILS` | Comma-separated emails that are always admins. Use it to bootstrap the first admin |
+| `npm run dev` | Dev server with hot reload |
+| `npx tsc --noEmit` | Typecheck (must pass before every push) |
+| `npx next build` | Production build (must pass before every PR) |
+| `npx supabase db push --linked` | Apply new migrations to the linked Supabase project |
 
-Further admins are promoted from **Admin → Users** (stored in `app_metadata.role`, which users can't edit themselves). Every admin page and server action re-checks the role on the server. Accounts in `ADMIN_EMAILS` and your own account are protected from demote/ban/delete in the panel.
+> Don't run `next build` while `npm run dev` is running — both write to `.next`. Stop dev (or delete `.next`) first.
 
-Sections: **Overview** (user and content stats, sign-up and activity charts), **Users** (search, filters, sorting, paging, CSV export, invite, and a detail drawer with usage counts, plan, password-reset/resend emails, admin/ban/delete), **Usage** (item counts per user — never content), **Announcements** (banners shown to every signed-in user) and **Audit log** (every admin action is recorded).
+### Environment variables
 
-To add a section, create `app/admin/<section>/page.tsx` and add one line to `SECTIONS` in `components/admin/AdminNav.tsx`.
+See [`.env.example`](.env.example). Never commit `.env*` files; never prefix a secret with `NEXT_PUBLIC_`.
 
-## Accounts (Supabase Auth)
+| Variable | Needed for |
+| --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Everything signed-in (without them pages show a setup notice) |
+| `SUPABASE_SERVICE_ROLE_KEY` | Admin panel, public chat links, account deletion (server only) |
+| `ADMIN_EMAILS` | Comma-separated emails that are always admins |
+| `GROQ_API_KEY`, `COMPOSIO_API_KEY`, `CRON_SECRET`, Sentry/PostHog keys | Later phases |
 
-`/login`, `/signup`, `/forgot-password` and `/reset-password` use [Supabase Auth](https://supabase.com/docs/guides/auth) with email + password and Google sign-in. `/dashboard` and `/admin` are protected by the proxy (`proxy.ts`).
+If a key contains an invalid character (a pasted "…", a quote or a space) the login page names the variable that's wrong.
 
-1. Create a Supabase project and copy **Project URL** and **anon public key** (Project Settings → API) into `.env.local` as `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY`.
-2. In **Authentication → URL Configuration** set *Site URL* to your site (for example `http://localhost:3000`) and add `http://localhost:3000/auth/callback` and your production `/auth/callback` URL to *Redirect URLs*.
-3. For Google sign-in, enable the Google provider under **Authentication → Providers** and add your OAuth client ID and secret.
-4. Email confirmation links and password-reset links go through `/auth/callback`, which exchanges the code for a session and then redirects.
+### Supabase setup
 
-Without the keys the pages still render and show a setup notice instead of failing.
+1. Create a project; copy the URL and anon key into `.env.local`.
+2. Authentication → URL Configuration: set *Site URL* and add `<site>/auth/callback` to *Redirect URLs* (local and production).
+3. Enable the Google provider if you want Google sign-in.
+4. Apply the migrations in `supabase/migrations/` (`npx supabase login`, `npx supabase link --project-ref <ref>`, `npx supabase db push --linked`).
 
 ## Project structure
 
 ```
-app/
-  layout.tsx        Fonts, metadata, shared site header and footer
-  page.tsx          Home page, section by section
-  how-it-works/  universal-search/  context-graph/  daily-brief/
-  demo/  pricing/  early-users/  privacy-security/      Inner pages
-  globals.css       Design tokens and all styles
-  icon.svg          Favicon (the green dot from the logo)
-components/
-  Client.tsx        Header, Reveal, Integrations carousel, mobile menu, CountUp, FaqList, MobileCarousel, Logo
-  SiteChrome.tsx    Site header (with Features dropdown) and the multi-column footer
-  PageKit.tsx       Shared inner-page pieces: hero, section heading, feature cards, closing CTA
-  demos/            Interactive Universal Search, Context Graph and Daily Brief demos
-  HeroApp.tsx       Interactive app preview in the hero and on /demo
-  Areas.tsx         Workspace areas carousel + details popup
-  AiSwitcher.tsx    "Your AI can change. Your workspace shouldn't." demo
-lib/
-  site.ts           Navigation and footer link data
-  logos.ts          Brand-colour marks, and which integrations are live
-public/logos/       Integration logos (SVG/PNG)
+src/
+  app/          Routes: marketing, auth, dashboard (signed-in app), admin, share/[token], api/v1
+  components/   Shared UI (ui, layout, navigation, shared) + legacy feature UI being migrated
+  features/     One folder per product feature (notes, tasks, journal, calendar, email, meetings,
+                automation, integrations, ai, search, insights, workspace, settings)
+  server/       Server-only: services, repositories, providers (AI), jobs
+  lib/          Supabase clients, composio vocabulary, ai provider list, auth, utils
+  hooks/  types/  config/
+supabase/       config + migrations (append-only)
+docs/           Architecture, phases, workflow, data model, security, Jira guide
 ```
+
+Every folder has an `AGENTS.md` explaining its purpose and rules. Today part of the code still lives in the legacy locations (`src/components/app/*`, `src/lib/*`); [`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md) maps what is where.
+
+## Documentation
+
+[`docs/README.md`](docs/README.md) is the index: onboarding, architecture, phases, team workflow, current state, data model, security, conventions, Jira guide and the full backlog.
 
 ## Design system
 
-Tokens live at the top of `app/globals.css` (`:root`).
-
-- **Canvas** `#f5f4eb`, **ink** `#1b1c14`, one quiet accent: forest green `#1f5d49`.
-- **Tints** (violet, blue, green, amber, clay, sand) are used for categorisation — e.g. Journal is violet, Notes blue, Email green, Calendar amber, Integrations clay.
-- **Type**: Instrument Serif for display, Geist for UI, Geist Mono for counters, Noto Sans Tamil for the Tamil footer line.
-- **Shape**: pill buttons, 10–36px radii, hairline `inset` rings instead of borders.
-- **Motion**: slow and ambient; always disabled under `prefers-reduced-motion`.
-
-### Handy knobs
-
-- `--panel-h` (in `app/globals.css`, default `560px`) — the shared height of the scroll-stack panels on desktop.
-- The scroll stack only activates on screens at least 901px wide and 640px tall; elsewhere the panels flow normally.
-
-## Content
-
-All copy comes from the product content & feature specification. Anything the spec doesn't state — pricing, Personality Insights behaviour, automation triggers — is deliberately not invented. The mock data inside the hero preview (launch plan, Q3 roadmap thread, calendar events) is placeholder.
-
-The "Get started" buttons point at an in-page anchor; wire them to your real sign-up URL.
-
-## Logos & trademarks
-
-Files in `public/logos/` are the property of their respective owners and are shown only to indicate supported integrations. Use them according to each company's brand guidelines. Google Docs and HubSpot are drawn from the CC0 [simple-icons](https://simpleicons.org) set (`lib/logos.ts`). Icons elsewhere are [Font Awesome Free](https://fontawesome.com) (solid).
+Tokens are at the top of `src/app/globals.css`: canvas `#f5f4eb`, ink `#1b1c14`, forest-green accent `#1f5d49`; categorisation tints (violet, blue, green, amber, clay, sand, mint, gold) applied with `at-<tint>` classes. Type: Instrument Serif (display), Geist (UI), Geist Mono. Pill buttons, hairline inset rings, slow ambient motion that respects `prefers-reduced-motion`.
 
 ## Deploying
 
-It's a standard Next.js app with no environment variables or backend, so it deploys as-is to Vercel, Netlify or any Node host (`npm run build && npm start`).
+Vercel (production) with Cloudflare in front (Phase 6). Set the environment variables above for Production and Preview, set Supabase's Site URL and redirect URLs to the deployed domain, and **redeploy without build cache** after changing any `NEXT_PUBLIC_*` value (they are baked in at build time).
+
+## Logos & trademarks
+
+Files in `public/logos/` belong to their respective owners and are shown only to indicate supported integrations. Icons elsewhere are [Font Awesome Free](https://fontawesome.com) (solid).
 
 ---
 

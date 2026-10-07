@@ -1,0 +1,21 @@
+name: PR title
+
+# Every PR title starts with a Jira key (UNT-123 …) so Jira links the PR to its task.
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+jobs:
+  jira-key:
+    name: Title has a Jira key
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check title
+        env:
+          TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          if ! printf '%s' "$TITLE" | grep -Eq '^(UNT-[0-9]+[ ,]+)+[^ ]'; then
+            echo "::error::PR title must start with a Jira key, e.g. 'UNT-123 Add notes repository' (got: $TITLE)"
+            exit 1
+          fi
+          echo "OK: $TITLE"
