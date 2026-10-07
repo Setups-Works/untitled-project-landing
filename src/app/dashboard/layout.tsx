@@ -11,6 +11,8 @@ import { supabaseServer } from "../../lib/supabase/server";
 import AppNav from "../../components/app/AppNav";
 import QueryProvider from "../../components/providers/QueryProvider";
 import AnnouncementBanner from "../../components/app/AnnouncementBanner";
+import Onboarding from "../../components/app/Onboarding";
+import { cleanOnboarding, shouldShowOnboarding } from "../../lib/onboarding";
 
 export const metadata: Metadata = { title: "Dashboard — untitled project", robots: { index: false } };
 export const dynamic = "force-dynamic";
@@ -50,6 +52,8 @@ export default async function Layout({ children }: { children: ReactNode }) {
   } catch {
     /* ignore */
   }
+  const prefs = cleanPrefs(user.user_metadata?.preferences, CATEGORIES);
+  const onboarding = cleanOnboarding(user.user_metadata?.onboarding);
   return (
     <QueryProvider>
       <div className="ap">
@@ -57,7 +61,7 @@ export default async function Layout({ children }: { children: ReactNode }) {
           name={name}
           email={user.email ?? ""}
           admin={isAdmin(user)}
-          prefs={cleanPrefs(user.user_metadata?.preferences, CATEGORIES)}
+          prefs={prefs}
           account={{
             name: (user.user_metadata?.full_name as string | undefined) ?? "",
             email: user.email ?? "",
@@ -70,6 +74,7 @@ export default async function Layout({ children }: { children: ReactNode }) {
         />
         <AnnouncementBanner items={announcements} />
         <div className="ap-body">{children}</div>
+        <Onboarding name={name} prefs={prefs} state={onboarding} show={shouldShowOnboarding(onboarding)} />
       </div>
     </QueryProvider>
   );

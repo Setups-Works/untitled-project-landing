@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { Prefs } from "../../lib/prefs";
 import PrefsSync from "./PrefsSync";
 import SettingsModal from "./SettingsModal";
+import { OPEN_ONBOARDING_EVENT } from "./Onboarding";
 import UniversalSearch, { OPEN_SETTINGS_EVENT } from "./UniversalSearch";
 import { FontAwesomeIcon as FA } from "@fortawesome/react-fontawesome";
 import {
@@ -16,6 +17,7 @@ import {
   faShieldHalved,
   faRightFromBracket,
   faGear,
+  faCompass,
 } from "@fortawesome/free-solid-svg-icons";
 import { supabaseBrowser } from "../../lib/supabase/client";
 
@@ -119,6 +121,15 @@ export default function AppNav({
               }}
             >
               <FA icon={faGear} /> Settings
+            </button>
+            <button
+              role="menuitem"
+              onClick={() => {
+                setOpen(false);
+                window.dispatchEvent(new Event(OPEN_ONBOARDING_EVENT));
+              }}
+            >
+              <FA icon={faCompass} /> Getting started
             </button>
             {admin && (
               <Link role="menuitem" href="/admin" onClick={() => setOpen(false)}>
