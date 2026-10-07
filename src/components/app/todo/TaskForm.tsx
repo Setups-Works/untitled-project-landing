@@ -1,5 +1,6 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { readText, writeText } from "../../../lib/drafts";
 import { FontAwesomeIcon as FA } from "@fortawesome/react-fontawesome";
 import { faCalendarDay, faFlag, faRotate, faXmark, faHashtag } from "@fortawesome/free-solid-svg-icons";
 import { PRIORITIES, RECURRENCES, type Draft } from "../../../lib/tasks";
@@ -14,6 +15,7 @@ export default function TaskForm({
   onSubmit,
   onCancel,
   autoFocus = true,
+  draftKey,
 }: {
   initial: Draft;
   lists: TaskList[];
@@ -21,17 +23,37 @@ export default function TaskForm({
   onSubmit: (d: Draft) => void | Promise<void>;
   onCancel?: () => void;
   autoFocus?: boolean;
+  /** For "new task" forms: keeps the typed name and description in this browser until the task is added, so a refresh doesn't lose them. */
+  draftKey?: string;
 }) {
-  const [d, setD] = useState(initial);
+  const [d, setD] = useState<Draft>(() => {
+    if (!draftKey) return initial;
+    try {
+      const s = JSON.parse(readText(draftKey) ?? "null") as { title?: unknown; description?: unknown } | null;
+      return s ? { ...initial, title: String(s.title ?? ""), description: String(s.description ?? "") } : initial;
+    } catch {
+      return initial;
+    }
+  });
   const [busy, setBusy] = useState(false);
   const set = <K extends keyof Draft>(k: K, v: Draft[K]) => setD((x) => ({ ...x, [k]: v }));
   const today = isoDate();
+  const sent = useRef(false);
+
+  useEffect(() => {
+    if (!draftKey || sent.current) return;
+    writeText(draftKey, d.title || d.description ? JSON.stringify({ title: d.title, description: d.description }) : "");
+  }, [draftKey, d.title, d.description]);
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     if (!d.title.trim() || busy) return;
     setBusy(true);
     await onSubmit({ ...d, title: d.title.trim(), description: d.description.trim() });
+    if (draftKey) {
+      sent.current = true;
+      writeText(draftKey, "");
+    }
     setBusy(false);
   }
 

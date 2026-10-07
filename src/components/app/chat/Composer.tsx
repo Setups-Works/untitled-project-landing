@@ -1,11 +1,13 @@
 "use client";
-import { useRef, useState } from "react";
+import { useRef } from "react";
 import { FontAwesomeIcon as FA } from "@fortawesome/react-fontawesome";
-import { faArrowUp, faChevronDown, faMicrophone, faPaperclip, faStop } from "@fortawesome/free-solid-svg-icons";
+import { faArrowUp, faChevronDown, faPaperclip } from "@fortawesome/free-solid-svg-icons";
 import { PROVIDERS } from "../../../lib/ai";
 import Menu, { MenuLabel, MenuRadioGroup, MenuRadioItem } from "../../ui/Menu";
 import FilePreviewList from "../../ui/FilePreviewList";
+import RecordButton from "../../ui/RecordButton";
 import { useRecorder } from "../useRecorder";
+import { useDraftFiles, useDraftText } from "../../../hooks/useDraft";
 
 const MAX_BYTES = 10 * 1024 * 1024;
 
@@ -15,15 +17,18 @@ export default function Composer({
   onSend,
   onError,
   autoFocus,
+  draftKey,
 }: {
   busy: boolean;
   provider: string;
   onSend: (text: string, files: File[]) => Promise<boolean>;
   onError: (m: string) => void;
   autoFocus?: boolean;
+  /** Where the unsent message, attachments and voice recordings are kept so a refresh doesn't lose them (one per chat). */
+  draftKey: string;
 }) {
-  const [text, setText] = useState("");
-  const [files, setFiles] = useState<File[]>([]);
+  const [text, setText] = useDraftText(draftKey);
+  const [files, setFiles] = useDraftFiles(draftKey);
   const ta = useRef<HTMLTextAreaElement>(null);
   const picker = useRef<HTMLInputElement>(null);
   const current = PROVIDERS.find((p) => p.id === provider) ?? PROVIDERS[0];
@@ -122,21 +127,7 @@ export default function Composer({
           </MenuRadioGroup>
         </Menu>
         <span className="cx-spacer" />
-        <button
-          type="button"
-          className="ne-btn"
-          data-on={rec.recording}
-          aria-pressed={rec.recording}
-          aria-label={rec.recording ? "Stop recording" : "Record a voice message"}
-          onClick={rec.toggle}
-        >
-          <FA icon={rec.recording ? faStop : faMicrophone} />
-          {rec.recording && (
-            <small className="cx-rec">
-              {Math.floor(rec.secs / 60)}:{String(rec.secs % 60).padStart(2, "0")}
-            </small>
-          )}
-        </button>
+        <RecordButton recording={rec.recording} secs={rec.secs} onToggle={rec.toggle} />
         <button className="jr-send" disabled={!canSend} aria-label="Send message" title="Send (Enter)">
           <FA icon={faArrowUp} />
         </button>

@@ -75,6 +75,7 @@ function InlineAdd({ ctx, defaults, label = "Add task" }: { ctx: VCtx; defaults:
     <div className="tv-addform">
       <TaskForm
         initial={emptyDraft(defaults)}
+        draftKey="todo:inline-task"
         lists={ctx.lists}
         submitLabel="Add task"
         onCancel={() => setOpen(false)}

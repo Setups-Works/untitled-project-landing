@@ -25,6 +25,7 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { api } from "../../lib/api/client";
 import { authClient } from "../../lib/auth/client";
+import { clearDrafts } from "../../lib/drafts";
 import { EMAIL_RE } from "../../lib/validate";
 import { CATEGORIES } from "../../lib/notes";
 import { writePrefs, type Prefs } from "../../lib/prefs";
@@ -290,6 +291,7 @@ export default function SettingsView({ account, prefs: initial }: { account: Acc
     if (!yes) return;
     await run("global", async () => {
       await authClient.revokeSessions();
+      await clearDrafts();
       await authClient.signOut();
       router.push("/login");
       router.refresh();
@@ -337,6 +339,7 @@ export default function SettingsView({ account, prefs: initial }: { account: Acc
     await run("delete", async () => {
       const r = await deleteMyAccount(typed);
       if (!r.ok) return setDelMsg({ ok: false, text: r.error });
+      await clearDrafts();
       await authClient.signOut();
       router.push("/");
       router.refresh();

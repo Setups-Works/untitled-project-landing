@@ -569,7 +569,15 @@ export default function ChatApp({ name }: { name: string }) {
               <FA icon={faTriangleExclamation} /> No AI is connected, so replies aren’t generated. Your messages are saved to this chat.
             </p>
           )}
-          <Composer key={activeId ?? "new"} busy={busy} provider={provider} onSend={send} onError={setErr} autoFocus />
+          <Composer
+            key={activeId ?? "new"}
+            draftKey={`chat:${activeId ?? "new"}`}
+            busy={busy}
+            provider={provider}
+            onSend={send}
+            onError={setErr}
+            autoFocus
+          />
         </div>
       </section>
     </div>

@@ -2,23 +2,14 @@
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FontAwesomeIcon as FA } from "@fortawesome/react-fontawesome";
-import {
-  faArrowUp,
-  faChevronLeft,
-  faChevronRight,
-  faMicrophone,
-  faPaperclip,
-  faPen,
-  faStop,
-  faTrash,
-} from "@fortawesome/free-solid-svg-icons";
+import { faArrowUp, faChevronLeft, faChevronRight, faPaperclip, faPen, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../lib/api/client";
 import { qk } from "../../lib/query/keys";
 import { useRealtimeInvalidate } from "../../hooks/useRealtimeInvalidate";
 import { addDays, isoDate } from "../../lib/dates";
 import { fmtTime } from "../../lib/prefs";
-import { safeName } from "../../lib/notes";
+import { safeName, TONES } from "../../lib/notes";
 import type { Attachment, Entry } from "../../lib/workspace";
 import Markdown from "./Markdown";
 import JournalCalendar from "./JournalCalendar";
@@ -26,9 +17,14 @@ import { useConfirm } from "../ui/Confirm";
 import FilePreviewList from "../ui/FilePreviewList";
 import AttachmentImage from "../ui/AttachmentImage";
 import AudioWave from "../ui/AudioWave";
+import RecordButton from "../ui/RecordButton";
+import { useDraftFiles, useDraftText } from "../../hooks/useDraft";
 import { useRecorder } from "./useRecorder";
 
 const COLS = "id,entry_date,body,created_at,updated_at,kind,attachments";
+const DAY_TONES = TONES.filter((t) => t !== "sand");
+/** A stable colour for a date (its day-of-month picks the tint), so neighbouring days differ and a date never changes colour. */
+const dayTone = (iso: string) => DAY_TONES[Number(iso.slice(8, 10)) % DAY_TONES.length];
 const EMPTY_ENTRIES: Entry[] = []; // stable references while a query loads
 const EMPTY_COUNTS: Record<string, number> = {};
 const MAX_BYTES = 10 * 1024 * 1024;
@@ -49,8 +45,9 @@ export default function JournalView() {
   }, [dParam, today]);
   const qc = useQueryClient();
   const [err, setErr] = useState("");
-  const [text, setText] = useState("");
-  const [files, setFiles] = useState<File[]>([]);
+  // Unsent text, attachments and voice recordings are kept per day, so a refresh doesn't lose them.
+  const [text, setText] = useDraftText(`journal:${date}`);
+  const [files, setFiles] = useDraftFiles(`journal:${date}`);
   const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
   const [draft, setDraft] = useState("");
@@ -219,7 +216,13 @@ export default function JournalView() {
             const dd = parse(iso);
             return (
               <li key={iso}>
-                <button data-on={iso === date} aria-current={iso === date ? "date" : undefined} onClick={() => setDate(iso)}>
+                <button
+                  data-on={iso === date}
+                  aria-current={iso === date ? "date" : undefined}
+                  onClick={() => setDate(iso)}
+                  // Each date has its own colour (same tints as the notes cards); the chosen day gets a stronger ring.
+                  className={`at-${dayTone(iso)} bg-(--ab) shadow-[inset_0_0_0_1px_var(--abl)] hover:brightness-[0.97] data-[on=true]:shadow-[inset_0_0_0_2px_var(--abf)] [&_small]:text-(--abf)`}
+                >
                   <span>
                     <small>{dd.toLocaleDateString(undefined, { weekday: "short" })}</small>
                     <b>{dd.toLocaleDateString(undefined, { day: "numeric", month: "long" })}</b>
@@ -357,10 +360,7 @@ export default function JournalView() {
             <button type="button" className="jr-pill" onClick={() => file.current?.click()}>
               <FA icon={faPaperclip} /> Attach
             </button>
-            <button type="button" className="jr-pill" data-on={rec.recording} aria-pressed={rec.recording} onClick={rec.toggle}>
-              <FA icon={rec.recording ? faStop : faMicrophone} />{" "}
-              {rec.recording ? `Stop · ${Math.floor(rec.secs / 60)}:${String(rec.secs % 60).padStart(2, "0")}` : "Voice"}
-            </button>
+            <RecordButton variant="pill" recording={rec.recording} secs={rec.secs} onToggle={rec.toggle} />
             <input
               ref={file}
               type="file"

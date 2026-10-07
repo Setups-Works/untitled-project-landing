@@ -7,6 +7,7 @@ import { faBookOpen, faComments, faPenToSquare, faListCheck, faPlus, faMessage }
 import { api } from "../../lib/api/client";
 import { qk } from "../../lib/query/keys";
 import { useRealtimeInvalidate } from "../../hooks/useRealtimeInvalidate";
+import { useDraftText } from "../../hooks/useDraft";
 import { useTaskActions } from "../../features/tasks/queries";
 import { addDays, ago, greeting, isoDate } from "../../lib/dates";
 import type { Chat, Profile, Task } from "../../lib/workspace";
@@ -31,8 +32,9 @@ export default function HomeView({ name }: { name: string }) {
   const qc = useQueryClient();
   const today = useMemo(() => isoDate(), []);
   const [err, setErr] = useState("");
-  const [journal, setJournal] = useState("");
-  const [title, setTitle] = useState("");
+  // Unsent text survives a refresh. The journal box shares its draft with today's page on the Journal screen.
+  const [journal, setJournal] = useDraftText(`journal:${today}`);
+  const [title, setTitle] = useDraftText("home:task");
 
   // Each card is its own query: cached, refreshed on focus, and kept in sync with the To-do page
   // (tasks share the ["tasks"] key prefix, so a mutation anywhere updates every screen).

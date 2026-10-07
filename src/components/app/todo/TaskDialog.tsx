@@ -39,6 +39,7 @@ export default function TaskDialog({
         </div>
         <TaskForm
           initial={initial}
+          draftKey={task ? undefined : "todo:new-task"}
           lists={lists}
           submitLabel={task ? "Save" : "Add task"}
           onSubmit={async (d) => {

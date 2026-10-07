@@ -20,6 +20,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../lib/api/client";
 import { qk } from "../../lib/query/keys";
 import { useRealtimeInvalidate } from "../../hooks/useRealtimeInvalidate";
+import { useDraftText } from "../../hooks/useDraft";
 import type { Attachment, Note } from "../../lib/workspace";
 import { CATEGORIES, NOTE_COLS, displayTitle, editedLabel, safeName, toneOf } from "../../lib/notes";
 import Markdown from "./Markdown";
@@ -44,7 +45,7 @@ export default function NotesView() {
   const [cats, setCats] = useState<string[]>([]);
   const [withFiles, setWithFiles] = useState(false);
   const [sort, setSort] = useState<Sort>("manual");
-  const [cap, setCap] = useState("");
+  const [cap, setCap] = useDraftText("notes:capture");
   const [recording, setRecording] = useState(false);
   const [secs, setSecs] = useState(0);
   const [dragId, setDragId] = useState<string | null>(null);

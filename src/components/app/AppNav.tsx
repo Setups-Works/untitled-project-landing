@@ -20,6 +20,7 @@ import {
   faCompass,
 } from "@fortawesome/free-solid-svg-icons";
 import { authClient } from "../../lib/auth/client";
+import { clearDrafts } from "../../lib/drafts";
 
 /** One line per workspace section — pages live in app/dashboard/<section>. */
 const TABS = [
@@ -80,6 +81,7 @@ export default function AppNav({
   }, []);
 
   async function signOut() {
+    await clearDrafts(); // unsent text and recordings must not be visible to the next person on this computer
     await authClient.signOut();
     router.push("/");
     router.refresh();
