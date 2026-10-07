@@ -2,6 +2,7 @@ import "server-only";
 import { betterAuth } from "better-auth";
 import { nextCookies } from "better-auth/next-js";
 import { APIError } from "better-auth/api";
+import { oneTap } from "better-auth/plugins";
 import pg from "pg";
 import { serverEnv } from "../config/env";
 import { sendMail } from "./mail";
@@ -131,7 +132,8 @@ function create() {
         },
       },
     },
-    plugins: [nextCookies()],
+    // One Tap uses the same Google credentials as the redirect sign-in; nextCookies() must stay last.
+    plugins: [oneTap(), nextCookies()],
   });
 }
 

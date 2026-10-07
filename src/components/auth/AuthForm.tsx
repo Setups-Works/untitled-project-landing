@@ -12,7 +12,7 @@ import {
   faSpinner,
   faTriangleExclamation,
 } from "@fortawesome/free-solid-svg-icons";
-import { authClient } from "../../lib/auth/client";
+import { authClient, oneTapAuthClient } from "../../lib/auth/client";
 import { EMAIL_RE } from "../../lib/validate";
 import { safeNext } from "../../lib/auth/redirect";
 
@@ -75,8 +75,19 @@ export default function AuthForm({ mode }: { mode: Mode }) {
   const [email, setEmail] = useState("");
   const [pw, setPw] = useState("");
   const [show, setShow] = useState(false);
-  const [cfg, setCfg] = useState<{ google: boolean; configured: boolean } | null>(null);
+  const [cfg, setCfg] = useState<{ google: boolean; googleClientId: string | null; configured: boolean } | null>(null);
   const score = useMemo(() => strength(pw), [pw]);
+  // Google One Tap: the small "Continue as …" prompt that appears on its own when the visitor is signed in to Google in this browser.
+  // The Sign-in button below stays as the fallback if the prompt is dismissed or the browser blocks it.
+  useEffect(() => {
+    if (!cfg?.googleClientId || (mode !== "login" && mode !== "signup")) return;
+    void oneTapAuthClient(cfg.googleClientId)
+      .oneTap({
+        callbackURL: next,
+        fetchOptions: { onSuccess: () => window.location.assign(next) },
+      })
+      .catch(() => undefined);
+  }, [cfg, mode, next]);
   useEffect(() => {
     fetch("/api/v1/auth-config")
       .then((r) => r.json())
