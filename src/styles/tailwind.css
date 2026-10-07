@@ -1,0 +1,64 @@
+/*
+ * Tailwind v4, adopted incrementally (UNT-50 follow-up).
+ *
+ * Only the theme and utilities layers are loaded — NOT Tailwind's preflight reset — so importing this file changes nothing on
+ * screen: the legacy rules in globals.css keep styling every screen until it is converted.
+ *
+ * The design tokens stay defined once, in `:root` in globals.css. `@theme inline` maps them to Tailwind names by reference
+ * (`bg-surface` → `var(--surface)`), so there is a single source of truth and dark/density overrides keep working.
+ *
+ * Migration rule: convert one screen at a time; once a screen has no legacy class left, delete its rules from globals.css.
+ * Note: unlayered legacy CSS outranks Tailwind's layered utilities, so never mix a legacy class and a utility that set the same property.
+ */
+@layer theme, base, components, legacy, utilities;
+/* Font Awesome's tiny stylesheet goes in `base` so legacy rules still override it, exactly as before. */
+@import "@fortawesome/fontawesome-svg-core/styles.css" layer(base);
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+
+@theme inline {
+  --color-page: var(--page);
+  --color-surface: var(--surface);
+  --color-surface-muted: var(--surface-muted);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-surface-accent: var(--surface-accent);
+  --color-fill-dark: var(--fill-dark);
+  --color-on-dark: var(--on-dark);
+  --color-fg: var(--fg);
+  --color-fg-strong: var(--fg-strong);
+  --color-fg-muted: var(--fg-muted);
+  --color-fg-subtle: var(--fg-subtle);
+  --color-fg-faint: var(--fg-faint);
+  --color-line: var(--line);
+  --color-line-strong: var(--line-strong);
+  --color-green-bg: var(--green-bg);
+  --color-green-fg: var(--green-fg);
+  --color-blue-bg: var(--blue-bg);
+  --color-blue-fg: var(--blue-fg);
+  --color-amber-bg: var(--amber-bg);
+  --color-amber-fg: var(--amber-fg);
+  --color-clay-bg: var(--clay-bg);
+  --color-clay-fg: var(--clay-fg);
+  --color-violet-bg: var(--violet-bg);
+  --color-violet-fg: var(--violet-fg);
+  --color-sand-bg: var(--sand-bg);
+  --color-sand-fg: var(--sand-fg);
+
+  --radius-r1: var(--r1);
+  --radius-r2: var(--r2);
+  --radius-r3: var(--r3);
+  --radius-r4: var(--r4);
+  --radius-r5: var(--r5);
+  --radius-pill: var(--pill);
+
+  --shadow-e1: var(--e1);
+  --shadow-e2: var(--e2);
+  --shadow-e3: var(--e3);
+  --shadow-e4: var(--e4);
+
+  --font-sans: var(--sans);
+  --font-serif: var(--serif);
+  --font-mono: var(--mono);
+
+  --ease-site: var(--ease);
+}

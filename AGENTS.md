@@ -6,7 +6,7 @@ You are working on **untitled project**: one workspace for notes, tasks, journal
 
 ## 1. Stack
 
-Next.js 16 (App Router, React 19, TypeScript strict) · Supabase (Postgres + Auth + Storage + Realtime) · Composio (OAuth + tools + triggers for Gmail, Calendar, Slack, GitHub) · AI providers behind a router (Groq on the server, Puter.js in the browser) · Cloudflare (DNS/WAF/CDN) in front of Vercel · Sentry + PostHog (observability). Styling is hand-written CSS with design tokens in `src/app/globals.css` — no Tailwind, no UI kit. Icons: Font Awesome Free (solid).
+Next.js 16 (App Router, React 19, TypeScript strict) · Supabase (Postgres + Auth + Storage + Realtime) · Composio (OAuth + tools + triggers for Gmail, Calendar, Slack, GitHub) · AI providers behind a router (Groq on the server, Puter.js in the browser) · Cloudflare (DNS/WAF/CDN) in front of Vercel · Sentry + PostHog (observability). Styling is migrating from hand-written CSS (`src/app/globals.css`, wrapped in the `legacy` cascade layer) to **Tailwind v4** (`src/styles/tailwind.css`, no preflight). Design tokens stay defined once in `:root` and are exposed as utilities (`bg-surface`, `text-fg-muted`, `rounded-r2`, `shadow-e2`). **New and touched screens use Tailwind utilities; when you convert a screen, delete its legacy rules in the same PR and keep the look pixel-identical.** Don't mix a legacy class and a utility that set the same property. No UI kit. Icons: Font Awesome Free (solid).
 
 ## 2. Commands
 
