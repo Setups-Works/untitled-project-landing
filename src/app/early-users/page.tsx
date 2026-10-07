@@ -16,13 +16,23 @@ const slots = ["blue", "violet", "amber"];
 export default function Page() {
   return (
     <main>
-      <PageHero eyebrow="Early users" title="Built with the people" quiet="who use it first." lead="untitled project is in its early days. The first people to try it shape what it becomes — and we’ll share what they tell us right here.">
+      <PageHero
+        eyebrow="Early users"
+        title="Built with the people"
+        quiet="who use it first."
+        lead="untitled project is in its early days. The first people to try it shape what it becomes — and we’ll share what they tell us right here."
+      >
         <AuthLink arrow />
       </PageHero>
 
       <section className="section" style={{ paddingTop: 0 }}>
         <div className="container">
-          <SectionHead eyebrow="What early users say" title="Their words," quiet="not ours." lead="We only publish feedback from real people, with their permission. The first quotes will appear here as early users share them." />
+          <SectionHead
+            eyebrow="What early users say"
+            title="Their words,"
+            quiet="not ours."
+            lead="We only publish feedback from real people, with their permission. The first quotes will appear here as early users share them."
+          />
           <Reveal>
             <div className="quotes">
               {slots.map((t, n) => (
@@ -32,7 +42,10 @@ export default function Page() {
                   <blockquote>Your feedback could be the first quote on this page.</blockquote>
                   <figcaption>
                     <span className="quote-av" aria-hidden />
-                    <span><b>Early user</b><small>Name and role added with permission</small></span>
+                    <span>
+                      <b>Early user</b>
+                      <small>Name and role added with permission</small>
+                    </span>
                   </figcaption>
                 </figure>
               ))}
@@ -44,15 +57,37 @@ export default function Page() {
       <section className="section" style={{ paddingTop: 0 }}>
         <div className="container">
           <SectionHead eyebrow="Why join early" title="A direct line" quiet="to the team." />
-          <FeatureCards items={[
-            { icon: faSeedling, t: "Shape the product", d: "Tell us what’s missing. Early feedback decides what we build next.", tone: "tone-green" },
-            { icon: faComments, t: "Talk to the people building it", d: "Your questions and ideas go straight to the team.", tone: "tone-blue" },
-            { icon: faHandshake, t: "Grow with it", d: "Start with notes and connect the rest of your tools as they arrive.", tone: "tone-amber" },
-          ]} />
+          <FeatureCards
+            items={[
+              {
+                icon: faSeedling,
+                t: "Shape the product",
+                d: "Tell us what’s missing. Early feedback decides what we build next.",
+                tone: "tone-green",
+              },
+              {
+                icon: faComments,
+                t: "Talk to the people building it",
+                d: "Your questions and ideas go straight to the team.",
+                tone: "tone-blue",
+              },
+              {
+                icon: faHandshake,
+                t: "Grow with it",
+                d: "Start with notes and connect the rest of your tools as they arrive.",
+                tone: "tone-amber",
+              },
+            ]}
+          />
         </div>
       </section>
 
-      <CtaPanel title="Be one of" quiet="the first." lead="Start with the notes, connect Gmail and Google Calendar, and tell us what you think." secondary={["See the product demo", "/demo"]} />
+      <CtaPanel
+        title="Be one of"
+        quiet="the first."
+        lead="Start with the notes, connect Gmail and Google Calendar, and tell us what you think."
+        secondary={["See the product demo", "/demo"]}
+      />
     </main>
   );
 }

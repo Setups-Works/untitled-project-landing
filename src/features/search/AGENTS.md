@@ -7,6 +7,7 @@
 **Target:** `GET /api/v1/search` backed by `search_workspace()` (tsvector + GIN, ranking, highlighted snippets), later hybrid with pgvector (UNT-86).
 
 **Rules**
+
 - Results are always scoped to the user's workspace; journal only the author's own.
 - Strip characters that have meaning in filter syntax before building queries (see `clean()`); prefer RPC/parameterised search in the target.
 - Keyboard: ↑/↓/Enter/Esc; deep links use query params (`?task=`, `?d=`, `?c=`, `?note=`).

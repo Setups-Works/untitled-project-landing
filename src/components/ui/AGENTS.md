@@ -2,7 +2,14 @@
 
 **Purpose:** The design-system building blocks every screen uses. **Owner:** track A (with B reviewing). **Jira:** UNT-50.
 
-Planned contents: `Button`, `Input`, `Select`, `Switch`, `Tabs`, `Toast`, `Skeleton`, `Modal`, `Menu`, `ConfirmDialog` / `PromptDialog` (extract from `components/app/{Modal,Menu,Confirm}.tsx`).
+**Done (built on Radix, so focus trap, Escape, arrow-key nav and portals come for free):**
+
+- `Modal` — `<Modal label onClose size top>…</Modal>` (Radix Dialog; `label` is the accessible title).
+- `useConfirm()` / `usePrompt()` (`Confirm.tsx`) — `await confirm({...})` → boolean; `await prompt({...})` → string | null (AlertDialog / Dialog).
+- `Menu` (+ `MenuItem`, `MenuCheckItem`, `MenuRadioGroup`, `MenuRadioItem`, `MenuLabel`, `MenuSeparator`) — Radix DropdownMenu.
+- `Tabs` (+ list/trigger/content wrappers) — Radix Tabs; style via `[aria-selected=true]`.
+
+Planned: `Button`, `Input`, `Select`, `Switch`, `Toast`, `Skeleton`.
 
 ## Rules
 

@@ -14,7 +14,10 @@ export function supabaseAdmin() {
 }
 
 const adminEmails = () =>
-  (process.env.ADMIN_EMAILS || "").split(",").map((e) => e.trim().toLowerCase()).filter(Boolean);
+  (process.env.ADMIN_EMAILS || "")
+    .split(",")
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
 
 /** Admin = listed in ADMIN_EMAILS, or promoted via app_metadata.role (only writable with the service key). */
 export function isAdmin(user: Pick<User, "email" | "app_metadata"> | null | undefined) {
@@ -55,7 +58,9 @@ export async function countRows(table: string) {
 /** Records an admin action in the audit log. Never throws — logging must not block the action itself. */
 export async function audit(admin: Pick<User, "id" | "email">, action: string, target?: string | null, meta: Record<string, unknown> = {}) {
   try {
-    await supabaseAdmin().from("admin_audit").insert({ admin_id: admin.id, admin_email: admin.email ?? "", action, target: target ?? null, meta });
+    await supabaseAdmin()
+      .from("admin_audit")
+      .insert({ admin_id: admin.id, admin_email: admin.email ?? "", action, target: target ?? null, meta });
   } catch {
     /* ignore */
   }

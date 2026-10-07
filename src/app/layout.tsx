@@ -1,10 +1,5 @@
 import type { Metadata } from "next";
-import {
-  Geist,
-  Geist_Mono,
-  Instrument_Serif,
-  Noto_Sans_Tamil,
-} from "next/font/google";
+import { Geist, Geist_Mono, Instrument_Serif, Noto_Sans_Tamil } from "next/font/google";
 import "@fortawesome/fontawesome-svg-core/styles.css";
 import { config } from "@fortawesome/fontawesome-svg-core";
 import "./globals.css";
@@ -33,16 +28,9 @@ export const metadata: Metadata = {
     "Notes, tasks, journal, email, calendar, meetings and automations in one workspace. Use AI when it helps, ignore it when it doesn't.",
 };
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html
-      lang="en"
-      className={`${geist.variable} ${mono.variable} ${serif.variable} ${tamil.variable}`}
-    >
+    <html lang="en" className={`${geist.variable} ${mono.variable} ${serif.variable} ${tamil.variable}`}>
       <body>
         <HideInApp>
           <SiteHeader />

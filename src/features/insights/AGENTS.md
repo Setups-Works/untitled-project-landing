@@ -5,6 +5,7 @@
 **Today (legacy):** `lib/insights.ts` (pure `analyse()`), `components/app/{InsightsCard,Radar}.tsx`.
 
 **Rules**
+
 - Insights are patterns, not diagnoses — keep that wording. Never invent data; every sentence must trace to a number.
 - `analyse()` stays pure and unit-tested. Heavier/AI-written insights run in jobs and always show the underlying numbers.
 - Opt-in for anything emailed or AI-generated.

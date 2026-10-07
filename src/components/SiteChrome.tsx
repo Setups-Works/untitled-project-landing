@@ -34,8 +34,7 @@ export function SiteFooter() {
               untitled project
             </Link>
             <p className="body">
-              One workspace for your notes, tasks, journal, email, calendar and
-              meetings. Your AI can change. Your workspace shouldn’t.
+              One workspace for your notes, tasks, journal, email, calendar and meetings. Your AI can change. Your workspace shouldn’t.
             </p>
             <AuthLink className="btn btn-primary btn-sm" />
           </div>
@@ -55,9 +54,7 @@ export function SiteFooter() {
           </div>
         </div>
         <div className="sfoot-bottom">
-          <span className="meta">
-            © {new Date().getFullYear()} untitled project. All rights reserved.
-          </span>
+          <span className="meta">© {new Date().getFullYear()} untitled project. All rights reserved.</span>
           <span className="footer-back" style={{ margin: 0, padding: 0, border: 0 }}>
             <span className="eyebrow">Backed by</span>
             <span className="footer-brand">Setups Works</span>

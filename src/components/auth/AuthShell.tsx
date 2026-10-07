@@ -16,16 +16,22 @@ export default function AuthShell({ children }: { children: ReactNode }) {
       <div className="container au-grid">
         <aside className="au-side">
           <div className="chip">untitled project</div>
-          <h2 className="display">Your AI can change. <span className="quiet">Your workspace shouldn’t.</span></h2>
+          <h2 className="display">
+            Your AI can change. <span className="quiet">Your workspace shouldn’t.</span>
+          </h2>
           <ul className="au-points">
             {POINTS.map((p) => (
               <li key={p.t} className={`at-${p.tone}`}>
-                <span><FA icon={p.icon} /></span>
+                <span>
+                  <FA icon={p.icon} />
+                </span>
                 {p.t}
               </li>
             ))}
           </ul>
-          <p className="au-trust"><FA icon={faShieldHalved} /> Your content stays in your workspace, whichever AI you choose.</p>
+          <p className="au-trust">
+            <FA icon={faShieldHalved} /> Your content stays in your workspace, whichever AI you choose.
+          </p>
         </aside>
         <div className="au-card">{children}</div>
       </div>

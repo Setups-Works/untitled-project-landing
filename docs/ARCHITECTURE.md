@@ -41,24 +41,24 @@ UI component  →  feature hook  →  API v1 route / server action  →  service
 
 A layer may only import from the layer to its right. Concretely:
 
-| Layer | May import | Must not |
-| --- | --- | --- |
+| Layer                          | May import                                                | Must not                                        |
+| ------------------------------ | --------------------------------------------------------- | ----------------------------------------------- |
 | Components / features (client) | hooks, `src/lib`, `src/types`, `src/config` (public part) | `src/server/**`, secrets, Supabase service role |
-| API routes / server actions | services, `src/lib`, zod schemas | repositories directly, UI |
-| Services | repositories, providers, other services, `src/config` | `next/*` UI APIs, React |
-| Repositories | Supabase client, `src/types` | business rules, other services |
-| Providers (AI) | `src/config`, SDK | feature services |
+| API routes / server actions    | services, `src/lib`, zod schemas                          | repositories directly, UI                       |
+| Services                       | repositories, providers, other services, `src/config`     | `next/*` UI APIs, React                         |
+| Repositories                   | Supabase client, `src/types`                              | business rules, other services                  |
+| Providers (AI)                 | `src/config`, SDK                                         | feature services                                |
 
 Why: services are reused by the UI (through routes), background jobs, automations and **AI tools**. If rules live in a component, the AI can't use them safely.
 
 ## 3. Runtime boundaries
 
-| Where it runs | What | Secrets? |
-| --- | --- | --- |
-| Browser | React UI, Supabase *anon* client (RLS-protected reads/writes), Puter.js | None. Only `NEXT_PUBLIC_*` |
-| Vercel server (route handlers, server actions, RSC) | Services, repositories, Groq calls, Composio calls, Stripe | Yes — via `serverEnv()` |
-| Vercel Cron → `/api/v1/jobs/*` | Background jobs (sync, transcription, automations, digests) | Yes, plus `CRON_SECRET` |
-| Supabase | Postgres (RLS, SQL functions, triggers), Auth, Storage, Realtime | Managed |
+| Where it runs                                       | What                                                                    | Secrets?                   |
+| --------------------------------------------------- | ----------------------------------------------------------------------- | -------------------------- |
+| Browser                                             | React UI, Supabase _anon_ client (RLS-protected reads/writes), Puter.js | None. Only `NEXT_PUBLIC_*` |
+| Vercel server (route handlers, server actions, RSC) | Services, repositories, Groq calls, Composio calls, Stripe              | Yes — via `serverEnv()`    |
+| Vercel Cron → `/api/v1/jobs/*`                      | Background jobs (sync, transcription, automations, digests)             | Yes, plus `CRON_SECRET`    |
+| Supabase                                            | Postgres (RLS, SQL functions, triggers), Auth, Storage, Realtime        | Managed                    |
 
 **Direct browser → Supabase** is allowed for simple, RLS-covered CRUD (current notes/tasks/journal/chat code does this). It is **not** allowed for anything with business rules, side effects, third-party calls, or multi-table atomicity — those go through a service. Phase 1 migrates notes as the reference and the rest follow.
 
@@ -80,7 +80,7 @@ Chat UI ──► POST /api/v1/ai/chat ──► AI Orchestrator ──► Provi
                                           │                         └────► Puter.js (browser runtime)
                                           ├─ builds context (conversation window, workspace data)
                                           ├─ tool calls ──► Composio / our services (writes need user confirmation)
-                                          ├─ stores messages + usage (ai_usage) 
+                                          ├─ stores messages + usage (ai_usage)
                                           └─ "No AI" mode when no provider is available
 ```
 
@@ -106,11 +106,11 @@ See `AGENTS.md` §3 and the `AGENTS.md` inside each folder. Target routes (Phase
 
 Record architectural decisions here with date, decision, and reason. Open decisions are tagged `decision-needed` in Jira.
 
-| Date | Decision | Why |
-| --- | --- | --- |
-| 2026-10 | `src/` layout and layered server code | Parallel work for 3 developers + AI agents; services reusable by UI, jobs and AI tools |
-| 2026-10 | Composio for OAuth/tools; we store connection ids only | Avoid handling third-party tokens |
-| 2026-10 | Groq on the server, Puter.js in the browser behind one provider interface | Cheap fast default + bring-your-own-account option |
-| *open* | Final route structure (`(app)` group vs `/dashboard/*`) | Jira UNT-49 |
-| *open* | Embedding provider for semantic search | Jira UNT-86 |
-| *open* | Transcription provider and email-sending provider | Jira UNT-88, UNT-91 |
+| Date    | Decision                                                                  | Why                                                                                    |
+| ------- | ------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
+| 2026-10 | `src/` layout and layered server code                                     | Parallel work for 3 developers + AI agents; services reusable by UI, jobs and AI tools |
+| 2026-10 | Composio for OAuth/tools; we store connection ids only                    | Avoid handling third-party tokens                                                      |
+| 2026-10 | Groq on the server, Puter.js in the browser behind one provider interface | Cheap fast default + bring-your-own-account option                                     |
+| _open_  | Final route structure (`(app)` group vs `/dashboard/*`)                   | Jira UNT-49                                                                            |
+| _open_  | Embedding provider for semantic search                                    | Jira UNT-86                                                                            |
+| _open_  | Transcription provider and email-sending provider                         | Jira UNT-88, UNT-91                                                                    |

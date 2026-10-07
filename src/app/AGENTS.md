@@ -6,16 +6,16 @@
 
 ## Today
 
-| Folder / file | What | Notes |
-| --- | --- | --- |
-| `layout.tsx`, `globals.css` | Root layout, fonts, **all CSS and design tokens** | Append-only edits; give your CSS a commented block per feature. Marketing header/footer are hidden in `/dashboard` and `/admin` by `components/HideInApp.tsx` |
-| `page.tsx` + `how-it-works/`, `pricing/`, `demo/`, `early-users/`, `privacy-security/`, `universal-search/`, `context-graph/`, `daily-brief/` | Marketing site (static) | Target: `(marketing)` route group |
-| `login/`, `signup/`, `forgot-password/`, `reset-password/`, `auth/callback/` | Auth | Target: `(auth)` route group |
-| `dashboard/` | Signed-in app (Home, journal, chat, notes, todo) | See `dashboard/AGENTS.md` |
-| `share/[token]/` | Public read-only chat page (service role, `noindex`) | Do not add features that expose more than the shared chat |
-| `admin/` | Admin panel | See `admin/AGENTS.md` |
-| `api/v1/` | REST API (to be built, Phase 1) | See `api/v1/AGENTS.md` |
-| `not-found.tsx`, `icon.svg` | 404 and favicon | |
+| Folder / file                                                                                                                                 | What                                                 | Notes                                                                                                                                                         |
+| --------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `layout.tsx`, `globals.css`                                                                                                                   | Root layout, fonts, **all CSS and design tokens**    | Append-only edits; give your CSS a commented block per feature. Marketing header/footer are hidden in `/dashboard` and `/admin` by `components/HideInApp.tsx` |
+| `page.tsx` + `how-it-works/`, `pricing/`, `demo/`, `early-users/`, `privacy-security/`, `universal-search/`, `context-graph/`, `daily-brief/` | Marketing site (static)                              | Target: `(marketing)` route group                                                                                                                             |
+| `login/`, `signup/`, `forgot-password/`, `reset-password/`, `auth/callback/`                                                                  | Auth                                                 | Target: `(auth)` route group                                                                                                                                  |
+| `dashboard/`                                                                                                                                  | Signed-in app (Home, journal, chat, notes, todo)     | See `dashboard/AGENTS.md`                                                                                                                                     |
+| `share/[token]/`                                                                                                                              | Public read-only chat page (service role, `noindex`) | Do not add features that expose more than the shared chat                                                                                                     |
+| `admin/`                                                                                                                                      | Admin panel                                          | See `admin/AGENTS.md`                                                                                                                                         |
+| `api/v1/`                                                                                                                                     | REST API (to be built, Phase 1)                      | See `api/v1/AGENTS.md`                                                                                                                                        |
+| `not-found.tsx`, `icon.svg`                                                                                                                   | 404 and favicon                                      |                                                                                                                                                               |
 
 ## Rules
 

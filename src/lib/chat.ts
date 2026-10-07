@@ -34,11 +34,15 @@ export function groupByDate(chats: Chat[], now = new Date()): { label: string; i
   for (const c of chats) {
     const t = new Date(c.updated_at).getTime();
     const label =
-      t >= start ? "Today" :
-      t >= start - 86_400_000 ? "Yesterday" :
-      t >= start - 7 * 86_400_000 ? "Previous 7 days" :
-      t >= start - 30 * 86_400_000 ? "Previous 30 days" :
-      new Date(t).toLocaleDateString(undefined, { month: "long", year: "numeric" });
+      t >= start
+        ? "Today"
+        : t >= start - 86_400_000
+          ? "Yesterday"
+          : t >= start - 7 * 86_400_000
+            ? "Previous 7 days"
+            : t >= start - 30 * 86_400_000
+              ? "Previous 30 days"
+              : new Date(t).toLocaleDateString(undefined, { month: "long", year: "numeric" });
     out.set(label, [...(out.get(label) ?? []), c]);
   }
   return [...out.entries()].map(([label, items]) => ({ label, items }));

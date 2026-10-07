@@ -16,7 +16,10 @@ export const publicEnv = {
 } as const;
 
 export class MissingEnvError extends Error {
-  constructor(public readonly name: string, hint?: string) {
+  constructor(
+    public readonly name: string,
+    hint?: string,
+  ) {
     super(`Missing environment variable ${name}.${hint ? ` ${hint}` : ""}`);
     this.name = "MissingEnvError";
   }
@@ -36,7 +39,10 @@ export function serverEnv() {
   if (typeof window !== "undefined") throw new Error("serverEnv() was called in the browser. Secrets must stay on the server.");
   return {
     supabaseServiceRoleKey: optional("SUPABASE_SERVICE_ROLE_KEY"),
-    adminEmails: (optional("ADMIN_EMAILS") ?? "").split(",").map((e) => e.trim().toLowerCase()).filter(Boolean),
+    adminEmails: (optional("ADMIN_EMAILS") ?? "")
+      .split(",")
+      .map((e) => e.trim().toLowerCase())
+      .filter(Boolean),
     groqApiKey: optional("GROQ_API_KEY"),
     composioApiKey: optional("COMPOSIO_API_KEY"),
     sentryAuthToken: optional("SENTRY_AUTH_TOKEN"),

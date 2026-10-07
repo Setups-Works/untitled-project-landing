@@ -11,5 +11,4 @@ export const ICONS: Record<string, { path: string; hex: string }> = {
 };
 
 // Only Google products are live for now; everything else is marked "Coming soon".
-export const isLive = (name: string) =>
-  /^Google/.test(name) || name === "Gmail" || name === "Maps";
+export const isLive = (name: string) => /^Google/.test(name) || name === "Gmail" || name === "Maps";

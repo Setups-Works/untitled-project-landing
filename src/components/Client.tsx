@@ -1,11 +1,6 @@
 "use client";
 import { FontAwesomeIcon as FA } from "@fortawesome/react-fontawesome";
-import {
-  faChevronLeft,
-  faChevronRight,
-  faArrowRight,
-  faPlay,
-} from "@fortawesome/free-solid-svg-icons";
+import { faChevronLeft, faChevronRight, faArrowRight, faPlay } from "@fortawesome/free-solid-svg-icons";
 import { ICONS, isLive } from "../lib/logos";
 import type { MegaItem } from "../lib/site";
 import MegaPreview from "./MegaPreview";
@@ -23,18 +18,10 @@ export function Header({ children }: { children: ReactNode }) {
     window.addEventListener("scroll", f, { passive: true });
     return () => window.removeEventListener("scroll", f);
   }, []);
-  return (
-    <header className={`header${s ? " scrolled" : ""}`}>{children}</header>
-  );
+  return <header className={`header${s ? " scrolled" : ""}`}>{children}</header>;
 }
 
-export function Reveal({
-  children,
-  className = "",
-}: {
-  children: ReactNode;
-  className?: string;
-}) {
+export function Reveal({ children, className = "" }: { children: ReactNode; className?: string }) {
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const el = ref.current;
@@ -96,25 +83,14 @@ export function Logo({ name, size = 24 }: { name: string; size?: number }) {
   const ic = ICONS[name];
   if (ic)
     return (
-      <svg
-        width={size}
-        height={size}
-        viewBox="0 0 24 24"
-        fill={ic.hex}
-        aria-hidden
-        style={{ flex: "none" }}
-      >
+      <svg width={size} height={size} viewBox="0 0 24 24" fill={ic.hex} aria-hidden style={{ flex: "none" }}>
         <path d={ic.path} />
       </svg>
     );
   return <span style={{ fontWeight: 600 }}>{name[0]}</span>;
 }
 
-export function Integrations({
-  groups,
-}: {
-  groups: { name: string; items: Int[] }[];
-}) {
+export function Integrations({ groups }: { groups: { name: string; items: Int[] }[] }) {
   const ref = useRef<HTMLDivElement>(null);
   const [i, setI] = useState(0);
   const tone = ["", "tone-violet", "tone-blue", "tone-amber", "tone-clay"];
@@ -124,10 +100,7 @@ export function Integrations({
     const c = Math.max(0, Math.min(groups.length - 1, n));
     const slide = el.children[c] as HTMLElement;
     el.scrollTo({
-      left:
-        slide.offsetLeft -
-        el.offsetLeft -
-        parseFloat(getComputedStyle(el).paddingLeft),
+      left: slide.offsetLeft - el.offsetLeft - parseFloat(getComputedStyle(el).paddingLeft),
       behavior: "smooth",
     });
   };
@@ -148,39 +121,23 @@ export function Integrations({
   };
   return (
     <div className="carousel">
-      <div
-        className="car-track"
-        ref={ref}
-        onScroll={onScroll}
-        tabIndex={0}
-        aria-label="Integration groups"
-      >
+      <div className="car-track" ref={ref} onScroll={onScroll} tabIndex={0} aria-label="Integration groups">
         {groups.map((g, n) => (
           <div className={`card car-slide ${tone[n]}`} key={g.name}>
-            <div
-              className="eyebrow"
-              style={{ color: "var(--tint-fg, var(--green-fg))" }}
-            >
+            <div className="eyebrow" style={{ color: "var(--tint-fg, var(--green-fg))" }}>
               {g.name}
             </div>
             <div className="ilist">
               {g.items.map((it) => (
                 <div className="int" data-soon={!isLive(it.name)} key={it.name}>
-                  <div
-                    className="tile"
-                    style={{ background: "var(--surface-muted)" }}
-                  >
+                  <div className="tile" style={{ background: "var(--surface-muted)" }}>
                     <Logo name={it.name} size={34} />
                   </div>
                   <div>
                     <div className="card-title" style={{ lineHeight: 1.2 }}>
                       {it.name}
                     </div>
-                    {isLive(it.name) ? (
-                      <div className="meta">{it.use}</div>
-                    ) : (
-                      <span className="soon">Coming soon</span>
-                    )}
+                    {isLive(it.name) ? <div className="meta">{it.use}</div> : <span className="soon">Coming soon</span>}
                   </div>
                 </div>
               ))}
@@ -191,29 +148,14 @@ export function Integrations({
       <div className="car-ctl">
         <div className="dots">
           {groups.map((g, n) => (
-            <button
-              key={g.name}
-              aria-label={g.name}
-              aria-current={n === i}
-              onClick={() => go(n)}
-            />
+            <button key={g.name} aria-label={g.name} aria-current={n === i} onClick={() => go(n)} />
           ))}
         </div>
         <div className="arrows">
-          <button
-            className="arrow"
-            aria-label="Previous"
-            disabled={i === 0}
-            onClick={() => go(i - 1)}
-          >
+          <button className="arrow" aria-label="Previous" disabled={i === 0} onClick={() => go(i - 1)}>
             <FA icon={faChevronLeft} />
           </button>
-          <button
-            className="arrow"
-            aria-label="Next"
-            disabled={i === groups.length - 1}
-            onClick={() => go(i + 1)}
-          >
+          <button className="arrow" aria-label="Next" disabled={i === groups.length - 1} onClick={() => go(i + 1)}>
             <FA icon={faChevronRight} />
           </button>
         </div>
@@ -247,12 +189,7 @@ export function AiSwap({ models }: { models: string[] }) {
       <div className="link" />
       <div className="models">
         {models.map((m, n) => (
-          <button
-            key={m}
-            className="model"
-            data-on={n === on}
-            onClick={() => setOn(n)}
-          >
+          <button key={m} className="model" data-on={n === on} onClick={() => setOn(n)}>
             {m}
           </button>
         ))}
@@ -307,8 +244,7 @@ export function CountUp({ to }: { to: number }) {
   const [v, setV] = useState(to);
   useEffect(() => {
     const el = ref.current;
-    if (!el || window.matchMedia("(prefers-reduced-motion: reduce)").matches)
-      return;
+    if (!el || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     setV(0);
     const io = new IntersectionObserver(
       ([e]) => {
@@ -358,22 +294,12 @@ export function MobileCarousel({
   };
   return (
     <>
-      <div
-        ref={ref}
-        className={`mcar-track ${className}`}
-        style={style}
-        onScroll={onScroll}
-      >
+      <div ref={ref} className={`mcar-track ${className}`} style={style} onScroll={onScroll}>
         {children}
       </div>
       <div className="mcar-dots" aria-hidden={false}>
         {Array.from({ length: n }).map((_, k) => (
-          <button
-            key={k}
-            aria-label={`Go to slide ${k + 1}`}
-            aria-current={k === i}
-            onClick={() => go(k)}
-          />
+          <button key={k} aria-label={`Go to slide ${k + 1}`} aria-current={k === i} onClick={() => go(k)} />
         ))}
       </div>
     </>
@@ -388,18 +314,9 @@ export function FaqList({ items }: { items: string[][] }) {
       {items.map(([q, a], n) => {
         const on = open === n;
         return (
-          <div
-            className={`faqx-item tone-${tones[n % tones.length]}`}
-            data-open={on}
-            key={q}
-          >
+          <div className={`faqx-item tone-${tones[n % tones.length]}`} data-open={on} key={q}>
             <h3>
-              <button
-                aria-expanded={on}
-                aria-controls={`faq-${n}`}
-                id={`faq-b-${n}`}
-                onClick={() => setOpen(on ? null : n)}
-              >
+              <button aria-expanded={on} aria-controls={`faq-${n}`} id={`faq-b-${n}`} onClick={() => setOpen(on ? null : n)}>
                 <span className="faqx-n">{String(n + 1).padStart(2, "0")}</span>
                 <span className="faqx-q">{q}</span>
                 <span className="faqx-plus" aria-hidden>
@@ -408,12 +325,7 @@ export function FaqList({ items }: { items: string[][] }) {
                 </span>
               </button>
             </h3>
-            <div
-              className="faqx-a"
-              id={`faq-${n}`}
-              role="region"
-              aria-labelledby={`faq-b-${n}`}
-            >
+            <div className="faqx-a" id={`faq-${n}`} role="region" aria-labelledby={`faq-b-${n}`}>
               <div>
                 <p>{a}</p>
               </div>
@@ -479,9 +391,17 @@ export function NavMenu({
   const [kind, setKind] = useState("demo");
   const wrap = useRef<HTMLDivElement>(null);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const hold = () => { if (timer.current) clearTimeout(timer.current); };
-  const show = () => { hold(); setOpen(true); };
-  const hide = () => { hold(); timer.current = setTimeout(() => setOpen(false), 140); };
+  const hold = () => {
+    if (timer.current) clearTimeout(timer.current);
+  };
+  const show = () => {
+    hold();
+    setOpen(true);
+  };
+  const hide = () => {
+    hold();
+    timer.current = setTimeout(() => setOpen(false), 140);
+  };
   useEffect(() => setOpen(false), [path]);
   useEffect(() => {
     const out = (e: MouseEvent) => {
@@ -499,7 +419,9 @@ export function NavMenu({
   const first = links[0];
   return (
     <nav className="nav" aria-label="Primary">
-      <Link href={first.href} aria-current={path === first.href ? "page" : undefined}>{first.t}</Link>
+      <Link href={first.href} aria-current={path === first.href ? "page" : undefined}>
+        {first.t}
+      </Link>
       <div className="navdrop" ref={wrap} onMouseEnter={show} onMouseLeave={hide}>
         <button aria-expanded={open} aria-haspopup="true" aria-controls="mega" data-active={inFeatures} onClick={() => setOpen(!open)}>
           Features <span className="caret" aria-hidden />
@@ -521,13 +443,21 @@ export function NavMenu({
                         onMouseEnter={() => setKind(f.kind ?? "demo")}
                         onFocus={() => setKind(f.kind ?? "demo")}
                       >
-                        <span className="mega-ico"><FA icon={f.icon} /></span>
+                        <span className="mega-ico">
+                          <FA icon={f.icon} />
+                        </span>
                         <span className="mega-txt">
                           <b>{f.t}</b>
                           <small>{f.d}</small>
-                          <span className="mega-tags">{f.tags?.map((t) => <i key={t}>{t}</i>)}</span>
+                          <span className="mega-tags">
+                            {f.tags?.map((t) => (
+                              <i key={t}>{t}</i>
+                            ))}
+                          </span>
                         </span>
-                        <span className="mega-go" aria-hidden><FA icon={faArrowRight} /></span>
+                        <span className="mega-go" aria-hidden>
+                          <FA icon={faArrowRight} />
+                        </span>
                       </Link>
                     ))}
                   </div>
@@ -538,33 +468,49 @@ export function NavMenu({
                     {mega.workspace.map((w, n) => (
                       <li key={w.t} style={{ ["--d" as string]: `${120 + n * 45}ms` }}>
                         <Link href={w.href}>
-                          <span className="mega-mini"><FA icon={w.icon} /></span>
-                          <span><b>{w.t}</b><small>{w.d}</small></span>
+                          <span className="mega-mini">
+                            <FA icon={w.icon} />
+                          </span>
+                          <span>
+                            <b>{w.t}</b>
+                            <small>{w.d}</small>
+                          </span>
                         </Link>
                       </li>
                     ))}
                   </ul>
                 </div>
                 <div className="mega-promo">
-                  <div className="mega-live"><span className="live-dot" /> {kind === "demo" ? "Live preview" : "How it works"}</div>
+                  <div className="mega-live">
+                    <span className="live-dot" /> {kind === "demo" ? "Live preview" : "How it works"}
+                  </div>
                   <MegaPreview key={kind} kind={kind} />
-                  <Link href="/demo" className="btn btn-primary btn-sm"><FA icon={faPlay} /> Open the product demo</Link>
+                  <Link href="/demo" className="btn btn-primary btn-sm">
+                    <FA icon={faPlay} /> Open the product demo
+                  </Link>
                 </div>
               </div>
               <div className="mega-foot">
                 <div className="mega-explore">
                   {mega.explore.map((x) => (
-                    <Link key={x.href} href={x.href}><FA icon={x.icon} />{x.t}</Link>
+                    <Link key={x.href} href={x.href}>
+                      <FA icon={x.icon} />
+                      {x.t}
+                    </Link>
                   ))}
                 </div>
-                <span className="mega-status"><span className="live-dot" /> Gmail &amp; Google Calendar live · more integrations soon</span>
+                <span className="mega-status">
+                  <span className="live-dot" /> Gmail &amp; Google Calendar live · more integrations soon
+                </span>
               </div>
             </div>
           </>
         )}
       </div>
       {links.slice(1).map((l) => (
-        <Link key={l.href} href={l.href} aria-current={path === l.href ? "page" : undefined}>{l.t}</Link>
+        <Link key={l.href} href={l.href} aria-current={path === l.href ? "page" : undefined}>
+          {l.t}
+        </Link>
       ))}
     </nav>
   );

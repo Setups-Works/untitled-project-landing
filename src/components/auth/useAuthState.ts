@@ -18,9 +18,14 @@ export function useAuthState(): "in" | "out" {
     if (!supabaseConfigured) return;
     const sb = supabaseBrowser();
     let live = true;
-    sb.auth.getSession().then(({ data }) => { if (live) setState(data.session ? "in" : "out"); });
+    sb.auth.getSession().then(({ data }) => {
+      if (live) setState(data.session ? "in" : "out");
+    });
     const { data } = sb.auth.onAuthStateChange((_e, session) => setState(session ? "in" : "out"));
-    return () => { live = false; data.subscription.unsubscribe(); };
+    return () => {
+      live = false;
+      data.subscription.unsubscribe();
+    };
   }, []);
 
   return state;

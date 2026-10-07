@@ -4,13 +4,13 @@
 
 ## Today
 
-| Route | Page | Data |
-| --- | --- | --- |
-| `/admin` | Overview stats and charts | auth admin API, row counts, `profiles` |
-| `/admin/users` | Search/filter/sort/page, CSV, invite, detail drawer | `components/admin/UsersTable.tsx`, actions in `actions.ts` |
-| `/admin/usage` | Item counts per user (ids only) | scans tables (to move into SQL: UNT-35) |
-| `/admin/announcements` | Banners for all users | `announcements` |
-| `/admin/audit` | Admin action log | `admin_audit` |
+| Route                  | Page                                                | Data                                                       |
+| ---------------------- | --------------------------------------------------- | ---------------------------------------------------------- |
+| `/admin`               | Overview stats and charts                           | auth admin API, row counts, `profiles`                     |
+| `/admin/users`         | Search/filter/sort/page, CSV, invite, detail drawer | `components/admin/UsersTable.tsx`, actions in `actions.ts` |
+| `/admin/usage`         | Item counts per user (ids only)                     | scans tables (to move into SQL: UNT-35)                    |
+| `/admin/announcements` | Banners for all users                               | `announcements`                                            |
+| `/admin/audit`         | Admin action log                                    | `admin_audit`                                              |
 
 Add a section: create `app/admin/<section>/page.tsx` and one line in `components/admin/AdminNav.tsx`.
 

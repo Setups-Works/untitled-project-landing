@@ -9,7 +9,10 @@ export default function PrefsSync({ prefs }: { prefs: Prefs }) {
     const el = document.documentElement;
     el.dataset.density = prefs.density;
     el.dataset.motion = prefs.reduceMotion ? "reduce" : "full";
-    return () => { delete el.dataset.density; delete el.dataset.motion; };
+    return () => {
+      delete el.dataset.density;
+      delete el.dataset.motion;
+    };
   }, [prefs]);
   return null;
 }

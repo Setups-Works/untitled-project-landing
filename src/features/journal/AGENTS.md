@@ -7,6 +7,7 @@
 **Backed by:** `journal_entries`, bucket `note-files` (`<uid>/journal/<entry>/…`). **Private to the author** — must stay so even inside shared workspaces.
 
 **Rules**
+
 - `entry_date` is the user's local calendar day (`date`), `created_at` the real timestamp; show times with `fmtTime()` (respects 12/24 h).
 - Week start comes from user preferences (`weekdayIndex`).
 - `?d=YYYY-MM-DD` deep-links a day (used by universal search).

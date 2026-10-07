@@ -11,15 +11,15 @@ Rules for everyone (and every AI agent). The checklist at the bottom is finished
 
 ## Secrets inventory (names only)
 
-| Variable | Where used | Exposure |
-| --- | --- | --- |
-| `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` | browser + server | public by design (RLS protects data); validated in `src/lib/supabase/config.ts` |
-| `SUPABASE_SERVICE_ROLE_KEY` | admin panel, share page, account deletion, server jobs | **server only** |
-| `ADMIN_EMAILS` | bootstrap admins | server only |
-| `GROQ_API_KEY`, `COMPOSIO_API_KEY` | AI / integrations services | server only (Phase 3–4) |
-| `CRON_SECRET` | protects `/api/v1/jobs/*` | server only |
-| `SENTRY_*`, `NEXT_PUBLIC_POSTHOG_KEY` | observability | DSN/keys are public identifiers; auth tokens server only |
-| Stripe keys | billing | server only (Phase 6) |
+| Variable                                                    | Where used                                             | Exposure                                                                        |
+| ----------------------------------------------------------- | ------------------------------------------------------ | ------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` | browser + server                                       | public by design (RLS protects data); validated in `src/lib/supabase/config.ts` |
+| `SUPABASE_SERVICE_ROLE_KEY`                                 | admin panel, share page, account deletion, server jobs | **server only**                                                                 |
+| `ADMIN_EMAILS`                                              | bootstrap admins                                       | server only                                                                     |
+| `GROQ_API_KEY`, `COMPOSIO_API_KEY`                          | AI / integrations services                             | server only (Phase 3–4)                                                         |
+| `CRON_SECRET`                                               | protects `/api/v1/jobs/*`                              | server only                                                                     |
+| `SENTRY_*`, `NEXT_PUBLIC_POSTHOG_KEY`                       | observability                                          | DSN/keys are public identifiers; auth tokens server only                        |
+| Stripe keys                                                 | billing                                                | server only (Phase 6)                                                           |
 
 Rotation: Supabase dashboard → Settings → API / Database; Vercel → Environment Variables; then redeploy **without build cache** (NEXT_PUBLIC values are baked at build). A pasted value containing characters like “…” or spaces breaks every request — the app now detects this and says which variable is wrong.
 

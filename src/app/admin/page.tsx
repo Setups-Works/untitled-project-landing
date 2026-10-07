@@ -1,6 +1,15 @@
 import { FontAwesomeIcon as FA } from "@fortawesome/react-fontawesome";
 import {
-  faUsers, faUserPlus, faEnvelopeCircleCheck, faBolt, faPenToSquare, faListCheck, faBookOpen, faComments, faMessage, faCrown,
+  faUsers,
+  faUserPlus,
+  faEnvelopeCircleCheck,
+  faBolt,
+  faPenToSquare,
+  faListCheck,
+  faBookOpen,
+  faComments,
+  faMessage,
+  faCrown,
 } from "@fortawesome/free-solid-svg-icons";
 import { countRows, isAdmin, listAllUsers, serviceConfigured, supabaseAdmin } from "../../lib/supabase/admin";
 import SetupNotice from "../../components/admin/SetupNotice";
@@ -14,10 +23,15 @@ function Bars({ title, tone, data, note }: { title: string; tone: string; data: 
       <h4>{title}</h4>
       <div className="adm-chart" role="img" aria-label={title}>
         {data.map((d) => (
-          <div key={d.label} title={`${d.label}: ${d.n}`}><i style={{ height: `${(d.n / max) * 100}%` }} /><small>{d.label.split(" ")[0]}</small></div>
+          <div key={d.label} title={`${d.label}: ${d.n}`}>
+            <i style={{ height: `${(d.n / max) * 100}%` }} />
+            <small>{d.label.split(" ")[0]}</small>
+          </div>
         ))}
       </div>
-      <p className="meta" style={{ marginTop: 12 }}>{note}</p>
+      <p className="meta" style={{ marginTop: 12 }}>
+        {note}
+      </p>
     </div>
   );
 }
@@ -25,7 +39,12 @@ function Bars({ title, tone, data, note }: { title: string; tone: string; data: 
 export default async function Page() {
   if (!serviceConfigured) return <SetupNotice />;
   const [users, notes, tasks, journal, chats, messages, profiles] = await Promise.all([
-    listAllUsers(), countRows("notes"), countRows("tasks"), countRows("journal_entries"), countRows("chats"), countRows("chat_messages"),
+    listAllUsers(),
+    countRows("notes"),
+    countRows("tasks"),
+    countRows("journal_entries"),
+    countRows("chats"),
+    countRows("chat_messages"),
     supabaseAdmin().from("profiles").select("plan"),
   ]);
   const now = Date.now();
@@ -39,8 +58,12 @@ export default async function Page() {
     [faEnvelopeCircleCheck, "Email confirmed", users.filter((u) => u.email_confirmed_at).length, "green"],
   ] as const;
   const content = [
-    [faPenToSquare, "Notes", notes, "violet"], [faListCheck, "Tasks", tasks, "blue"], [faBookOpen, "Journal entries", journal, "amber"],
-    [faComments, "Chats", chats, "mint"], [faMessage, "Messages", messages, "clay"], [faCrown, "Pro users", pro, "gold"],
+    [faPenToSquare, "Notes", notes, "violet"],
+    [faListCheck, "Tasks", tasks, "blue"],
+    [faBookOpen, "Journal entries", journal, "amber"],
+    [faComments, "Chats", chats, "mint"],
+    [faMessage, "Messages", messages, "clay"],
+    [faCrown, "Pro users", pro, "gold"],
   ] as const;
 
   const days = Array.from({ length: 14 }, (_, i) => {
@@ -61,26 +84,46 @@ export default async function Page() {
       <div className="dash-head">
         <div>
           <div className="eyebrow">Overview</div>
-          <h1 className="h2" style={{ marginTop: 8 }}>How it’s going</h1>
+          <h1 className="h2" style={{ marginTop: 8 }}>
+            How it’s going
+          </h1>
         </div>
       </div>
       <div className="dash-stats">
         {stats.map(([ic, l, n, t]) => (
           <div className={`dash-stat at-${t}`} key={l}>
-            <span className="mega-ico"><FA icon={ic} /></span><b>{n}</b><small>{l}</small>
+            <span className="mega-ico">
+              <FA icon={ic} />
+            </span>
+            <b>{n}</b>
+            <small>{l}</small>
           </div>
         ))}
       </div>
       <div className="dash-stats adm-six">
         {content.map(([ic, l, n, t]) => (
           <div className={`dash-stat at-${t}`} key={l}>
-            <span className="mega-ico"><FA icon={ic} /></span><b>{n}</b><small>{l}</small>
+            <span className="mega-ico">
+              <FA icon={ic} />
+            </span>
+            <b>{n}</b>
+            <small>{l}</small>
           </div>
         ))}
       </div>
       <div className="dash-grid">
-        <Bars title="Sign-ups, last 14 days" tone="violet" data={days.map((d) => ({ label: d.label, n: d.joined }))} note={`${google} with Google · ${users.length - google} with email`} />
-        <Bars title="Users last seen, per day" tone="blue" data={days.map((d) => ({ label: d.label, n: d.seen }))} note="Counts each user on the day of their latest sign-in." />
+        <Bars
+          title="Sign-ups, last 14 days"
+          tone="violet"
+          data={days.map((d) => ({ label: d.label, n: d.joined }))}
+          note={`${google} with Google · ${users.length - google} with email`}
+        />
+        <Bars
+          title="Users last seen, per day"
+          tone="blue"
+          data={days.map((d) => ({ label: d.label, n: d.seen }))}
+          note="Counts each user on the day of their latest sign-in."
+        />
         <div className="dash-card at-mint">
           <h4>Latest sign-ups</h4>
           {recent.length === 0 && <p className="meta">No users yet.</p>}
@@ -88,18 +131,35 @@ export default async function Page() {
             <blockquote key={u.id} style={{ fontStyle: "normal" }}>
               {(u.user_metadata?.full_name as string) || u.email}
               {isAdmin(u) && <b> · admin</b>}
-              <small>{u.email} · {new Date(u.created_at).toLocaleDateString()}</small>
+              <small>
+                {u.email} · {new Date(u.created_at).toLocaleDateString()}
+              </small>
             </blockquote>
           ))}
         </div>
         <div className="dash-card at-amber">
           <h4>At a glance</h4>
           <dl className="st-facts">
-            <div><dt>Notes per user</dt><dd>{avgNotes}</dd></div>
-            <div><dt>Pro share</dt><dd>{users.length ? Math.round((pro / users.length) * 100) : 0}%</dd></div>
-            <div><dt>Admins</dt><dd>{users.filter(isAdmin).length}</dd></div>
-            <div><dt>Banned</dt><dd>{users.filter((u) => u.banned_until && new Date(u.banned_until) > new Date()).length}</dd></div>
-            <div><dt>Unconfirmed</dt><dd>{users.filter((u) => !u.email_confirmed_at).length}</dd></div>
+            <div>
+              <dt>Notes per user</dt>
+              <dd>{avgNotes}</dd>
+            </div>
+            <div>
+              <dt>Pro share</dt>
+              <dd>{users.length ? Math.round((pro / users.length) * 100) : 0}%</dd>
+            </div>
+            <div>
+              <dt>Admins</dt>
+              <dd>{users.filter(isAdmin).length}</dd>
+            </div>
+            <div>
+              <dt>Banned</dt>
+              <dd>{users.filter((u) => u.banned_until && new Date(u.banned_until) > new Date()).length}</dd>
+            </div>
+            <div>
+              <dt>Unconfirmed</dt>
+              <dd>{users.filter((u) => !u.email_confirmed_at).length}</dd>
+            </div>
           </dl>
         </div>
       </div>

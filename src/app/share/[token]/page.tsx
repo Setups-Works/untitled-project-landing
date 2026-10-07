@@ -22,9 +22,13 @@ export default async function Page({ params }: { params: Promise<{ token: string
   if (!/^[a-f0-9]{32}$/.test(token)) notFound();
   if (!serviceConfigured)
     return (
-      <main className="section"><div className="container" style={{ maxWidth: 640 }}>
-        <div className="panel" data-tone="amber"><p className="body">Shared chats aren’t available until the server is configured.</p></div>
-      </div></main>
+      <main className="section">
+        <div className="container" style={{ maxWidth: 640 }}>
+          <div className="panel" data-tone="amber">
+            <p className="body">Shared chats aren’t available until the server is configured.</p>
+          </div>
+        </div>
+      </main>
     );
 
   // Looked up by exact token on the server, so the database never exposes the list of shared chats.
@@ -46,9 +50,13 @@ export default async function Page({ params }: { params: Promise<{ token: string
     <main className="sh-page">
       <div className="container sh-wrap">
         <header className="sh-head">
-          <span className="sh-badge"><FA icon={faEarthAmericas} /> Shared conversation · read-only</span>
+          <span className="sh-badge">
+            <FA icon={faEarthAmericas} /> Shared conversation · read-only
+          </span>
           <h1>{prettyTitle(chat.title as string)}</h1>
-          <small>{msgs.length} {msgs.length === 1 ? "message" : "messages"} · Shared {since}</small>
+          <small>
+            {msgs.length} {msgs.length === 1 ? "message" : "messages"} · Shared {since}
+          </small>
         </header>
 
         <div className="cx-msgs sh-msgs">
@@ -61,9 +69,19 @@ export default async function Page({ params }: { params: Promise<{ token: string
                   const u = urls.get(a.path);
                   return (
                     <div key={a.path} className="cx-att">
-                      {u && a.type.startsWith("image/") && /* eslint-disable-next-line @next/next/no-img-element */ <img src={u} alt={a.name} />}
+                      {u && a.type.startsWith("image/") && (
+                        /* eslint-disable-next-line @next/next/no-img-element */ <img src={u} alt={a.name} />
+                      )}
                       {u && a.type.startsWith("audio/") && <audio controls src={u} aria-label={a.name} />}
-                      {!a.type.startsWith("image/") && !a.type.startsWith("audio/") && (u ? <a href={u} target="_blank" rel="noopener noreferrer"><FA icon={faPaperclip} /> {a.name}</a> : <span>{a.name}</span>)}
+                      {!a.type.startsWith("image/") &&
+                        !a.type.startsWith("audio/") &&
+                        (u ? (
+                          <a href={u} target="_blank" rel="noopener noreferrer">
+                            <FA icon={faPaperclip} /> {a.name}
+                          </a>
+                        ) : (
+                          <span>{a.name}</span>
+                        ))}
                     </div>
                   );
                 })}

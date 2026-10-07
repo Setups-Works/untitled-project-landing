@@ -10,9 +10,15 @@ export const dynamic = "force-dynamic";
 export default async function Layout({ children }: { children: ReactNode }) {
   if (!supabaseConfigured)
     return (
-      <main className="section"><div className="container" style={{ maxWidth: 640 }}>
-        <div className="panel" data-tone="amber"><p className="body">Supabase isn’t connected yet. Add your keys to <code>.env.local</code> and restart.</p></div>
-      </div></main>
+      <main className="section">
+        <div className="container" style={{ maxWidth: 640 }}>
+          <div className="panel" data-tone="amber">
+            <p className="body">
+              Supabase isn’t connected yet. Add your keys to <code>.env.local</code> and restart.
+            </p>
+          </div>
+        </div>
+      </main>
     );
   const user = await requireAdmin();
   return (

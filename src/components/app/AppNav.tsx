@@ -7,7 +7,16 @@ import PrefsSync from "./PrefsSync";
 import SettingsModal from "./SettingsModal";
 import UniversalSearch, { OPEN_SETTINGS_EVENT } from "./UniversalSearch";
 import { FontAwesomeIcon as FA } from "@fortawesome/react-fontawesome";
-import { faHouse, faBookOpen, faComments, faPenToSquare, faListCheck, faShieldHalved, faRightFromBracket, faGear } from "@fortawesome/free-solid-svg-icons";
+import {
+  faHouse,
+  faBookOpen,
+  faComments,
+  faPenToSquare,
+  faListCheck,
+  faShieldHalved,
+  faRightFromBracket,
+  faGear,
+} from "@fortawesome/free-solid-svg-icons";
 import { supabaseBrowser } from "../../lib/supabase/client";
 
 /** One line per workspace section — pages live in app/dashboard/<section>. */
@@ -19,9 +28,29 @@ const TABS = [
   { href: "/dashboard/todo", t: "To-do", icon: faListCheck },
 ];
 
-type Account = { name: string; email: string; hasPassword: boolean; providers: string[]; createdAt: string; avatarUrl: string | null; lastSignIn: string | null };
+type Account = {
+  name: string;
+  email: string;
+  hasPassword: boolean;
+  providers: string[];
+  createdAt: string;
+  avatarUrl: string | null;
+  lastSignIn: string | null;
+};
 
-export default function AppNav({ name, email, admin, account, prefs }: { name: string; email: string; admin: boolean; account: Account; prefs: Prefs }) {
+export default function AppNav({
+  name,
+  email,
+  admin,
+  account,
+  prefs,
+}: {
+  name: string;
+  email: string;
+  admin: boolean;
+  account: Account;
+  prefs: Prefs;
+}) {
   const path = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -78,10 +107,27 @@ export default function AppNav({ name, email, admin, account, prefs }: { name: s
         </button>
         {open && (
           <div className="ap-menu" role="menu">
-            <div className="ap-menu-id"><b>{name}</b><small>{email}</small></div>
-            <button role="menuitem" onClick={() => { setOpen(false); setSettings(true); }}><FA icon={faGear} /> Settings</button>
-            {admin && <Link role="menuitem" href="/admin" onClick={() => setOpen(false)}><FA icon={faShieldHalved} /> Admin panel</Link>}
-            <button role="menuitem" onClick={signOut}><FA icon={faRightFromBracket} /> Sign out</button>
+            <div className="ap-menu-id">
+              <b>{name}</b>
+              <small>{email}</small>
+            </div>
+            <button
+              role="menuitem"
+              onClick={() => {
+                setOpen(false);
+                setSettings(true);
+              }}
+            >
+              <FA icon={faGear} /> Settings
+            </button>
+            {admin && (
+              <Link role="menuitem" href="/admin" onClick={() => setOpen(false)}>
+                <FA icon={faShieldHalved} /> Admin panel
+              </Link>
+            )}
+            <button role="menuitem" onClick={signOut}>
+              <FA icon={faRightFromBracket} /> Sign out
+            </button>
           </div>
         )}
       </div>

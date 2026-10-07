@@ -2,14 +2,14 @@
 
 **Purpose:** Code usable from both client and server that isn't a feature or a service: Supabase clients, vocabulary/types for integrations, the client-safe AI provider list, auth helpers, pure utilities. **Anything needing a secret belongs in `src/server`.**
 
-| Folder / file | What | Safe in browser? |
-| --- | --- | --- |
-| `supabase/` | `client.ts` (browser), `server.ts` (request-scoped), `config.ts` (validated env), `admin.ts` (**service role**, `server-only`) | `client`, `config` yes · `server`, `admin` no |
-| `composio/` | Integration vocabulary and types | yes |
-| `ai/` | Client-safe list of AI options shown in the composer | yes |
-| `auth/` | Roles/permissions helpers (UNT-58) | yes (pure) |
-| `utils/` | Generic helpers (planned home for `dates`, `validate`, formatting) | yes |
-| `*.ts` (legacy) | `dates`, `prefs`, `notes`, `tasks`, `chat`, `insights`, `workspace` (types), `site`, `logos`, `validate` | yes — feature helpers move to their feature folder over time |
+| Folder / file   | What                                                                                                                           | Safe in browser?                                             |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------ |
+| `supabase/`     | `client.ts` (browser), `server.ts` (request-scoped), `config.ts` (validated env), `admin.ts` (**service role**, `server-only`) | `client`, `config` yes · `server`, `admin` no                |
+| `composio/`     | Integration vocabulary and types                                                                                               | yes                                                          |
+| `ai/`           | Client-safe list of AI options shown in the composer                                                                           | yes                                                          |
+| `auth/`         | Roles/permissions helpers (UNT-58)                                                                                             | yes (pure)                                                   |
+| `utils/`        | Generic helpers (planned home for `dates`, `validate`, formatting)                                                             | yes                                                          |
+| `*.ts` (legacy) | `dates`, `prefs`, `notes`, `tasks`, `chat`, `insights`, `workspace` (types), `site`, `logos`, `validate`                       | yes — feature helpers move to their feature folder over time |
 
 ## Rules
 

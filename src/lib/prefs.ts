@@ -8,7 +8,12 @@ export type Prefs = {
 };
 
 export const DEFAULT_PREFS: Prefs = {
-  timeFormat: "12h", defaultCategory: "Others", weekStart: "mon", density: "comfortable", reduceMotion: false, todoView: "today",
+  timeFormat: "12h",
+  defaultCategory: "Others",
+  weekStart: "mon",
+  density: "comfortable",
+  reduceMotion: false,
+  todoView: "today",
 };
 const KEY = "up_prefs";
 
@@ -17,7 +22,8 @@ export function cleanPrefs(v: unknown, categories: readonly string[]): Prefs {
   const o = (v && typeof v === "object" ? v : {}) as Partial<Prefs>;
   return {
     timeFormat: o.timeFormat === "24h" ? "24h" : "12h",
-    defaultCategory: typeof o.defaultCategory === "string" && categories.includes(o.defaultCategory) ? o.defaultCategory : DEFAULT_PREFS.defaultCategory,
+    defaultCategory:
+      typeof o.defaultCategory === "string" && categories.includes(o.defaultCategory) ? o.defaultCategory : DEFAULT_PREFS.defaultCategory,
     weekStart: o.weekStart === "sun" ? "sun" : "mon",
     density: o.density === "compact" ? "compact" : "comfortable",
     reduceMotion: o.reduceMotion === true,

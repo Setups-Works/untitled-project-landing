@@ -20,7 +20,7 @@ api/v1/
 - Handlers call **services**, never repositories or Supabase directly. No business logic here.
 - Cursor pagination (`?cursor=&limit=`), stable ordering, max limit enforced.
 - Streaming endpoints (AI) use Server-Sent Events and honour `request.signal` for cancellation.
-- Webhook and job routes verify a signature/secret *before* doing anything and are idempotent.
+- Webhook and job routes verify a signature/secret _before_ doing anything and are idempotent.
 - Version in the path. Breaking changes → `/api/v2`, not edits to v1.
 - Never return secrets, other users' data, or raw database errors.
 

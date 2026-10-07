@@ -5,6 +5,7 @@
 **Backed by:** `meetings`, `meeting_transcripts`, bucket `note-files`; processing by the background job in `src/server/jobs` and the AI orchestrator (UNT-88).
 
 **Rules**
+
 - Recording is chunk-uploaded so a reload doesn't lose it; work on iOS Safari and Android Chrome.
 - Processing is asynchronous with a visible status (uploaded → transcribing → summarising → ready/failed) and retry.
 - Link to a calendar event when there is one. Action items → tasks only after user review.

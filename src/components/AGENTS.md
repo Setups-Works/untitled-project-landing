@@ -2,12 +2,12 @@
 
 **Purpose:** UI that is **not tied to one feature**. Feature-specific UI belongs in `src/features/<name>`.
 
-| Subfolder | For | Status |
-| --- | --- | --- |
-| `ui/` | Primitives: Button, Input, Select, Switch, Tabs, Toast, Modal, Menu, Confirm/Prompt dialogs | planned (UNT-50) — today `Modal`, `Menu`, `Confirm` live in `app/` |
-| `layout/` | Page scaffolding: shells, containers, sidebars, headers | planned |
-| `navigation/` | Top bars, tabs, breadcrumbs, command/search triggers | planned (`AppNav` moves here) |
-| `shared/` | Cross-feature composites: empty states, avatars, attachment lists, markdown renderer | planned |
+| Subfolder     | For                                                                                         | Status                                                             |
+| ------------- | ------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
+| `ui/`         | Primitives: Button, Input, Select, Switch, Tabs, Toast, Modal, Menu, Confirm/Prompt dialogs | planned (UNT-50) — today `Modal`, `Menu`, `Confirm` live in `app/` |
+| `layout/`     | Page scaffolding: shells, containers, sidebars, headers                                     | planned                                                            |
+| `navigation/` | Top bars, tabs, breadcrumbs, command/search triggers                                        | planned (`AppNav` moves here)                                      |
+| `shared/`     | Cross-feature composites: empty states, avatars, attachment lists, markdown renderer        | planned                                                            |
 
 ## Today (legacy locations — move only as part of a Jira task)
 

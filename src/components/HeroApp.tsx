@@ -59,27 +59,13 @@ export default function HeroApp() {
   const [mail, setMail] = useState(0);
 
   useEffect(() => {
-    if (!auto || window.matchMedia("(prefers-reduced-motion: reduce)").matches)
-      return;
-    const order: Id[] = [
-      "notes",
-      "todo",
-      "email",
-      "calendar",
-      "meetings",
-      "automations",
-      "journal",
-      "home",
-    ];
-    const t = setInterval(
-      () => setView((v) => order[(order.indexOf(v) + 1) % order.length]),
-      4200,
-    );
+    if (!auto || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const order: Id[] = ["notes", "todo", "email", "calendar", "meetings", "automations", "journal", "home"];
+    const t = setInterval(() => setView((v) => order[(order.indexOf(v) + 1) % order.length]), 4200);
     return () => clearInterval(t);
   }, [auto]);
 
-  const toggleTask = (k: number) =>
-    setTasks((a) => a.map((x, n) => (n === k ? { ...x, d: !x.d } : x)));
+  const toggleTask = (k: number) => setTasks((a) => a.map((x, n) => (n === k ? { ...x, d: !x.d } : x)));
   const done = tasks.filter((x) => x.d).length;
   const Tasks = ({ title }: { title: string }) => (
     <>
@@ -87,12 +73,7 @@ export default function HeroApp() {
         {title} · {done}/{tasks.length}
       </div>
       {tasks.map((x, k) => (
-        <button
-          key={x.t}
-          className={`app-todo${x.d ? " done" : ""}`}
-          onClick={() => toggleTask(k)}
-          aria-pressed={x.d}
-        >
+        <button key={x.t} className={`app-todo${x.d ? " done" : ""}`} onClick={() => toggleTask(k)} aria-pressed={x.d}>
           <b>{x.d && <FA icon={faCheck} />}</b>
           <span>{x.t}</span>
         </button>
@@ -174,8 +155,7 @@ export default function HeroApp() {
               <div className="eyebrow">Journal · Fri 2 Oct</div>
               <h4>A good, busy day</h4>
               <p className="app-p">
-                Shipped the first draft of the launch plan. Stand-up went long,
-                but the pricing discussion unblocked everyone.
+                Shipped the first draft of the launch plan. Stand-up went long, but the pricing discussion unblocked everyone.
               </p>
               <div className="app-line" style={{ width: "92%" }} />
               <div className="app-line" style={{ width: "70%" }} />
@@ -207,11 +187,7 @@ export default function HeroApp() {
             <div className="app-mail">
               <div className="app-mlist">
                 {MAILS.map((m, k) => (
-                  <button
-                    key={m.s}
-                    className={mail === k ? "on" : ""}
-                    onClick={() => setMail(k)}
-                  >
+                  <button key={m.s} className={mail === k ? "on" : ""} onClick={() => setMail(k)}>
                     <b>{m.f}</b>
                     <span>{m.s}</span>
                     <small>{m.a}</small>
@@ -264,8 +240,7 @@ export default function HeroApp() {
           {view === "meetings" && (
             <>
               <div className="eyebrow">
-                <FA icon={faCircleDot} style={{ color: "#c0493a" }} /> Recording
-                · Launch review
+                <FA icon={faCircleDot} style={{ color: "#c0493a" }} /> Recording · Launch review
               </div>
               <h4>Capture, transcribe, follow through</h4>
               <div className="app-wave" aria-hidden>
@@ -297,11 +272,7 @@ export default function HeroApp() {
                     aria-checked={r.on}
                     aria-label={r.t}
                     className="app-sw"
-                    onClick={() =>
-                      setRules((a) =>
-                        a.map((x, n) => (n === k ? { ...x, on: !x.on } : x)),
-                      )
-                    }
+                    onClick={() => setRules((a) => a.map((x, n) => (n === k ? { ...x, on: !x.on } : x)))}
                   >
                     <i />
                   </button>
@@ -329,10 +300,7 @@ export default function HeroApp() {
             </div>
           ))}
           <div className="eyebrow app-sec">Inbox</div>
-          <div
-            className="app-ev"
-            style={{ background: "var(--surface-sunken)" }}
-          >
+          <div className="app-ev" style={{ background: "var(--surface-sunken)" }}>
             Re: Q3 roadmap<small>Gmail · full thread</small>
           </div>
         </aside>

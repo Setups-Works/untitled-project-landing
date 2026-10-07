@@ -37,7 +37,11 @@ export interface AiProvider {
 }
 
 export class AiProviderError extends Error {
-  constructor(message: string, public readonly providerId: string, public readonly code: "not_implemented" | "not_configured" | "rate_limited" | "failed" = "failed") {
+  constructor(
+    message: string,
+    public readonly providerId: string,
+    public readonly code: "not_implemented" | "not_configured" | "rate_limited" | "failed" = "failed",
+  ) {
     super(message);
     this.name = "AiProviderError";
   }

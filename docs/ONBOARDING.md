@@ -4,13 +4,13 @@ For every new developer (and the AI agent you'll work with). About 30 minutes.
 
 ## 1. Get access
 
-| Tool | What you need | Ask |
-| --- | --- | --- |
-| GitHub | Member of the **Setups-Works** org with write access to `untitled-project-landing` | tech lead |
-| Jira | Access to project **UNT** — https://setups-works.atlassian.net/jira/software/projects/UNT/boards | tech lead |
-| Supabase | Invite to the dev project (never the production one by default) | tech lead |
-| Vercel | Read access to deployments / preview logs | tech lead |
-| Secrets | A `.env.local` for **dev** (shared securely, e.g. a password manager — never chat/email/git) | tech lead |
+| Tool     | What you need                                                                                    | Ask       |
+| -------- | ------------------------------------------------------------------------------------------------ | --------- |
+| GitHub   | Member of the **Setups-Works** org with write access to `untitled-project-landing`               | tech lead |
+| Jira     | Access to project **UNT** — https://setups-works.atlassian.net/jira/software/projects/UNT/boards | tech lead |
+| Supabase | Invite to the dev project (never the production one by default)                                  | tech lead |
+| Vercel   | Read access to deployments / preview logs                                                        | tech lead |
+| Secrets  | A `.env.local` for **dev** (shared securely, e.g. a password manager — never chat/email/git)     | tech lead |
 
 ## 2. Run it locally
 
@@ -22,7 +22,7 @@ cp .env.example .env.local     # fill in the dev values you were given
 npm run dev                    # http://localhost:3000
 ```
 
-Sign up with your own email on the local site. To get the admin panel, ask the tech lead to add your email to `ADMIN_EMAILS` in *your* `.env.local` (or to promote you from `/admin/users`).
+Sign up with your own email on the local site. To get the admin panel, ask the tech lead to add your email to `ADMIN_EMAILS` in _your_ `.env.local` (or to promote you from `/admin/users`).
 
 Useful checks before every push:
 
@@ -57,7 +57,7 @@ Open a PR on GitHub with the title **`UNT-123 Short summary`** (a check enforces
 
 ## 6. Working with an AI agent
 
-Start the session with: *"Read AGENTS.md and the AGENTS.md of the folders involved, then implement Jira task UNT-123: <paste the task>. Plan first."* You are responsible for the result — read the diff, run the app, test the acceptance criteria. Don't give agents production secrets or let them run destructive commands unattended. See `docs/TEAM_AND_WORKFLOW.md` §8.
+Start the session with: _"Read AGENTS.md and the AGENTS.md of the folders involved, then implement Jira task UNT-123: <paste the task>. Plan first."_ You are responsible for the result — read the diff, run the app, test the acceptance criteria. Don't give agents production secrets or let them run destructive commands unattended. See `docs/TEAM_AND_WORKFLOW.md` §8.
 
 ## 7. When you're stuck
 

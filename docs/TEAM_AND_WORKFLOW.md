@@ -6,7 +6,7 @@ How three developers (each with AI agents) work in one repository without breaki
 
 - **Tech lead** (one of the three, rotates if needed): owns architecture decisions (`docs/ARCHITECTURE.md` decisions log), approves migrations, merges risky PRs, owns secrets rotation.
 - **Track owners** (A/B/C — see `PHASES.md`): own their folders, review PRs touching them.
-- **AI agents**: work *as* the developer who started them. The developer is accountable for the code; read and understand every diff.
+- **AI agents**: work _as_ the developer who started them. The developer is accountable for the code; read and understand every diff.
 
 ## 2. Branches and commits
 
@@ -34,12 +34,12 @@ How three developers (each with AI agents) work in one repository without breaki
 
 ## 5. Environments
 
-| Env | Where | Database | Notes |
-| --- | --- | --- | --- |
-| Local | `npm run dev` | Shared dev Supabase project, or local via `supabase start` | `.env.local` from `.env.example` |
-| Preview | Vercel preview per PR | Dev/staging Supabase | Env vars scoped to Preview |
-| Staging | Vercel (Phase 6) | Staging Supabase | Release rehearsal |
-| Production | Vercel + Cloudflare | Production Supabase | Migrations applied before deploy |
+| Env        | Where                 | Database                                                   | Notes                            |
+| ---------- | --------------------- | ---------------------------------------------------------- | -------------------------------- |
+| Local      | `npm run dev`         | Shared dev Supabase project, or local via `supabase start` | `.env.local` from `.env.example` |
+| Preview    | Vercel preview per PR | Dev/staging Supabase                                       | Env vars scoped to Preview       |
+| Staging    | Vercel (Phase 6)      | Staging Supabase                                           | Release rehearsal                |
+| Production | Vercel + Cloudflare   | Production Supabase                                        | Migrations applied before deploy |
 
 Never point local or preview at the production database.
 
@@ -66,7 +66,7 @@ Merge to `main` → Vercel deploys production. Until staging exists (UNT-101): c
 
 - Questions about requirements → comment on the Jira task (not in private chat) so the answer is recorded.
 - Architecture changes → propose in a PR editing `docs/ARCHITECTURE.md` decisions log.
-- Blocked? Move the task to *Blocked* (or comment) and link the blocking issue.
+- Blocked? Move the task to _Blocked_ (or comment) and link the blocking issue.
 
 ## 10. Daily rhythm (suggested)
 

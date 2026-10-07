@@ -3,7 +3,15 @@ import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { FontAwesomeIcon as FA } from "@fortawesome/react-fontawesome";
-import { faArrowRight, faCircleCheck, faEnvelopeOpenText, faEye, faEyeSlash, faSpinner, faTriangleExclamation } from "@fortawesome/free-solid-svg-icons";
+import {
+  faArrowRight,
+  faCircleCheck,
+  faEnvelopeOpenText,
+  faEye,
+  faEyeSlash,
+  faSpinner,
+  faTriangleExclamation,
+} from "@fortawesome/free-solid-svg-icons";
 import { supabaseBrowser } from "../../lib/supabase/client";
 import { EMAIL_RE } from "../../lib/validate";
 import { safeNext, supabaseConfigured, supabaseProblem } from "../../lib/supabase/config";
@@ -12,9 +20,27 @@ type Mode = "login" | "signup" | "forgot" | "reset";
 
 const COPY: Record<Mode, { eyebrow: string; title: string; quiet: string; sub: string; cta: string }> = {
   login: { eyebrow: "Welcome back", title: "Log in to your", quiet: "workspace.", sub: "Pick up where you left off.", cta: "Log in" },
-  signup: { eyebrow: "Create your account", title: "Start your", quiet: "workspace.", sub: "One place for notes, mail, calendar and meetings.", cta: "Create account" },
-  forgot: { eyebrow: "Forgot password", title: "Reset your", quiet: "password.", sub: "Enter your email and we’ll send you a reset link.", cta: "Send reset link" },
-  reset: { eyebrow: "New password", title: "Choose a new", quiet: "password.", sub: "Make it at least 8 characters.", cta: "Update password" },
+  signup: {
+    eyebrow: "Create your account",
+    title: "Start your",
+    quiet: "workspace.",
+    sub: "One place for notes, mail, calendar and meetings.",
+    cta: "Create account",
+  },
+  forgot: {
+    eyebrow: "Forgot password",
+    title: "Reset your",
+    quiet: "password.",
+    sub: "Enter your email and we’ll send you a reset link.",
+    cta: "Send reset link",
+  },
+  reset: {
+    eyebrow: "New password",
+    title: "Choose a new",
+    quiet: "password.",
+    sub: "Make it at least 8 characters.",
+    cta: "Update password",
+  },
 };
 
 function strength(p: string) {
@@ -31,7 +57,8 @@ function friendly(msg: string) {
   const m = msg.toLowerCase();
   if (m.includes("invalid login")) return "That email and password don’t match.";
   if (m.includes("email not confirmed")) return "Please confirm your email first — check your inbox.";
-  if (m.includes("already registered") || m.includes("already been registered")) return "An account with this email already exists. Try logging in.";
+  if (m.includes("already registered") || m.includes("already been registered"))
+    return "An account with this email already exists. Try logging in.";
   if (m.includes("rate limit") || m.includes("too many")) return "Too many attempts. Please wait a minute and try again.";
   if (m.includes("password should be")) return "Choose a stronger password (at least 8 characters).";
   return msg;
@@ -84,7 +111,9 @@ export default function AuthForm({ mode }: { mode: Mode }) {
         return;
       }
       if (mode === "forgot") {
-        const { error } = await sb.auth.resetPasswordForEmail(email.trim(), { redirectTo: `${location.origin}/auth/callback?next=/reset-password` });
+        const { error } = await sb.auth.resetPasswordForEmail(email.trim(), {
+          redirectTo: `${location.origin}/auth/callback?next=/reset-password`,
+        });
         if (error) throw error;
         setDone("sent");
         return;
@@ -119,74 +148,181 @@ export default function AuthForm({ mode }: { mode: Mode }) {
   if (done)
     return (
       <div className="au-done" role="status">
-        <span className="au-ico"><FA icon={done === "sent" ? faEnvelopeOpenText : faCircleCheck} /></span>
+        <span className="au-ico">
+          <FA icon={done === "sent" ? faEnvelopeOpenText : faCircleCheck} />
+        </span>
         <h2 className="h3">{done === "sent" ? "Check your email" : "Confirm your email"}</h2>
         <p className="body">
-          {done === "sent"
-            ? <>If an account exists for <b>{email}</b>, a reset link is on its way. It can take a minute.</>
-            : <>We sent a confirmation link to <b>{email}</b>. Open it to activate your account.</>}
+          {done === "sent" ? (
+            <>
+              If an account exists for <b>{email}</b>, a reset link is on its way. It can take a minute.
+            </>
+          ) : (
+            <>
+              We sent a confirmation link to <b>{email}</b>. Open it to activate your account.
+            </>
+          )}
         </p>
-        {done === "confirm" && <button className="btn btn-secondary btn-sm" onClick={resend} disabled={busy}>Resend email</button>}
-        {err && <p className="form-err" role="alert">{err}</p>}
-        <Link className="au-link" href="/login">Back to log in</Link>
+        {done === "confirm" && (
+          <button className="btn btn-secondary btn-sm" onClick={resend} disabled={busy}>
+            Resend email
+          </button>
+        )}
+        {err && (
+          <p className="form-err" role="alert">
+            {err}
+          </p>
+        )}
+        <Link className="au-link" href="/login">
+          Back to log in
+        </Link>
       </div>
     );
 
   return (
     <div className="au-card-in">
       <div className="eyebrow">{c.eyebrow}</div>
-      <h1 className="h2">{c.title} <span className="quiet">{c.quiet}</span></h1>
+      <h1 className="h2">
+        {c.title} <span className="quiet">{c.quiet}</span>
+      </h1>
       <p className="body">{c.sub}</p>
 
       {!supabaseConfigured && (
-        <p className="au-note" role="note"><FA icon={faTriangleExclamation} /> <span>{supabaseProblem ?? <>Supabase isn’t connected yet. Add <code>NEXT_PUBLIC_SUPABASE_URL</code> and <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code> to <code>.env.local</code>.</>}</span></p>
+        <p className="au-note" role="note">
+          <FA icon={faTriangleExclamation} />{" "}
+          <span>
+            {supabaseProblem ?? (
+              <>
+                Supabase isn’t connected yet. Add <code>NEXT_PUBLIC_SUPABASE_URL</code> and <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code> to{" "}
+                <code>.env.local</code>.
+              </>
+            )}
+          </span>
+        </p>
       )}
 
       {(mode === "login" || mode === "signup") && (
         <>
           <button type="button" className="au-google" onClick={google}>
-            <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.5 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.6 5.9c4.4-4.1 7-10.1 7-17.6z"/><path fill="#FBBC05" d="M10.5 28.7A14.5 14.5 0 019.5 24c0-1.6.3-3.2.8-4.7l-7.9-6.1A24 24 0 000 24c0 3.9.9 7.5 2.6 10.8l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.6-5.9c-2.1 1.4-4.9 2.3-8.3 2.3-6.3 0-11.6-4-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/></svg>
+            <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden>
+              <path
+                fill="#EA4335"
+                d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.5 17.7 9.5 24 9.5z"
+              />
+              <path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.6 5.9c4.4-4.1 7-10.1 7-17.6z" />
+              <path
+                fill="#FBBC05"
+                d="M10.5 28.7A14.5 14.5 0 019.5 24c0-1.6.3-3.2.8-4.7l-7.9-6.1A24 24 0 000 24c0 3.9.9 7.5 2.6 10.8l7.9-6.1z"
+              />
+              <path
+                fill="#34A853"
+                d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.6-5.9c-2.1 1.4-4.9 2.3-8.3 2.3-6.3 0-11.6-4-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z"
+              />
+            </svg>
             Continue with Google
           </button>
-          <div className="au-or"><span>or</span></div>
+          <div className="au-or">
+            <span>or</span>
+          </div>
         </>
       )}
 
       <form className="wl-form au-form" onSubmit={submit} noValidate>
         {mode === "signup" && (
-          <label><span>Full name</span><input name="name" autoComplete="name" maxLength={80} placeholder="Ada Lovelace" /></label>
+          <label>
+            <span>Full name</span>
+            <input name="name" autoComplete="name" maxLength={80} placeholder="Ada Lovelace" />
+          </label>
         )}
         {mode !== "reset" && (
-          <label><span>Email</span><input type="email" autoComplete="email" maxLength={254} value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" /></label>
+          <label>
+            <span>Email</span>
+            <input
+              type="email"
+              autoComplete="email"
+              maxLength={254}
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+            />
+          </label>
         )}
         {mode !== "forgot" && (
           <label>
             <span className="au-pwrow">
               {mode === "reset" ? "New password" : "Password"}
-              {mode === "login" && <Link href="/forgot-password" className="au-link">Forgot password?</Link>}
+              {mode === "login" && (
+                <Link href="/forgot-password" className="au-link">
+                  Forgot password?
+                </Link>
+              )}
             </span>
             <span className="au-pw">
-              <input type={show ? "text" : "password"} autoComplete={mode === "login" ? "current-password" : "new-password"} value={pw} onChange={(e) => setPw(e.target.value)} placeholder={mode === "login" ? "Your password" : "At least 8 characters"} />
-              <button type="button" aria-label={show ? "Hide password" : "Show password"} onClick={() => setShow(!show)}><FA icon={show ? faEyeSlash : faEye} /></button>
+              <input
+                type={show ? "text" : "password"}
+                autoComplete={mode === "login" ? "current-password" : "new-password"}
+                value={pw}
+                onChange={(e) => setPw(e.target.value)}
+                placeholder={mode === "login" ? "Your password" : "At least 8 characters"}
+              />
+              <button type="button" aria-label={show ? "Hide password" : "Show password"} onClick={() => setShow(!show)}>
+                <FA icon={show ? faEyeSlash : faEye} />
+              </button>
             </span>
             {(mode === "signup" || mode === "reset") && pw && (
               <span className="au-meter" data-s={score}>
-                <i /><i /><i /><i />
+                <i />
+                <i />
+                <i />
+                <i />
                 <small>{LABELS[score]}</small>
               </span>
             )}
           </label>
         )}
-        {err && <p className="form-err" role="alert">{err}</p>}
+        {err && (
+          <p className="form-err" role="alert">
+            {err}
+          </p>
+        )}
         <button className="btn btn-primary" disabled={busy}>
-          {busy ? <><FA icon={faSpinner} spin /> Please wait…</> : <>{c.cta} <FA icon={faArrowRight} /></>}
+          {busy ? (
+            <>
+              <FA icon={faSpinner} spin /> Please wait…
+            </>
+          ) : (
+            <>
+              {c.cta} <FA icon={faArrowRight} />
+            </>
+          )}
         </button>
       </form>
 
       <p className="au-switch">
-        {mode === "login" && <>New here? <Link className="au-link" href="/signup">Create an account</Link></>}
-        {mode === "signup" && <>Already have an account? <Link className="au-link" href="/login">Log in</Link></>}
-        {(mode === "forgot" || mode === "reset") && <>Remembered it? <Link className="au-link" href="/login">Back to log in</Link></>}
+        {mode === "login" && (
+          <>
+            New here?{" "}
+            <Link className="au-link" href="/signup">
+              Create an account
+            </Link>
+          </>
+        )}
+        {mode === "signup" && (
+          <>
+            Already have an account?{" "}
+            <Link className="au-link" href="/login">
+              Log in
+            </Link>
+          </>
+        )}
+        {(mode === "forgot" || mode === "reset") && (
+          <>
+            Remembered it?{" "}
+            <Link className="au-link" href="/login">
+              Back to log in
+            </Link>
+          </>
+        )}
       </p>
     </div>
   );

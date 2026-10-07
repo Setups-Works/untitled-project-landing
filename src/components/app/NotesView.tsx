@@ -3,27 +3,41 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FontAwesomeIcon as FA } from "@fortawesome/react-fontawesome";
 import {
-  faCheck, faEllipsis, faGripVertical, faImage, faMagnifyingGlass, faMicrophone, faPaperclip, faPlus, faStop, faThumbtack, faTrash, faWaveSquare,
+  faCheck,
+  faEllipsis,
+  faGripVertical,
+  faImage,
+  faMagnifyingGlass,
+  faMicrophone,
+  faPaperclip,
+  faPlus,
+  faStop,
+  faThumbtack,
+  faTrash,
+  faWaveSquare,
 } from "@fortawesome/free-solid-svg-icons";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabaseBrowser } from "../../lib/supabase/client";
+import { qk } from "../../lib/query/keys";
+import { useRealtimeInvalidate } from "../../hooks/useRealtimeInvalidate";
 import type { Attachment, Note } from "../../lib/workspace";
 import { CATEGORIES, NOTE_COLS, displayTitle, editedLabel, safeName, toneOf } from "../../lib/notes";
 import Markdown from "./Markdown";
-import Menu from "./Menu";
-import { useConfirm } from "./Confirm";
+import Menu, { MenuCheckItem, MenuItem, MenuLabel, MenuRadioGroup, MenuRadioItem, MenuSeparator } from "../ui/Menu";
+import { useConfirm } from "../ui/Confirm";
 import { readPrefs } from "../../lib/prefs";
 import NoteEditor from "./NoteEditor";
 
 type Filter = "all" | "pinned" | "voice";
 type Sort = "manual" | "edited" | "title";
 const MAX_BYTES = 10 * 1024 * 1024;
+const EMPTY_NOTES: Note[] = []; // stable reference while the query loads
 
 export default function NotesView() {
   const sb = useMemo(supabaseBrowser, []);
   const router = useRouter();
   const params = useSearchParams();
-  const [notes, setNotes] = useState<Note[]>([]);
-  const [ready, setReady] = useState(false);
+  const qc = useQueryClient();
   const [err, setErr] = useState("");
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<Filter>("all");
@@ -47,31 +61,56 @@ export default function NotesView() {
   const open = useCallback((id: string) => router.push(`/dashboard/notes?note=${id}`, { scroll: false }), [router]);
   const close = useCallback(() => router.push("/dashboard/notes", { scroll: false }), [router]);
 
-  const load = useCallback(async () => {
-    const [{ data, error }, u] = await Promise.all([
-      sb.from("notes").select(NOTE_COLS).order("sort_order", { ascending: false }).limit(1000),
-      sb.auth.getUser(),
-    ]);
-    uid.current = u.data.user?.id ?? "";
-    setErr(error ? "Couldn’t load your notes." : "");
-    setNotes((data as Note[]) ?? []);
-    setReady(true);
+  // The notes list is a cached query. Local changes go through the cache (`setNotes`), and `load()` marks it stale so it refetches.
+  const notesQ = useQuery({
+    queryKey: qk.notes.all,
+    queryFn: async () => {
+      const { data, error } = await sb.from("notes").select(NOTE_COLS).order("sort_order", { ascending: false }).limit(1000);
+      if (error) throw error;
+      return data as Note[];
+    },
+  });
+  const notes = notesQ.data ?? EMPTY_NOTES;
+  const ready = !notesQ.isPending;
+  const setNotes = useCallback((fn: (all: Note[]) => Note[]) => qc.setQueryData<Note[]>(qk.notes.all, (old) => fn(old ?? [])), [qc]);
+  const load = useCallback(() => qc.invalidateQueries({ queryKey: qk.notes.all }), [qc]);
+  useRealtimeInvalidate("notes", [qk.notes.all]);
+  useEffect(() => {
+    setErr(notesQ.isError ? "Couldn’t load your notes." : "");
+  }, [notesQ.isError]);
+  // The user id is needed for storage paths; fetch it separately so it's set even when the list comes straight from the cache.
+  useEffect(() => {
+    sb.auth.getUser().then(({ data }) => {
+      uid.current = data.user?.id ?? "";
+    });
   }, [sb]);
-  useEffect(() => { load(); }, [load]);
 
   /* ---- create / change ---- */
-  const create = useCallback(async (init: Partial<Pick<Note, "title" | "body" | "kind" | "category">> = {}) => {
-    const { data, error } = await sb.from("notes").insert({ title: "", body: "", category: readPrefs().defaultCategory, ...init }).select(NOTE_COLS).single();
-    if (error || !data) { setErr("Couldn’t create a note."); return null; }
-    setNotes((all) => [data as Note, ...all]);
-    return data as Note;
-  }, [sb]);
+  const create = useCallback(
+    async (init: Partial<Pick<Note, "title" | "body" | "kind" | "category">> = {}) => {
+      const { data, error } = await sb
+        .from("notes")
+        .insert({ title: "", body: "", category: readPrefs().defaultCategory, ...init })
+        .select(NOTE_COLS)
+        .single();
+      if (error || !data) {
+        setErr("Couldn’t create a note.");
+        return null;
+      }
+      setNotes((all) => [data as Note, ...all]);
+      return data as Note;
+    },
+    [sb],
+  );
 
   useEffect(() => {
     if (!ready || creating.current) return;
     if (openId === "new" || params.get("new")) {
       creating.current = true;
-      create().then((n) => { creating.current = false; router.replace(n ? `/dashboard/notes?note=${n.id}` : "/dashboard/notes"); });
+      create().then((n) => {
+        creating.current = false;
+        router.replace(n ? `/dashboard/notes?note=${n.id}` : "/dashboard/notes");
+      });
     }
   }, [ready, openId, params, create, router]);
 
@@ -79,14 +118,23 @@ export default function NotesView() {
   async function patch(id: string, p: Partial<Note>) {
     patchLocal(id, p);
     const { error } = await sb.from("notes").update(p).eq("id", id);
-    if (error) { setErr("Couldn’t save that change."); load(); }
+    if (error) {
+      setErr("Couldn’t save that change.");
+      load();
+    }
   }
 
   async function upload(noteId: string, file: Blob, name: string, type: string): Promise<Attachment | null> {
-    if (file.size > MAX_BYTES) { setErr("Files can be up to 10 MB."); return null; }
+    if (file.size > MAX_BYTES) {
+      setErr("Files can be up to 10 MB.");
+      return null;
+    }
     const path = `${uid.current}/${noteId}/${crypto.randomUUID()}-${safeName(name)}`;
     const { error } = await sb.storage.from("note-files").upload(path, file, { contentType: type || "application/octet-stream" });
-    if (error) { setErr("Couldn’t upload that file."); return null; }
+    if (error) {
+      setErr("Couldn’t upload that file.");
+      return null;
+    }
     return { path, name, type: type || "application/octet-stream", size: file.size };
   }
   async function attach(noteId: string, file: File) {
@@ -137,7 +185,12 @@ export default function NotesView() {
     const n = await create({ title: f.name.replace(/\.[^.]+$/, "").slice(0, 120) });
     if (!n) return;
     const a = await upload(n.id, f, f.name, f.type);
-    if (a) patchLocal(n.id, { attachments: [a] }), await sb.from("notes").update({ attachments: [a] }).eq("id", n.id);
+    if (a)
+      (patchLocal(n.id, { attachments: [a] }),
+        await sb
+          .from("notes")
+          .update({ attachments: [a] })
+          .eq("id", n.id));
     open(n.id);
   }
 
@@ -164,7 +217,13 @@ export default function NotesView() {
       const n = await create({ title: "Voice note", kind: "voice", category: "Others" });
       if (!n) return;
       const a = await upload(n.id, blob, `voice-note.${type.includes("mp4") ? "m4a" : "webm"}`, type);
-      if (a) { patchLocal(n.id, { attachments: [a] }); await sb.from("notes").update({ attachments: [a] }).eq("id", n.id); }
+      if (a) {
+        patchLocal(n.id, { attachments: [a] });
+        await sb
+          .from("notes")
+          .update({ attachments: [a] })
+          .eq("id", n.id);
+      }
       open(n.id);
     };
     mr.current = rec;
@@ -172,13 +231,21 @@ export default function NotesView() {
     setRecording(true);
     rec.start();
   }
-  useEffect(() => () => { if (mr.current?.state === "recording") mr.current.stop(); }, []);
+  useEffect(
+    () => () => {
+      if (mr.current?.state === "recording") mr.current.stop();
+    },
+    [],
+  );
 
   /* ---- shortcuts ---- */
   useEffect(() => {
     const k = (e: KeyboardEvent) => {
       if (!(e.metaKey || e.ctrlKey)) return;
-      if (e.key.toLowerCase() === "e") { e.preventDefault(); capture(true); }
+      if (e.key.toLowerCase() === "e") {
+        e.preventDefault();
+        capture(true);
+      }
     };
     document.addEventListener("keydown", k);
     return () => document.removeEventListener("keydown", k);
@@ -187,11 +254,13 @@ export default function NotesView() {
   /* ---- list ---- */
   const shown = useMemo(() => {
     const t = q.trim().toLowerCase();
-    const list = notes.filter((n) =>
-      (filter === "all" || (filter === "pinned" ? n.pinned : n.kind === "voice")) &&
-      (!cats.length || cats.includes(n.category)) &&
-      (!withFiles || n.attachments.length > 0) &&
-      (!t || `${n.title} ${n.body} ${n.category}`.toLowerCase().includes(t)));
+    const list = notes.filter(
+      (n) =>
+        (filter === "all" || (filter === "pinned" ? n.pinned : n.kind === "voice")) &&
+        (!cats.length || cats.includes(n.category)) &&
+        (!withFiles || n.attachments.length > 0) &&
+        (!t || `${n.title} ${n.body} ${n.category}`.toLowerCase().includes(t)),
+    );
     const by: Record<Sort, (a: Note, b: Note) => number> = {
       manual: (a, b) => b.sort_order - a.sort_order,
       edited: (a, b) => +new Date(b.updated_at) - +new Date(a.updated_at),
@@ -207,7 +276,8 @@ export default function NotesView() {
     if (!id || id === targetId) return;
     const order = shown.filter((n) => n.id !== id);
     const at = order.findIndex((n) => n.id === targetId);
-    const above = order[at - 1], below = order[at];
+    const above = order[at - 1],
+      below = order[at];
     // Land just before the card it was dropped on.
     const so = above && below ? (above.sort_order + below.sort_order) / 2 : below ? below.sort_order + 1000 : 0;
     patch(id, { sort_order: so });
@@ -215,51 +285,88 @@ export default function NotesView() {
 
   const current = openId && openId !== "new" ? notes.find((n) => n.id === openId) : undefined;
   const filtersOn = cats.length + (withFiles ? 1 : 0);
-  const pills: [Filter, string][] = [["all", "All notes"], ["pinned", "Pinned"], ["voice", "Voice"]];
+  const pills: [Filter, string][] = [
+    ["all", "All notes"],
+    ["pinned", "Pinned"],
+    ["voice", "Voice"],
+  ];
 
   return (
     <div className="nt" data-open={!!current}>
       {dialog}
       <div className="nt-head">
-        <h1 className="h2">Notes <sup>{notes.length}</sup></h1>
+        <h1 className="h2">
+          Notes <sup>{notes.length}</sup>
+        </h1>
         <div className="nt-tools">
           <label className="nt-search">
             <FA icon={faMagnifyingGlass} />
             <input ref={search} value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search notes" aria-label="Search notes" />
           </label>
           <div className="nt-pills" role="group" aria-label="Filter notes">
-            {pills.map(([k, l]) => <button key={k} data-on={filter === k} aria-pressed={filter === k} onClick={() => setFilter(k)}>{l}</button>)}
-            <Menu label="More filters" trigger={<>More filters{filtersOn > 0 && <b className="nt-badge">{filtersOn}</b>}</>} className="nt-pill-menu">
-              {() => (
-                <>
-                  <div className="ap-pop-h">Category</div>
-                  {CATEGORIES.map((c) => (
-                    <button key={c} role="menuitemcheckbox" aria-checked={cats.includes(c)} onClick={() => setCats((x) => (x.includes(c) ? x.filter((y) => y !== c) : [...x, c]))}>
-                      <span>{c}</span>{cats.includes(c) && <FA icon={faCheck} />}
-                    </button>
-                  ))}
-                  <hr />
-                  <button role="menuitemcheckbox" aria-checked={withFiles} onClick={() => setWithFiles(!withFiles)}><span>With attachments</span>{withFiles && <FA icon={faCheck} />}</button>
-                  {filtersOn > 0 && <button role="menuitem" onClick={() => { setCats([]); setWithFiles(false); }}>Clear filters</button>}
-                </>
+            {pills.map(([k, l]) => (
+              <button key={k} data-on={filter === k} aria-pressed={filter === k} onClick={() => setFilter(k)}>
+                {l}
+              </button>
+            ))}
+            <Menu
+              label="More filters"
+              trigger={<>More filters{filtersOn > 0 && <b className="nt-badge">{filtersOn}</b>}</>}
+              className="nt-pill-menu"
+            >
+              <MenuLabel>Category</MenuLabel>
+              {CATEGORIES.map((c) => (
+                <MenuCheckItem
+                  key={c}
+                  checked={cats.includes(c)}
+                  onSelect={() => setCats((x) => (x.includes(c) ? x.filter((y) => y !== c) : [...x, c]))}
+                >
+                  {c}
+                </MenuCheckItem>
+              ))}
+              <MenuSeparator />
+              <MenuCheckItem checked={withFiles} onSelect={() => setWithFiles(!withFiles)}>
+                With attachments
+              </MenuCheckItem>
+              {filtersOn > 0 && (
+                <MenuItem
+                  onSelect={() => {
+                    setCats([]);
+                    setWithFiles(false);
+                  }}
+                >
+                  Clear filters
+                </MenuItem>
               )}
             </Menu>
           </div>
           <Menu label="Sort and options" trigger={<FA icon={faEllipsis} />} className="nt-dots">
-            {(close2) => (
-              <>
-                <div className="ap-pop-h">Sort by</div>
-                {([["manual", "Manual (drag to reorder)"], ["edited", "Last edited"], ["title", "Title A–Z"]] as [Sort, string][]).map(([k, l]) => (
-                  <button key={k} role="menuitemradio" aria-checked={sort === k} onClick={() => { setSort(k); close2(); }}><span>{l}</span>{sort === k && <FA icon={faCheck} />}</button>
-                ))}
-              </>
-            )}
+            <MenuLabel>Sort by</MenuLabel>
+            <MenuRadioGroup value={sort} onValueChange={(v) => setSort(v as Sort)}>
+              {(
+                [
+                  ["manual", "Manual (drag to reorder)"],
+                  ["edited", "Last edited"],
+                  ["title", "Title A–Z"],
+                ] as [Sort, string][]
+              ).map(([k, l]) => (
+                <MenuRadioItem key={k} value={k}>
+                  {l}
+                </MenuRadioItem>
+              ))}
+            </MenuRadioGroup>
           </Menu>
-          <button className="btn btn-secondary btn-sm" onClick={() => capture(true)}><FA icon={faPlus} /> New note</button>
+          <button className="btn btn-secondary btn-sm" onClick={() => capture(true)}>
+            <FA icon={faPlus} /> New note
+          </button>
         </div>
       </div>
 
-      {err && <p className="form-err" role="alert">{err}</p>}
+      {err && (
+        <p className="form-err" role="alert">
+          {err}
+        </p>
+      )}
 
       <div className="nt-wrap">
         <div className="nt-cards" role="list">
@@ -274,24 +381,67 @@ export default function NotesView() {
               data-drag={dragId === n.id}
               draggable={sort === "manual"}
               onDragStart={() => setDragId(n.id)}
-              onDragEnd={() => { setDragId(null); setOverId(null); }}
-              onDragOver={(e) => { if (dragId) { e.preventDefault(); setOverId(n.id); } }}
-              onDrop={(e) => { e.preventDefault(); drop(n.id); }}
+              onDragEnd={() => {
+                setDragId(null);
+                setOverId(null);
+              }}
+              onDragOver={(e) => {
+                if (dragId) {
+                  e.preventDefault();
+                  setOverId(n.id);
+                }
+              }}
+              onDrop={(e) => {
+                e.preventDefault();
+                drop(n.id);
+              }}
               onClick={() => open(n.id)}
-              onKeyDown={(e) => { if (e.key === "Enter" && e.target === e.currentTarget) open(n.id); }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && e.target === e.currentTarget) open(n.id);
+              }}
             >
-              <div className="nt-grip" aria-hidden>{sort === "manual" ? <FA icon={faGripVertical} /> : null}{n.pinned && <FA icon={faThumbtack} className="nt-pin" />}
-                <button type="button" className="nt-del" aria-label={`Delete ${displayTitle(n)}`} title="Delete" onClick={(e) => { e.stopPropagation(); remove(n.id); }}><FA icon={faTrash} /></button>
+              <div className="nt-grip" aria-hidden>
+                {sort === "manual" ? <FA icon={faGripVertical} /> : null}
+                {n.pinned && <FA icon={faThumbtack} className="nt-pin" />}
+                <button
+                  type="button"
+                  className="nt-del"
+                  aria-label={`Delete ${displayTitle(n)}`}
+                  title="Delete"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    remove(n.id);
+                  }}
+                >
+                  <FA icon={faTrash} />
+                </button>
               </div>
               <h3>{displayTitle(n)}</h3>
-              {n.kind === "voice" && <span className="nt-voice"><FA icon={faWaveSquare} /> Voice note</span>}
-              {n.body.trim() && <div className="nt-prev"><Markdown text={n.body} /></div>}
-              {n.attachments.length > 0 && n.kind !== "voice" && <span className="nt-voice"><FA icon={faPaperclip} /> {n.attachments.length} attached</span>}
-              <footer><span>{n.category}</span><span>Edited {editedLabel(n.updated_at)}</span></footer>
+              {n.kind === "voice" && (
+                <span className="nt-voice">
+                  <FA icon={faWaveSquare} /> Voice note
+                </span>
+              )}
+              {n.body.trim() && (
+                <div className="nt-prev">
+                  <Markdown text={n.body} />
+                </div>
+              )}
+              {n.attachments.length > 0 && n.kind !== "voice" && (
+                <span className="nt-voice">
+                  <FA icon={faPaperclip} /> {n.attachments.length} attached
+                </span>
+              )}
+              <footer>
+                <span>{n.category}</span>
+                <span>Edited {editedLabel(n.updated_at)}</span>
+              </footer>
             </article>
           ))}
           {ready && shown.length === 0 && (
-            <p className="ap-none nt-empty">{notes.length ? "No notes match those filters." : "No notes yet — jot your first one below."}</p>
+            <p className="ap-none nt-empty">
+              {notes.length ? "No notes match those filters." : "No notes yet — jot your first one below."}
+            </p>
           )}
         </div>
 
@@ -312,13 +462,52 @@ export default function NotesView() {
         )}
       </div>
 
-      <form className="nt-cap" data-wide={!current} onSubmit={(e) => { e.preventDefault(); capture(); }}>
-        <input ref={capRef} value={cap} onChange={(e) => setCap(e.target.value)} maxLength={5000} placeholder="Write a new note…" aria-label="Write a new note" />
-        {recording && <span className="nt-rec" role="status">● {Math.floor(secs / 60)}:{String(secs % 60).padStart(2, "0")}</span>}
-        <button type="button" className="ne-btn" data-on={recording} aria-label={recording ? "Stop recording" : "Record a voice note"} onClick={toggleRecord}><FA icon={recording ? faStop : faMicrophone} /></button>
-        <button type="button" className="ne-btn" aria-label="Add an image or file" onClick={() => img.current?.click()}><FA icon={faImage} /></button>
-        <button type="button" className="ne-btn" aria-label="Open in editor" title="Open in editor" onClick={() => capture(true)}><kbd>⌘E</kbd></button>
-        <input ref={img} type="file" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) captureFile(f); e.target.value = ""; }} />
+      <form
+        className="nt-cap"
+        data-wide={!current}
+        onSubmit={(e) => {
+          e.preventDefault();
+          capture();
+        }}
+      >
+        <input
+          ref={capRef}
+          value={cap}
+          onChange={(e) => setCap(e.target.value)}
+          maxLength={5000}
+          placeholder="Write a new note…"
+          aria-label="Write a new note"
+        />
+        {recording && (
+          <span className="nt-rec" role="status">
+            ● {Math.floor(secs / 60)}:{String(secs % 60).padStart(2, "0")}
+          </span>
+        )}
+        <button
+          type="button"
+          className="ne-btn"
+          data-on={recording}
+          aria-label={recording ? "Stop recording" : "Record a voice note"}
+          onClick={toggleRecord}
+        >
+          <FA icon={recording ? faStop : faMicrophone} />
+        </button>
+        <button type="button" className="ne-btn" aria-label="Add an image or file" onClick={() => img.current?.click()}>
+          <FA icon={faImage} />
+        </button>
+        <button type="button" className="ne-btn" aria-label="Open in editor" title="Open in editor" onClick={() => capture(true)}>
+          <kbd>⌘E</kbd>
+        </button>
+        <input
+          ref={img}
+          type="file"
+          hidden
+          onChange={(e) => {
+            const f = e.target.files?.[0];
+            if (f) captureFile(f);
+            e.target.value = "";
+          }}
+        />
       </form>
     </div>
   );

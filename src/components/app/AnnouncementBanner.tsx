@@ -11,7 +11,11 @@ const ICON = { info: faBullhorn, success: faCircleCheck, warning: faTriangleExcl
 export default function AnnouncementBanner({ items }: { items: Item[] }) {
   const [gone, setGone] = useState<string[] | null>(null);
   useEffect(() => {
-    try { setGone(JSON.parse(window.localStorage.getItem(KEY) || "[]")); } catch { setGone([]); }
+    try {
+      setGone(JSON.parse(window.localStorage.getItem(KEY) || "[]"));
+    } catch {
+      setGone([]);
+    }
   }, []);
   if (gone === null) return null;
   const shown = items.filter((i) => !gone.includes(i.id));
@@ -20,7 +24,11 @@ export default function AnnouncementBanner({ items }: { items: Item[] }) {
   const dismiss = (id: string) => {
     const next = [...gone, id].slice(-50);
     setGone(next);
-    try { window.localStorage.setItem(KEY, JSON.stringify(next)); } catch { /* storage unavailable */ }
+    try {
+      window.localStorage.setItem(KEY, JSON.stringify(next));
+    } catch {
+      /* storage unavailable */
+    }
   };
   return (
     <div className="ann-bar" role="region" aria-label="Announcements">
@@ -28,7 +36,9 @@ export default function AnnouncementBanner({ items }: { items: Item[] }) {
         <div key={a.id} className="ann-item" data-tone={a.tone} role="status">
           <FA icon={ICON[a.tone as keyof typeof ICON] ?? faBullhorn} />
           <p>{a.message}</p>
-          <button aria-label="Dismiss announcement" onClick={() => dismiss(a.id)}><FA icon={faXmark} /></button>
+          <button aria-label="Dismiss announcement" onClick={() => dismiss(a.id)}>
+            <FA icon={faXmark} />
+          </button>
         </div>
       ))}
     </div>

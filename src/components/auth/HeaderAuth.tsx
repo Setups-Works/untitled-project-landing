@@ -6,11 +6,19 @@ import { useAuthState } from "./useAuthState";
 export default function HeaderAuth() {
   const state = useAuthState();
   if (state === "in")
-    return <Link href="/dashboard" className="btn btn-primary btn-sm hide-sm hd-cta">Dashboard</Link>;
+    return (
+      <Link href="/dashboard" className="btn btn-primary btn-sm hide-sm hd-cta">
+        Dashboard
+      </Link>
+    );
   return (
     <>
-      <Link href="/login" className="nav-login hide-sm">Log in</Link>
-      <Link href="/signup" className="btn btn-primary btn-sm hide-sm hd-cta">Get started</Link>
+      <Link href="/login" className="nav-login hide-sm">
+        Log in
+      </Link>
+      <Link href="/signup" className="btn btn-primary btn-sm hide-sm hd-cta">
+        Get started
+      </Link>
     </>
   );
 }

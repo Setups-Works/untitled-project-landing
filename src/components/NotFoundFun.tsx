@@ -4,7 +4,17 @@ import AuthLink from "./auth/AuthLink";
 import { useEffect, useState } from "react";
 import { FontAwesomeIcon as FA } from "@fortawesome/react-fontawesome";
 import {
-  faArrowRight, faBookOpen, faCalendarDays, faEnvelope, faHouse, faListCheck, faMagnifyingGlass, faMicrophone, faPenToSquare, faPlay, faWandMagicSparkles,
+  faArrowRight,
+  faBookOpen,
+  faCalendarDays,
+  faEnvelope,
+  faHouse,
+  faListCheck,
+  faMagnifyingGlass,
+  faMicrophone,
+  faPenToSquare,
+  faPlay,
+  faWandMagicSparkles,
 } from "@fortawesome/free-solid-svg-icons";
 
 const QUIPS = [
@@ -18,13 +28,21 @@ const QUIPS = [
 ];
 
 const POKES = [
-  "Ouch.", "Rude.", "It’s not a button.", "Stop poking the 404.", "We have feelings. Mostly sarcasm, though.",
+  "Ouch.",
+  "Rude.",
+  "It’s not a button.",
+  "Stop poking the 404.",
+  "We have feelings. Mostly sarcasm, though.",
   "Okay fine, you win. Here’s a confetti. 🎉 (Imaginary. Budget cuts.)",
 ];
 
 const FLOATERS = [
-  [faEnvelope, "6%", "18s", "-2s", "green"], [faPenToSquare, "18%", "22s", "-9s", "blue"], [faCalendarDays, "32%", "20s", "-5s", "amber"],
-  [faListCheck, "48%", "24s", "-13s", "violet"], [faBookOpen, "63%", "19s", "-7s", "clay"], [faMicrophone, "78%", "23s", "-1s", "green"],
+  [faEnvelope, "6%", "18s", "-2s", "green"],
+  [faPenToSquare, "18%", "22s", "-9s", "blue"],
+  [faCalendarDays, "32%", "20s", "-5s", "amber"],
+  [faListCheck, "48%", "24s", "-13s", "violet"],
+  [faBookOpen, "63%", "19s", "-7s", "clay"],
+  [faMicrophone, "78%", "23s", "-1s", "green"],
   [faWandMagicSparkles, "90%", "21s", "-11s", "violet"],
 ] as const;
 
@@ -57,13 +75,21 @@ export default function NotFoundFun() {
 
         <button className="nf-num" onClick={() => setPokes((p) => p + 1)} aria-label="The number 404. Please stop poking it.">
           <span>4</span>
-          <span className="nf-zero" data-p={pokes % 2}><FA icon={faMagnifyingGlass} /></span>
+          <span className="nf-zero" data-p={pokes % 2}>
+            <FA icon={faMagnifyingGlass} />
+          </span>
           <span>4</span>
         </button>
-        <p className="nf-poke" role="status">{pokes > 0 ? POKES[Math.min(pokes - 1, POKES.length - 1)] : " "}</p>
+        <p className="nf-poke" role="status">
+          {pokes > 0 ? POKES[Math.min(pokes - 1, POKES.length - 1)] : " "}
+        </p>
 
-        <h1 className="h2">We looked everywhere. <span className="quiet">(We didn’t.)</span></h1>
-        <p className="lead nf-quip" key={q}>{QUIPS[q]}</p>
+        <h1 className="h2">
+          We looked everywhere. <span className="quiet">(We didn’t.)</span>
+        </h1>
+        <p className="lead nf-quip" key={q}>
+          {QUIPS[q]}
+        </p>
 
         <form
           className="nf-search"
@@ -73,7 +99,12 @@ export default function NotFoundFun() {
           }}
         >
           <FA icon={faMagnifyingGlass} />
-          <input value={term} onChange={(e) => setTerm(e.target.value)} placeholder={`Search for “${path}”…`} aria-label="Search for the missing page" />
+          <input
+            value={term}
+            onChange={(e) => setTerm(e.target.value)}
+            placeholder={`Search for “${path}”…`}
+            aria-label="Search for the missing page"
+          />
           <button className="btn btn-primary btn-sm">Search</button>
         </form>
 
@@ -81,20 +112,28 @@ export default function NotFoundFun() {
           <div className="nf-res" role="status">
             <b>Results for “{asked}”</b>
             <ul>
-              <li>0 notes</li><li>0 tasks</li><li>0 emails</li><li>0 meetings</li><li>1 existential crisis</li>
+              <li>0 notes</li>
+              <li>0 tasks</li>
+              <li>0 emails</li>
+              <li>0 meetings</li>
+              <li>1 existential crisis</li>
             </ul>
             <small>Universal Search has seen things. This isn’t one of them.</small>
           </div>
         )}
 
         <div className="nf-cta">
-          <Link className="btn btn-primary" href="/"><FA icon={faHouse} /> Take me home</Link>
-          <Link className="btn btn-secondary" href="/demo"><FA icon={faPlay} /> Try the demo (it exists, promise)</Link>
+          <Link className="btn btn-primary" href="/">
+            <FA icon={faHouse} /> Take me home
+          </Link>
+          <Link className="btn btn-secondary" href="/demo">
+            <FA icon={faPlay} /> Try the demo (it exists, promise)
+          </Link>
           <AuthLink className="btn btn-secondary" arrow />
         </div>
 
         <pre className="nf-log" aria-hidden>
-{`$ locate ${path}
+          {`$ locate ${path}
 > searching notes...      nothing
 > searching tasks...      nothing
 > searching your hopes... also nothing

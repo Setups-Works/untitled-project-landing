@@ -7,6 +7,7 @@
 **Backed by:** `tasks`, `task_lists`. Target: `src/server/services/tasks` + repository + `/api/v1/tasks`, `/api/v1/task-lists`.
 
 **Rules**
+
 - Completing a recurring task must create **exactly one** next task, atomically (today done in the client — move into the service with a transaction/idempotency key).
 - Dates are `date` strings in the user's local calendar; never convert through UTC for due dates.
 - View membership logic lives in `lib/tasks.ts` (`inView`) — keep it pure and unit-tested.

@@ -25,81 +25,29 @@ import {
   faWallet,
   faWandMagicSparkles,
 } from "@fortawesome/free-solid-svg-icons";
-import {
-  Reveal,
-  Integrations,
-  Logo,
-  CountUp,
-  MobileCarousel,
-  FaqList,
-} from "../components/Client";
+import { Reveal, Integrations, Logo, CountUp, MobileCarousel, FaqList } from "../components/Client";
 import AiSwitcher from "../components/AiSwitcher";
 import HeroApp from "../components/HeroApp";
 import { isLive } from "../lib/logos";
 import Areas from "../components/Areas";
 import AuthLink from "../components/auth/AuthLink";
 
-
 const noteFeats = [
-  [
-    faPenToSquare,
-    "Rich notes",
-    "Write, organize, and structure things your way.",
-  ],
-  [
-    faTable,
-    "Tables",
-    "Turn notes into something more useful with formulas and linked columns.",
-  ],
-  [
-    faLink,
-    "Backlinks + Atlas",
-    "See the connections between your ideas and notes.",
-  ],
-  [
-    faClockRotateLeft,
-    "Version history",
-    "Go back to an earlier version whenever you need to.",
-  ],
+  [faPenToSquare, "Rich notes", "Write, organize, and structure things your way."],
+  [faTable, "Tables", "Turn notes into something more useful with formulas and linked columns."],
+  [faLink, "Backlinks + Atlas", "See the connections between your ideas and notes."],
+  [faClockRotateLeft, "Version history", "Go back to an earlier version whenever you need to."],
   [faScissors, "Web clipper", "Save what matters while you browse."],
-  [
-    faRightLeft,
-    "Import + export",
-    "Bring your existing work with you and take it with you when you need to.",
-  ],
+  [faRightLeft, "Import + export", "Bring your existing work with you and take it with you when you need to."],
 ] as const;
 
 const journalFeats = [
-  [
-    faBookOpen,
-    "A record of your days",
-    "Capture what happened, what you thought and what comes next.",
-  ],
-  [
-    faLock,
-    "Private by design",
-    "Your journal is yours — a private place, separate from the rest of the workspace.",
-  ],
-  [
-    faLink,
-    "Connected to your notes",
-    "Link entries to notes and ideas so nothing sits in isolation.",
-  ],
-  [
-    faCalendarDays,
-    "Context from your calendar",
-    "Keep meetings and plans alongside what you wrote about them.",
-  ],
-  [
-    faListCheck,
-    "Plan next to the work",
-    "Turn reflections into to-dos without leaving the page.",
-  ],
-  [
-    faWandMagicSparkles,
-    "AI only if you want it",
-    "Use AI when it helps. Ignore it when it doesn't.",
-  ],
+  [faBookOpen, "A record of your days", "Capture what happened, what you thought and what comes next."],
+  [faLock, "Private by design", "Your journal is yours — a private place, separate from the rest of the workspace."],
+  [faLink, "Connected to your notes", "Link entries to notes and ideas so nothing sits in isolation."],
+  [faCalendarDays, "Context from your calendar", "Keep meetings and plans alongside what you wrote about them."],
+  [faListCheck, "Plan next to the work", "Turn reflections into to-dos without leaving the page."],
+  [faWandMagicSparkles, "AI only if you want it", "Use AI when it helps. Ignore it when it doesn't."],
 ] as const;
 
 const groups = [
@@ -147,15 +95,10 @@ const groups = [
     ],
   },
 ];
-const allInts = groups
-  .flatMap((g) => g.items.map((x) => x.name))
-  .filter((n) => !n.startsWith("Other"));
+const allInts = groups.flatMap((g) => g.items.map((x) => x.name)).filter((n) => !n.startsWith("Other"));
 
 const faqs = [
-  [
-    "Do I have to use AI?",
-    "No. Use AI when it helps, or keep your workspace fully AI-free. The workspace works the same either way.",
-  ],
+  ["Do I have to use AI?", "No. Use AI when it helps, or keep your workspace fully AI-free. The workspace works the same either way."],
   [
     "What happens if I switch AI provider or model?",
     "Nothing happens to your content. Your notes, tasks, journal and everything you've built stay exactly where they are — the workspace is separate from the AI you choose.",
@@ -193,13 +136,11 @@ export default function Page() {
               Your AI can change. Your workspace shouldn’t.
             </div>
             <h1 className="display" style={{ maxWidth: 940, margin: "0 auto" }}>
-              One workspace for everything you{" "}
-              <span className="quiet">think, plan and send.</span>
+              One workspace for everything you <span className="quiet">think, plan and send.</span>
             </h1>
             <p className="lead" style={{ margin: "22px auto 0" }}>
-              Notes, tasks, journal, email, calendar, meetings and automations —
-              together in one place. Use AI when it helps. Ignore it when it
-              doesn’t.
+              Notes, tasks, journal, email, calendar, meetings and automations — together in one place. Use AI when it helps. Ignore it when
+              it doesn’t.
             </p>
             <div className="cta" id="start">
               <AuthLink arrow />
@@ -235,13 +176,9 @@ export default function Page() {
             <Reveal className="center stack">
               <div className="eyebrow">The workspace</div>
               <h2 className="h2">
-                Everything in one place,{" "}
-                <span className="quiet">nothing in isolation.</span>
+                Everything in one place, <span className="quiet">nothing in isolation.</span>
               </h2>
-              <p className="lead">
-                Connect external services instead of managing information in
-                isolated apps.
-              </p>
+              <p className="lead">Connect external services instead of managing information in isolated apps.</p>
             </Reveal>
             <Reveal>
               <Areas />
@@ -255,21 +192,15 @@ export default function Page() {
             <Reveal className="center stack stack-head">
               <div className="eyebrow">Inside the workspace</div>
               <h2 className="h2">
-                Write it down, plan it,{" "}
-                <span className="quiet">send it — in one flow.</span>
+                Write it down, plan it, <span className="quiet">send it — in one flow.</span>
               </h2>
               <p className="lead">
-                Journal, notes, email and calendar are built to work together,
-                so the context follows you from one to the next.
+                Journal, notes, email and calendar are built to work together, so the context follows you from one to the next.
               </p>
             </Reveal>
           </div>
           <div className="container stackcol">
-            <div
-              className="stack-item"
-              id="journal"
-              style={{ ["--i" as string]: 0 }}
-            >
+            <div className="stack-item" id="journal" style={{ ["--i" as string]: 0 }}>
               <div className="panel" data-tone="violet">
                 <div className="center stack">
                   <div className="eyebrow">Journal</div>
@@ -277,8 +208,7 @@ export default function Page() {
                     Your days. <span className="quiet">Your record.</span>
                   </h2>
                   <p className="lead">
-                    A private record of your days. Write it down, come back to
-                    it later, and keep it close to the work.
+                    A private record of your days. Write it down, come back to it later, and keep it close to the work.
                   </p>
                 </div>
                 <MobileCarousel className="grid g3" style={{ marginTop: 48 }}>
@@ -296,21 +226,14 @@ export default function Page() {
                 </MobileCarousel>
               </div>
             </div>
-            <div
-              className="stack-item"
-              id="notes"
-              style={{ ["--i" as string]: 1 }}
-            >
+            <div className="stack-item" id="notes" style={{ ["--i" as string]: 1 }}>
               <div className="panel" data-tone="blue">
                 <div className="center stack">
                   <div className="eyebrow">Notes</div>
                   <h2 className="h2">
                     Your notes. <span className="quiet">Your way.</span>
                   </h2>
-                  <p className="lead">
-                    Write. Organize. Connect. Come back to it later. Use AI when
-                    it helps. Ignore it when it doesn’t.
-                  </p>
+                  <p className="lead">Write. Organize. Connect. Come back to it later. Use AI when it helps. Ignore it when it doesn’t.</p>
                 </div>
                 <MobileCarousel className="grid g3" style={{ marginTop: 48 }}>
                   {noteFeats.map(([I, t, d]) => (
@@ -333,13 +256,9 @@ export default function Page() {
                   <div className="stack">
                     <div className="eyebrow">Email</div>
                     <h2 className="h2">
-                      Your email,{" "}
-                      <span className="quiet">fully connected.</span>
+                      Your email, <span className="quiet">fully connected.</span>
                     </h2>
-                    <p className="lead">
-                      Connect Gmail or Outlook and bring the conversations that
-                      matter into untitled project.
-                    </p>
+                    <p className="lead">Connect Gmail or Outlook and bring the conversations that matter into untitled project.</p>
                     <ul className="feat-list">
                       {[
                         "Read complete threads",
@@ -355,11 +274,8 @@ export default function Page() {
                       ))}
                     </ul>
                     <p className="body">
-                      <strong style={{ color: "var(--fg)" }}>
-                        Multiple accounts? No problem.
-                      </strong>{" "}
-                      With Pro, connect up to 5 email accounts and manage them
-                      all from one place.
+                      <strong style={{ color: "var(--fg)" }}>Multiple accounts? No problem.</strong> With Pro, connect up to 5 email
+                      accounts and manage them all from one place.
                     </p>
                   </div>
                   <div className="card" data-emphasis style={{ gap: 0 }}>
@@ -370,16 +286,8 @@ export default function Page() {
                       Re: Q3 roadmap review
                     </div>
                     {[
-                      [
-                        "Maya",
-                        "Gmail",
-                        "Shared the draft — thoughts on scope?",
-                      ],
-                      [
-                        "You",
-                        "Outlook",
-                        "Looks good. Attaching the revised timeline.",
-                      ],
+                      ["Maya", "Gmail", "Shared the draft — thoughts on scope?"],
+                      ["You", "Outlook", "Looks good. Attaching the revised timeline."],
                       ["Dev", "Gmail", "Can we move the review to Thursday?"],
                     ].map(([n, a, m]) => (
                       <div
@@ -397,10 +305,7 @@ export default function Page() {
                           }}
                         >
                           <span className="card-title">{n}</span>
-                          <span
-                            className="chip"
-                            style={{ padding: "3px 10px", fontSize: 11.5 }}
-                          >
+                          <span className="chip" style={{ padding: "3px 10px", fontSize: 11.5 }}>
                             {a}
                           </span>
                         </div>
@@ -460,20 +365,11 @@ export default function Page() {
                   <div className="stack">
                     <div className="eyebrow">Calendar</div>
                     <h2 className="h2">
-                      One view of where your{" "}
-                      <span className="quiet">time is going.</span>
+                      One view of where your <span className="quiet">time is going.</span>
                     </h2>
-                    <p className="lead">
-                      Connect your calendar and keep meetings, plans, reminders
-                      and the context around them together.
-                    </p>
+                    <p className="lead">Connect your calendar and keep meetings, plans, reminders and the context around them together.</p>
                     <ul className="feat-list">
-                      {[
-                        "Sync events",
-                        "Unified schedule view",
-                        "Work and personal in one place",
-                        "Multiple calendars",
-                      ].map((x) => (
+                      {["Sync events", "Unified schedule view", "Work and personal in one place", "Multiple calendars"].map((x) => (
                         <li key={x}>
                           <Check_ />
                           {x}
@@ -481,29 +377,20 @@ export default function Page() {
                       ))}
                     </ul>
                     <p className="body">
-                      Pro supports up to 5 calendars, so work and personal
-                      schedules don’t have to live in separate worlds.
+                      Pro supports up to 5 calendars, so work and personal schedules don’t have to live in separate worlds.
                     </p>
                   </div>
                 </MobileCarousel>
               </div>
             </div>
-            <div
-              className="stack-item"
-              id="integrations"
-              style={{ ["--i" as string]: 4 }}
-            >
+            <div className="stack-item" id="integrations" style={{ ["--i" as string]: 4 }}>
               <div className="panel" data-tone="clay">
                 <div className="center stack">
                   <div className="eyebrow">Integrations</div>
                   <h2 className="h2">
-                    Connect the tools{" "}
-                    <span className="quiet">you already use.</span>
+                    Connect the tools <span className="quiet">you already use.</span>
                   </h2>
-                  <p className="lead">
-                    From inbox to issue tracker — and an extensible model for
-                    the rest.
-                  </p>
+                  <p className="lead">From inbox to issue tracker — and an extensible model for the rest.</p>
                 </div>
                 <Integrations groups={groups} />
               </div>
@@ -521,12 +408,10 @@ export default function Page() {
                     AI, on your terms
                   </div>
                   <h2 className="h2">
-                    Your AI can change.{" "}
-                    <span className="quiet">Your workspace shouldn’t.</span>
+                    Your AI can change. <span className="quiet">Your workspace shouldn’t.</span>
                   </h2>
                   <p className="lead">
-                    Try a new model. Switch providers. Change what powers your
-                    AI. Your notes, tasks, journal, and everything you’ve built
+                    Try a new model. Switch providers. Change what powers your AI. Your notes, tasks, journal, and everything you’ve built
                     stay exactly where they are.
                   </p>
                   <ul className="ai-points">
@@ -560,12 +445,10 @@ export default function Page() {
             <Reveal className="center stack">
               <div className="eyebrow">Pro</div>
               <h2 className="h2">
-                Room for every inbox,{" "}
-                <span className="quiet">every calendar.</span>
+                Room for every inbox, <span className="quiet">every calendar.</span>
               </h2>
               <p className="lead">
-                Work and personal don’t have to live in separate worlds. Go
-                further with Pro — and never pay for AI you don’t use.
+                Work and personal don’t have to live in separate worlds. Go further with Pro — and never pay for AI you don’t use.
               </p>
             </Reveal>
             <Reveal>
@@ -613,9 +496,7 @@ export default function Page() {
                     <div className="pillrow" style={{ marginTop: "auto" }}>
                       {x.chips.map((c) => (
                         <span className="chip" key={c}>
-                          {["Gmail", "Outlook", "Google Calendar"].includes(
-                            c,
-                          ) && <Logo name={c} size={16} />}
+                          {["Gmail", "Outlook", "Google Calendar"].includes(c) && <Logo name={c} size={16} />}
                           {c}
                         </span>
                       ))}
@@ -626,12 +507,7 @@ export default function Page() {
             </Reveal>
             <Reveal>
               <ul className="stat-strip">
-                {[
-                  "Multiple email accounts",
-                  "Multiple calendars",
-                  "Switch AI providers anytime",
-                  "Your workspace stays put",
-                ].map((x) => (
+                {["Multiple email accounts", "Multiple calendars", "Switch AI providers anytime", "Your workspace stays put"].map((x) => (
                   <li key={x}>
                     <FA icon={faCheck} />
                     {x}
@@ -651,8 +527,7 @@ export default function Page() {
                 Good <span className="quiet">questions.</span>
               </h2>
               <p className="lead" style={{ marginTop: 16 }}>
-                Quick answers about AI, accounts and your data. Still unsure?
-                Start with the notes and connect the rest later.
+                Quick answers about AI, accounts and your data. Still unsure? Start with the notes and connect the rest later.
               </p>
               <div className="faq-help">
                 <div className="tile">
@@ -682,8 +557,7 @@ export default function Page() {
                   Bring it all <span className="quiet">together.</span>
                 </h2>
                 <p className="lead">
-                  One workspace for personal and work information. Start with
-                  the notes — connect the rest when you’re ready.
+                  One workspace for personal and work information. Start with the notes — connect the rest when you’re ready.
                 </p>
                 <div
                   className="cta"
@@ -704,7 +578,6 @@ export default function Page() {
           </div>
         </section>
       </main>
-
     </>
   );
 }

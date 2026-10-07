@@ -23,7 +23,10 @@ export function ago(iso: string) {
 
 /** Whole days from a to b (both YYYY-MM-DD). */
 export const daysBetween = (a: string, b: string) => {
-  const t = (s: string) => { const [y, m, d] = s.split("-").map(Number); return Date.UTC(y, m - 1, d); };
+  const t = (s: string) => {
+    const [y, m, d] = s.split("-").map(Number);
+    return Date.UTC(y, m - 1, d);
+  };
   return Math.round((t(b) - t(a)) / 86_400_000);
 };
 

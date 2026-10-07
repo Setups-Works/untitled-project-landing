@@ -21,7 +21,11 @@ export const plural = (n: number, word: string) => `${n} ${word}${n === 1 ? "" :
 
 export const displayTitle = (n: Pick<Note, "title" | "body">) =>
   n.title.trim() ||
-  n.body.split("\n").find((l) => l.trim())?.replace(/^[#>\-*\s]+(\[[ x]\]\s*)?/, "").slice(0, 80) ||
+  n.body
+    .split("\n")
+    .find((l) => l.trim())
+    ?.replace(/^[#>\-*\s]+(\[[ x]\]\s*)?/, "")
+    .slice(0, 80) ||
   "Untitled";
 
 export function editedLabel(iso: string) {
@@ -31,7 +35,11 @@ export function editedLabel(iso: string) {
     return readPrefs().timeFormat === "24h"
       ? d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false })
       : d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit", hour12: true }).toLowerCase();
-  return d.toLocaleDateString(undefined, { month: "short", day: "numeric", ...(d.getFullYear() !== now.getFullYear() ? { year: "numeric" } : {}) });
+  return d.toLocaleDateString(undefined, {
+    month: "short",
+    day: "numeric",
+    ...(d.getFullYear() !== now.getFullYear() ? { year: "numeric" } : {}),
+  });
 }
 
 export const safeName = (n: string) => n.replace(/[^\w.\- ]+/g, "_").slice(0, 80) || "file";

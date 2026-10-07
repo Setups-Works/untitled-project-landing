@@ -1,6 +1,15 @@
 export type Task = { id: number; t: string; done: boolean; from?: string };
 export type Msg = { who: string; text: string };
-export type Mail = { id: number; from: string; subj: string; app: string; unread: boolean; starred: boolean; archived: boolean; msgs: Msg[] };
+export type Mail = {
+  id: number;
+  from: string;
+  subj: string;
+  app: string;
+  unread: boolean;
+  starred: boolean;
+  archived: boolean;
+  msgs: Msg[];
+};
 export type Ev = { id: number; day: number; hour: number; t: string; tone: string };
 export type Entry = { id: number; when: string; mood: string; text: string };
 export type Rule = { id: string; t: string; s: string; on: boolean };
@@ -21,17 +30,40 @@ export const seedTasks = (): Task[] => [
 ];
 
 export const seedMail = (): Mail[] => [
-  { id: 1, from: "Maya", subj: "Re: Q3 roadmap review", app: "Gmail", unread: true, starred: false, archived: false, msgs: [
-    { who: "Maya", text: "Shared the draft — thoughts on scope before the launch?" },
-    { who: "You", text: "Looks good. Attaching the revised timeline." },
-    { who: "Maya", text: "Great, can you confirm owners for the pricing page?" },
-  ] },
-  { id: 2, from: "Dev", subj: "Launch checklist", app: "Gmail", unread: true, starred: false, archived: false, msgs: [
-    { who: "Dev", text: "Can we move the review to Thursday? The checklist is nearly done." },
-  ] },
-  { id: 3, from: "Priya", subj: "Pricing page copy", app: "Gmail", unread: false, starred: true, archived: false, msgs: [
-    { who: "Priya", text: "Attached the revised copy for sign-off. Two small edits in the FAQ." },
-  ] },
+  {
+    id: 1,
+    from: "Maya",
+    subj: "Re: Q3 roadmap review",
+    app: "Gmail",
+    unread: true,
+    starred: false,
+    archived: false,
+    msgs: [
+      { who: "Maya", text: "Shared the draft — thoughts on scope before the launch?" },
+      { who: "You", text: "Looks good. Attaching the revised timeline." },
+      { who: "Maya", text: "Great, can you confirm owners for the pricing page?" },
+    ],
+  },
+  {
+    id: 2,
+    from: "Dev",
+    subj: "Launch checklist",
+    app: "Gmail",
+    unread: true,
+    starred: false,
+    archived: false,
+    msgs: [{ who: "Dev", text: "Can we move the review to Thursday? The checklist is nearly done." }],
+  },
+  {
+    id: 3,
+    from: "Priya",
+    subj: "Pricing page copy",
+    app: "Gmail",
+    unread: false,
+    starred: true,
+    archived: false,
+    msgs: [{ who: "Priya", text: "Attached the revised copy for sign-off. Two small edits in the FAQ." }],
+  },
 ];
 
 export const seedEvents = (): Ev[] => [
@@ -45,7 +77,12 @@ export const seedEvents = (): Ev[] => [
 ];
 
 export const seedEntries = (): Entry[] => [
-  { id: 1, when: "Yesterday", mood: "Focused", text: "Shipped the first draft of the launch plan. The pricing discussion unblocked everyone." },
+  {
+    id: 1,
+    when: "Yesterday",
+    mood: "Focused",
+    text: "Shipped the first draft of the launch plan. The pricing discussion unblocked everyone.",
+  },
 ];
 
 export const seedRules = (): Rule[] => [

@@ -30,7 +30,9 @@ export default function AdminNav({ email }: { email: string }) {
       </nav>
       <div className="adm-foot">
         <small>{email}</small>
-        <Link href="/dashboard"><FA icon={faArrowLeft} /> Back to app</Link>
+        <Link href="/dashboard">
+          <FA icon={faArrowLeft} /> Back to app
+        </Link>
       </div>
     </aside>
   );

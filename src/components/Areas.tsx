@@ -39,13 +39,7 @@ const AREAS = [
     d: "A private record of your days.",
     tone: "violet",
     long: "A private place to write down your days and come back to them later — kept close to the work.",
-    pts: [
-      "A record of your days",
-      "Private by design",
-      "Connected to your notes",
-      "Context from your calendar",
-      "AI only if you want it",
-    ],
+    pts: ["A record of your days", "Private by design", "Connected to your notes", "Context from your calendar", "AI only if you want it"],
     href: "#journal",
   },
   {
@@ -70,11 +64,7 @@ const AREAS = [
     d: "Plan next to the work.",
     tone: "amber",
     long: "Keep your tasks next to the notes, journal entries and meetings they come from, so planning never lives in a separate app.",
-    pts: [
-      "To-do lists and planning",
-      "Task context alongside your work",
-      "Turn reflections and meeting follow-ups into tasks",
-    ],
+    pts: ["To-do lists and planning", "Task context alongside your work", "Turn reflections and meeting follow-ups into tasks"],
     href: "#",
   },
   {
@@ -83,10 +73,7 @@ const AREAS = [
     d: "The whole workspace at a glance.",
     tone: "mint",
     long: "A high-level view of everything in your workspace, so you can see what’s going on without opening every area.",
-    pts: [
-      "The whole workspace at a glance",
-      "Pulls context from your connected services",
-    ],
+    pts: ["The whole workspace at a glance", "Pulls context from your connected services"],
     href: "#",
   },
   {
@@ -110,12 +97,7 @@ const AREAS = [
     d: "One view of your time.",
     tone: "gold",
     long: "Connect your calendar and keep meetings, plans, reminders and the context around them together.",
-    pts: [
-      "Sync events",
-      "Unified schedule view",
-      "Work and personal in one place",
-      "Up to 5 calendars with Pro",
-    ],
+    pts: ["Sync events", "Unified schedule view", "Work and personal in one place", "Up to 5 calendars with Pro"],
     href: "#calendar",
   },
   {
@@ -124,11 +106,7 @@ const AREAS = [
     d: "Capture, transcribe, follow through.",
     tone: "clay",
     long: "Capture what was said, get it transcribed, and follow through on what comes out of it.",
-    pts: [
-      "Capture and transcribe meetings",
-      "Follow-through after the call",
-      "Works with Google Meet, Microsoft Teams and Zoom",
-    ],
+    pts: ["Capture and transcribe meetings", "Follow-through after the call", "Works with Google Meet, Microsoft Teams and Zoom"],
     href: "#integrations",
   },
   {
@@ -137,11 +115,7 @@ const AREAS = [
     d: "Workflows that run themselves.",
     tone: "blue",
     long: "Automated workflows and actions that connect your workspace and the tools you already use.",
-    pts: [
-      "Rules, triggers and actions",
-      "Scheduled workflows",
-      "Works across your connected integrations",
-    ],
+    pts: ["Rules, triggers and actions", "Scheduled workflows", "Works across your connected integrations"],
     href: "#",
   },
   {
@@ -150,10 +124,7 @@ const AREAS = [
     d: "A dedicated area for insights.",
     tone: "violet",
     long: "A dedicated insights area in your workspace navigation, built from what you do in the workspace.",
-    pts: [
-      "Its own place in the workspace",
-      "Insights derived from your workspace",
-    ],
+    pts: ["Its own place in the workspace", "Insights derived from your workspace"],
     href: "#",
   },
 ];
@@ -170,8 +141,7 @@ export default function Areas() {
     const c = el?.children[0] as HTMLElement | undefined;
     return c ? c.offsetWidth + 14 : 300;
   };
-  const go = (dir: number) =>
-    ref.current?.scrollBy({ left: dir * step(), behavior: "smooth" });
+  const go = (dir: number) => ref.current?.scrollBy({ left: dir * step(), behavior: "smooth" });
   const onScroll = () => {
     const el = ref.current;
     if (el) setI(Math.round(el.scrollLeft / step()));
@@ -193,13 +163,7 @@ export default function Areas() {
   const a = open === null ? null : AREAS[open];
   return (
     <div className="acar">
-      <div
-        className="acar-track"
-        ref={ref}
-        onScroll={onScroll}
-        tabIndex={0}
-        aria-label="Workspace areas"
-      >
+      <div className="acar-track" ref={ref} onScroll={onScroll} tabIndex={0} aria-label="Workspace areas">
         {AREAS.map((x, n) => (
           <article className={`acard at-${x.tone}`} key={x.t}>
             <FA icon={x.icon} className="acard-bg" aria-hidden />
@@ -231,11 +195,7 @@ export default function Areas() {
           ))}
         </div>
         <div className="arrows">
-          <button
-            className="arrow"
-            aria-label="Previous"
-            onClick={() => go(-1)}
-          >
+          <button className="arrow" aria-label="Previous" onClick={() => go(-1)}>
             <FA icon={faChevronLeft} />
           </button>
           <button className="arrow" aria-label="Next" onClick={() => go(1)}>
@@ -246,19 +206,8 @@ export default function Areas() {
 
       {a && (
         <div className="modal" onClick={() => setOpen(null)}>
-          <div
-            className={`modal-card at-${a.tone}`}
-            role="dialog"
-            aria-modal="true"
-            aria-label={a.t}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              ref={closeBtn}
-              className="modal-x"
-              aria-label="Close"
-              onClick={() => setOpen(null)}
-            >
+          <div className={`modal-card at-${a.tone}`} role="dialog" aria-modal="true" aria-label={a.t} onClick={(e) => e.stopPropagation()}>
+            <button ref={closeBtn} className="modal-x" aria-label="Close" onClick={() => setOpen(null)}>
               <FA icon={faXmark} />
             </button>
             <span className="acard-ico">
@@ -275,11 +224,7 @@ export default function Areas() {
               ))}
             </ul>
             {a.href !== "#" && (
-              <a
-                className="btn btn-primary btn-sm"
-                href={a.href}
-                onClick={() => setOpen(null)}
-              >
+              <a className="btn btn-primary btn-sm" href={a.href} onClick={() => setOpen(null)}>
                 See it in the page
               </a>
             )}

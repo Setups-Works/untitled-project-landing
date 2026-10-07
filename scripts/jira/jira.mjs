@@ -30,18 +30,39 @@ const EMAIL = process.env.JIRA_EMAIL;
 const TOKEN = process.env.JIRA_API_TOKEN;
 const PROJECT = process.env.JIRA_PROJECT || "UNT";
 
-const die = (msg) => { console.error(`jira: ${msg}`); process.exit(1); };
-if (!EMAIL || !TOKEN) die("set JIRA_EMAIL and JIRA_API_TOKEN in .env.local (see .env.example). Create a token at https://id.atlassian.com/manage-profile/security/api-tokens");
+const die = (msg) => {
+  console.error(`jira: ${msg}`);
+  process.exit(1);
+};
+if (!EMAIL || !TOKEN)
+  die(
+    "set JIRA_EMAIL and JIRA_API_TOKEN in .env.local (see .env.example). Create a token at https://id.atlassian.com/manage-profile/security/api-tokens",
+  );
 
 const auth = "Basic " + Buffer.from(`${EMAIL}:${TOKEN}`).toString("base64");
 
 async function api(method, path, body) {
-  const res = await fetch(BASE + path, { method, headers: { Authorization: auth, Accept: "application/json", "Content-Type": "application/json" }, body: body ? JSON.stringify(body) : undefined });
+  const res = await fetch(BASE + path, {
+    method,
+    headers: { Authorization: auth, Accept: "application/json", "Content-Type": "application/json" },
+    body: body ? JSON.stringify(body) : undefined,
+  });
   const text = await res.text();
-  const data = text ? (() => { try { return JSON.parse(text); } catch { return text; } })() : {};
+  const data = text
+    ? (() => {
+        try {
+          return JSON.parse(text);
+        } catch {
+          return text;
+        }
+      })()
+    : {};
   if (res.status === 401) die("Jira rejected your email/token (401). Check JIRA_EMAIL and create a fresh token.");
   if (res.status === 403) die("Your Jira account isn't allowed to do that (403).");
-  if (!res.ok) die(`${method} ${path} failed (${res.status}): ${typeof data === "string" ? data.slice(0, 300) : JSON.stringify(data.errorMessages ?? data.errors ?? data).slice(0, 300)}`);
+  if (!res.ok)
+    die(
+      `${method} ${path} failed (${res.status}): ${typeof data === "string" ? data.slice(0, 300) : JSON.stringify(data.errorMessages ?? data.errors ?? data).slice(0, 300)}`,
+    );
   return data;
 }
 
@@ -57,10 +78,17 @@ function toAdf(md) {
       list.content.push({ type: "listItem", content: [{ type: "paragraph", content: [text(line.slice(2))] }] });
       continue;
     }
-    if (list) { nodes.push(list); list = null; }
+    if (list) {
+      nodes.push(list);
+      list = null;
+    }
     if (!line.trim()) continue;
     const h = /^(#{1,4}) (.*)$/.exec(line);
-    nodes.push(h ? { type: "heading", attrs: { level: Math.min(h[1].length + 1, 4) }, content: [text(h[2])] } : { type: "paragraph", content: [text(line)] });
+    nodes.push(
+      h
+        ? { type: "heading", attrs: { level: Math.min(h[1].length + 1, 4) }, content: [text(h[2])] }
+        : { type: "paragraph", content: [text(line)] },
+    );
   }
   if (list) nodes.push(list);
   return { type: "doc", version: 1, content: nodes.length ? nodes : [{ type: "paragraph", content: [] }] };
@@ -70,20 +98,35 @@ function fromAdf(n, depth = 0) {
   if (typeof n === "string") return n;
   const kids = (n.content ?? []).map((c) => fromAdf(c, depth + 1));
   switch (n.type) {
-    case "text": return n.marks?.some((m) => m.type === "code") ? "`" + n.text + "`" : n.text;
-    case "heading": return `\n${"#".repeat(n.attrs?.level ?? 3)} ${kids.join("")}\n`;
-    case "paragraph": return kids.join("") + "\n";
-    case "bulletList": return kids.join("");
-    case "orderedList": return kids.map((k, i) => `${i + 1}. ${k.replace(/^- /, "")}`).join("");
-    case "listItem": return "- " + kids.join("").trim() + "\n";
-    case "hardBreak": return "\n";
-    default: return kids.join("");
+    case "text":
+      return n.marks?.some((m) => m.type === "code") ? "`" + n.text + "`" : n.text;
+    case "heading":
+      return `\n${"#".repeat(n.attrs?.level ?? 3)} ${kids.join("")}\n`;
+    case "paragraph":
+      return kids.join("") + "\n";
+    case "bulletList":
+      return kids.join("");
+    case "orderedList":
+      return kids.map((k, i) => `${i + 1}. ${k.replace(/^- /, "")}`).join("");
+    case "listItem":
+      return "- " + kids.join("").trim() + "\n";
+    case "hardBreak":
+      return "\n";
+    default:
+      return kids.join("");
   }
 }
 
 // ---- helpers
-const flag = (name) => { const i = process.argv.indexOf(`--${name}`); return i > -1 ? (process.argv[i + 1]?.startsWith("--") ? true : process.argv[i + 1] ?? true) : undefined; };
-const keyArg = () => { const k = process.argv[3]; if (!/^[A-Z]+-\d+$/.test(k ?? "")) die("expected an issue key like UNT-61"); return k; };
+const flag = (name) => {
+  const i = process.argv.indexOf(`--${name}`);
+  return i > -1 ? (process.argv[i + 1]?.startsWith("--") ? true : (process.argv[i + 1] ?? true)) : undefined;
+};
+const keyArg = () => {
+  const k = process.argv[3];
+  if (!/^[A-Z]+-\d+$/.test(k ?? "")) die("expected an issue key like UNT-61");
+  return k;
+};
 
 async function transition(key, name) {
   const { transitions } = await api("GET", `/rest/api/3/issue/${key}/transitions`);
@@ -93,7 +136,11 @@ async function transition(key, name) {
 }
 const comment = (key, body) => api("POST", `/rest/api/3/issue/${key}/comment`, { body: toAdf(body) });
 
-const row = (i) => `${i.key.padEnd(8)} ${(i.fields.status?.name ?? "").padEnd(12)} ${(i.fields.labels ?? []).filter((l) => /^(track|size|phase)-/.test(l)).join(",").padEnd(34)} ${i.fields.summary}`;
+const row = (i) =>
+  `${i.key.padEnd(8)} ${(i.fields.status?.name ?? "").padEnd(12)} ${(i.fields.labels ?? [])
+    .filter((l) => /^(track|size|phase)-/.test(l))
+    .join(",")
+    .padEnd(34)} ${i.fields.summary}`;
 
 // ---- commands
 const cmd = process.argv[2];
@@ -105,12 +152,18 @@ switch (cmd) {
   }
   case "list": {
     const jql = [`project = ${PROJECT}`, "issuetype != Epic"];
-    const track = flag("track"), phase = flag("phase"), status = flag("status");
+    const track = flag("track"),
+      phase = flag("phase"),
+      status = flag("status");
     if (track) jql.push(`labels = "track-${track}"`);
     if (phase) jql.push(`labels = "phase-${phase}"`);
     jql.push(status ? `status = "${status}"` : "statusCategory != Done");
     if (flag("mine")) jql.push("assignee = currentUser()");
-    const r = await api("POST", "/rest/api/3/search/jql", { jql: jql.join(" AND ") + " ORDER BY key ASC", fields: ["summary", "status", "labels"], maxResults: 100 });
+    const r = await api("POST", "/rest/api/3/search/jql", {
+      jql: jql.join(" AND ") + " ORDER BY key ASC",
+      fields: ["summary", "status", "labels"],
+      maxResults: 100,
+    });
     r.issues.forEach((i) => console.log(row(i)));
     console.log(`\n${r.issues.length} task(s)`);
     break;
@@ -119,8 +172,12 @@ switch (cmd) {
     const k = keyArg();
     const i = await api("GET", `/rest/api/3/issue/${k}?fields=summary,status,labels,parent,description,issuelinks,assignee`);
     const f = i.fields;
-    console.log(`${i.key} — ${f.summary}\nStatus: ${f.status.name}   Assignee: ${f.assignee?.displayName ?? "unassigned"}   Epic: ${f.parent?.key ?? "—"}\nLabels: ${(f.labels ?? []).join(", ")}\n${BASE}/browse/${i.key}`);
-    const blockers = (f.issuelinks ?? []).filter((l) => l.type.name === "Blocks" && l.inwardIssue).map((l) => `${l.inwardIssue.key} (${l.inwardIssue.fields.status.name}) ${l.inwardIssue.fields.summary}`);
+    console.log(
+      `${i.key} — ${f.summary}\nStatus: ${f.status.name}   Assignee: ${f.assignee?.displayName ?? "unassigned"}   Epic: ${f.parent?.key ?? "—"}\nLabels: ${(f.labels ?? []).join(", ")}\n${BASE}/browse/${i.key}`,
+    );
+    const blockers = (f.issuelinks ?? [])
+      .filter((l) => l.type.name === "Blocks" && l.inwardIssue)
+      .map((l) => `${l.inwardIssue.key} (${l.inwardIssue.fields.status.name}) ${l.inwardIssue.fields.summary}`);
     if (blockers.length) console.log(`Blocked by: ${blockers.join("; ")}`);
     console.log("\n" + fromAdf(f.description).trim());
     break;
@@ -134,7 +191,8 @@ switch (cmd) {
     break;
   }
   case "review": {
-    const k = keyArg(), pr = process.argv[4];
+    const k = keyArg(),
+      pr = process.argv[4];
     if (!pr?.startsWith("http")) die("usage: review UNT-61 <pull-request-url>");
     await transition(k, "In Review");
     await comment(k, `Pull request ready for review: ${pr}`);
@@ -148,7 +206,8 @@ switch (cmd) {
     break;
   }
   case "comment": {
-    const k = keyArg(), body = process.argv.slice(4).join(" ");
+    const k = keyArg(),
+      body = process.argv.slice(4).join(" ");
     if (!body) die('usage: comment UNT-61 "text"');
     await comment(k, body);
     console.log(`commented on ${k}`);
@@ -157,11 +216,30 @@ switch (cmd) {
   case "create": {
     const title = flag("title");
     if (!title || title === true) die('usage: create --epic UNT-42 --track workspace --size m --title "…" [--body "…"]');
-    const labels = [flag("track") && `track-${flag("track")}`, flag("size") && `size-${flag("size")}`, flag("phase") && `phase-${flag("phase")}`].filter(Boolean);
-    const r = await api("POST", "/rest/api/3/issue", { fields: { project: { key: PROJECT }, issuetype: { name: "Story" }, summary: title, labels, ...(flag("epic") ? { parent: { key: flag("epic") } } : {}), description: toAdf(typeof flag("body") === "string" ? flag("body") : title) } });
+    const labels = [
+      flag("track") && `track-${flag("track")}`,
+      flag("size") && `size-${flag("size")}`,
+      flag("phase") && `phase-${flag("phase")}`,
+    ].filter(Boolean);
+    const r = await api("POST", "/rest/api/3/issue", {
+      fields: {
+        project: { key: PROJECT },
+        issuetype: { name: "Story" },
+        summary: title,
+        labels,
+        ...(flag("epic") ? { parent: { key: flag("epic") } } : {}),
+        description: toAdf(typeof flag("body") === "string" ? flag("body") : title),
+      },
+    });
     console.log(`created ${r.key} — ${BASE}/browse/${r.key}`);
     break;
   }
   default:
-    console.log(readFileSync(new URL(import.meta.url), "utf8").split("*/")[0].replace(/^#!.*\n\/\*\*?/, "").replace(/^ \* ?/gm, "").trim());
+    console.log(
+      readFileSync(new URL(import.meta.url), "utf8")
+        .split("*/")[0]
+        .replace(/^#!.*\n\/\*\*?/, "")
+        .replace(/^ \* ?/gm, "")
+        .trim(),
+    );
 }

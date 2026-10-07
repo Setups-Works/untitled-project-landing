@@ -1,14 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { FontAwesomeIcon as FA } from "@fortawesome/react-fontawesome";
-import {
-  faPlug,
-  faKey,
-  faWallet,
-  faBan,
-  faLock,
-  faMicrochip,
-} from "@fortawesome/free-solid-svg-icons";
+import { faPlug, faKey, faWallet, faBan, faLock, faMicrochip } from "@fortawesome/free-solid-svg-icons";
 
 const OPTS = [
   {
@@ -42,18 +35,13 @@ export default function AiSwitcher() {
   const [on, setOn] = useState(0);
   const [auto, setAuto] = useState(true);
   useEffect(() => {
-    if (!auto || window.matchMedia("(prefers-reduced-motion: reduce)").matches)
-      return;
+    if (!auto || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const t = setInterval(() => setOn((o) => (o + 1) % OPTS.length), 3200);
     return () => clearInterval(t);
   }, [auto]);
   const cur = OPTS[on];
   return (
-    <div
-      className="aisw"
-      onMouseEnter={() => setAuto(false)}
-      onMouseLeave={() => setAuto(true)}
-    >
+    <div className="aisw" onMouseEnter={() => setAuto(false)} onMouseLeave={() => setAuto(true)}>
       <div className="aisw-stage" data-off={!!cur.off}>
         <div className="aisw-ws">
           <div className="aisw-label">

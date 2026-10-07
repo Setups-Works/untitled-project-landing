@@ -37,6 +37,11 @@ export function useRecorder(onDone: (blob: Blob, type: string, secs: number) => 
     r.start();
   }, [onError]);
 
-  useEffect(() => () => { if (rec.current?.state === "recording") rec.current.stop(); }, []);
+  useEffect(
+    () => () => {
+      if (rec.current?.state === "recording") rec.current.stop();
+    },
+    [],
+  );
   return { recording, secs, toggle };
 }

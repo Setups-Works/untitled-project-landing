@@ -1,11 +1,11 @@
 # lib/supabase
 
-| File | Use |
-| --- | --- |
-| `config.ts` | Reads and **validates** `NEXT_PUBLIC_SUPABASE_URL/ANON_KEY` (trims, checks characters). Exposes `supabaseConfigured`, `supabaseProblem`, `safeNext()` |
-| `client.ts` | `supabaseBrowser()` — for client components (RLS applies) |
-| `server.ts` | `supabaseServer()` — request-scoped client in Server Components / actions (cookie session) |
-| `admin.ts` | **Service role**, `import "server-only"`. Helpers: `supabaseAdmin()`, `isAdmin()`, `requireAdmin()`, `assertAdmin()`, `currentUser()`, `listAllUsers()`, `audit()`, `countRows()` |
+| File        | Use                                                                                                                                                                               |
+| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `config.ts` | Reads and **validates** `NEXT_PUBLIC_SUPABASE_URL/ANON_KEY` (trims, checks characters). Exposes `supabaseConfigured`, `supabaseProblem`, `safeNext()`                             |
+| `client.ts` | `supabaseBrowser()` — for client components (RLS applies)                                                                                                                         |
+| `server.ts` | `supabaseServer()` — request-scoped client in Server Components / actions (cookie session)                                                                                        |
+| `admin.ts`  | **Service role**, `import "server-only"`. Helpers: `supabaseAdmin()`, `isAdmin()`, `requireAdmin()`, `assertAdmin()`, `currentUser()`, `listAllUsers()`, `audit()`, `countRows()` |
 
 ## Rules
 

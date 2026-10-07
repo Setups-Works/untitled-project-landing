@@ -2,7 +2,7 @@
 
 You are working on **untitled project**: one workspace for notes, tasks, journal, chat, calendar, email, meetings and automations, with an AI layer that can be swapped (Groq, Puter.js, bring-your-own) or switched off. Three developers build it in parallel, each using AI agents. This file is the contract that keeps everyone's code consistent. Folder-level `AGENTS.md` files add detail — **read the one in every folder you touch.**
 
-> Source of truth: **Jira project UNT** for *what to build and who owns it* · **this repo's docs** for *how to build it* · **the code** for *what exists today*. If they disagree, say so in your PR instead of guessing.
+> Source of truth: **Jira project UNT** for _what to build and who owns it_ · **this repo's docs** for _how to build it_ · **the code** for _what exists today_. If they disagree, say so in your PR instead of guessing.
 
 ## 1. Stack
 
@@ -43,7 +43,7 @@ docs/                  Architecture, phases, workflow, data model, security, Jir
 
 1. **Layering and direction of dependencies:** `UI component → feature hook → API v1 route / server action → service → repository → Supabase`. A layer may import only from layers to its right. Components never import from `src/server`.
 2. **Server-only secrets stay on the server.** `SUPABASE_SERVICE_ROLE_KEY`, `GROQ_API_KEY`, `COMPOSIO_API_KEY`, Stripe keys: only in `src/server/**`, route handlers and server actions, via `serverEnv()` from `src/config`. Files that must never reach the browser import `"server-only"`.
-3. **The browser never calls Composio or an AI provider with a secret.** It calls our `/api/v1/*` routes. (Exception: Puter.js runs in the browser by design, using the *user's* Puter account.)
+3. **The browser never calls Composio or an AI provider with a secret.** It calls our `/api/v1/*` routes. (Exception: Puter.js runs in the browser by design, using the _user's_ Puter account.)
 4. **Every table has Row-Level Security.** Data is scoped to a workspace (`workspace_id`) or, for private data like journal entries, to the author. Never rely on UI checks for authorisation. Service-role queries must re-check permissions in code first.
 5. **Business rules live in services**, not in components or route handlers. A service exposes plain async functions with typed inputs/outputs so UI, API routes, background jobs and AI tools can all reuse them.
 6. **Repositories contain only data access** (Supabase queries), no rules. One repository per aggregate.
@@ -58,7 +58,7 @@ docs/                  Architecture, phases, workflow, data model, security, Jir
 - Dates: store UTC (`timestamptz`) or plain `date` for calendar days; format in the browser. Pages that print dates/greetings wrap in `ClientOnly` to avoid hydration mismatches.
 - Accessibility is required: real `<button>`/`<a>`, labels, focus states, `aria-*` for dialogs/menus (reuse `Modal`, `Menu`, `Confirm`). Respect `prefers-reduced-motion` and the in-app "Reduce motion" setting.
 - UI: reuse the design tokens and existing classes (`at-<tint>` colour tints, `ap-card`, `btn btn-primary`). Mobile first: every screen must work at 375 px. No native `alert/confirm/prompt` — use `useConfirm()` / `usePrompt()`.
-- Comments explain *why*, not *what*. Keep functions small. Match the style of the surrounding file.
+- Comments explain _why_, not _what_. Keep functions small. Match the style of the surrounding file.
 - Never log secrets or message/note content. Errors shown to users are friendly; details go to logs/Sentry.
 
 ## 6. Database rules
@@ -76,7 +76,7 @@ docs/                  Architecture, phases, workflow, data model, security, Jir
 4. Implement in small commits. Add/adjust tests when logic is non-trivial.
 5. Run `npx tsc --noEmit` and `npx next build`. Test the feature in the browser at desktop and 375 px width.
 6. Update docs: the folder `AGENTS.md`, `docs/CURRENT_STATE.md`, `docs/DATA_MODEL.md` if you changed behaviour or schema.
-7. Open a PR titled `UNT-n <summary>` using the template. Move the Jira issue to *In Review*. Another developer reviews; squash-merge to `main`.
+7. Open a PR titled `UNT-n <summary>` using the template. Move the Jira issue to _In Review_. Another developer reviews; squash-merge to `main`.
 
 Full details: `docs/TEAM_AND_WORKFLOW.md`. Writing tasks: `docs/JIRA_GUIDE.md`.
 
@@ -98,15 +98,15 @@ Acceptance criteria met · typecheck and build pass · works on mobile · access
 
 ## 10. Map of the docs
 
-| File | Read it when |
-| --- | --- |
-| `docs/ARCHITECTURE.md` | You need the big picture, layering, data flow and runtime boundaries |
-| `docs/PHASES.md` | You want to know what comes when and who owns which track |
-| `docs/TEAM_AND_WORKFLOW.md` | Branching, PRs, reviews, environments, releases |
-| `docs/CURRENT_STATE.md` | You want to know what exists today and where it lives |
-| `docs/DATA_MODEL.md` | You touch the database |
-| `docs/SECURITY.md` | You touch auth, uploads, sharing, admin, AI tools or secrets |
-| `docs/CONVENTIONS.md` | Naming, UI patterns, error handling, testing |
-| `docs/AI_WORKFLOW.md` | **You are an AI agent taking a Jira task** — the exact loop, the Jira helper (`node scripts/jira/jira.mjs`) and what you must not do (never merge; never handle tokens in chat) |
-| `docs/JIRA_GUIDE.md` | You write or refine tasks |
-| `docs/JIRA_BACKLOG.md` | You want the full task list offline |
+| File                        | Read it when                                                                                                                                                                    |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `docs/ARCHITECTURE.md`      | You need the big picture, layering, data flow and runtime boundaries                                                                                                            |
+| `docs/PHASES.md`            | You want to know what comes when and who owns which track                                                                                                                       |
+| `docs/TEAM_AND_WORKFLOW.md` | Branching, PRs, reviews, environments, releases                                                                                                                                 |
+| `docs/CURRENT_STATE.md`     | You want to know what exists today and where it lives                                                                                                                           |
+| `docs/DATA_MODEL.md`        | You touch the database                                                                                                                                                          |
+| `docs/SECURITY.md`          | You touch auth, uploads, sharing, admin, AI tools or secrets                                                                                                                    |
+| `docs/CONVENTIONS.md`       | Naming, UI patterns, error handling, testing                                                                                                                                    |
+| `docs/AI_WORKFLOW.md`       | **You are an AI agent taking a Jira task** — the exact loop, the Jira helper (`node scripts/jira/jira.mjs`) and what you must not do (never merge; never handle tokens in chat) |
+| `docs/JIRA_GUIDE.md`        | You write or refine tasks                                                                                                                                                       |
+| `docs/JIRA_BACKLOG.md`      | You want the full task list offline                                                                                                                                             |

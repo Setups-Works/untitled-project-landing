@@ -13,17 +13,17 @@ Small rules that keep a three-developer codebase readable. When in doubt, match 
 
 ## Naming and files
 
-| Thing | Convention | Example |
-| --- | --- | --- |
-| Component | `PascalCase.tsx` | `NoteEditor.tsx` |
-| Hook | `useThing.ts` | `useAutosave.ts` |
-| Service | `<domain>.service.ts` in `src/server/services/<domain>/` | `notes.service.ts` |
-| Repository | `<domain>.repository.ts` | `notes.repository.ts` |
-| Zod schema | `<domain>.schema.ts` next to the route/service that uses it | `notes.schema.ts` |
-| API route | `src/app/api/v1/<resource>/route.ts` | `notes/route.ts` |
-| Migration | `<timestamp>_<snake_name>.sql` | `20261101000000_workspaces.sql` |
-| CSS class | feature prefix + role | `nt-card`, `tv-sec`, `cx-msg` |
-| Jira branch | `feature/UNT-n-name` | `feature/UNT-60-notes-feature-module` |
+| Thing       | Convention                                                  | Example                               |
+| ----------- | ----------------------------------------------------------- | ------------------------------------- |
+| Component   | `PascalCase.tsx`                                            | `NoteEditor.tsx`                      |
+| Hook        | `useThing.ts`                                               | `useAutosave.ts`                      |
+| Service     | `<domain>.service.ts` in `src/server/services/<domain>/`    | `notes.service.ts`                    |
+| Repository  | `<domain>.repository.ts`                                    | `notes.repository.ts`                 |
+| Zod schema  | `<domain>.schema.ts` next to the route/service that uses it | `notes.schema.ts`                     |
+| API route   | `src/app/api/v1/<resource>/route.ts`                        | `notes/route.ts`                      |
+| Migration   | `<timestamp>_<snake_name>.sql`                              | `20261101000000_workspaces.sql`       |
+| CSS class   | feature prefix + role                                       | `nt-card`, `tv-sec`, `cx-msg`         |
+| Jira branch | `feature/UNT-n-name`                                        | `feature/UNT-60-notes-feature-module` |
 
 ## API and errors
 
@@ -45,7 +45,10 @@ Small rules that keep a three-developer codebase readable. When in doubt, match 
 ## Data fetching on the client (until services land)
 
 - Use the browser Supabase client from `src/lib/supabase/client.ts`; select only needed columns; add `.limit()`.
-- After a mutation, update local state optimistically and reload on error.
+- Use **TanStack Query** (`useQuery`/`useMutation`); never hand-roll load/reload `useEffect` fetching. Keys live in `src/lib/query/keys.ts` (`qk`).
+- Optimistic updates: `cancelQueries` → snapshot with `getQueriesData` → `setQueriesData` → roll back in `onError` → `invalidateQueries` in `onSettled`. Reference: `src/features/tasks/queries.ts`.
+- Realtime: call `useRealtimeInvalidate(table, [keys])` (`src/hooks`); it debounces invalidation when rows change. The table must be in the `supabase_realtime` publication (see migration `20261007080000_realtime.sql`).
+- Overlays/menus/tabs use the Radix wrappers in `src/components/ui` — don't build custom ones.
 - Don't put business rules in components — if you catch yourself writing one, it belongs in a service (even if the service is a TODO — leave a comment referencing the Jira task).
 
 ## Testing (UNT-33)

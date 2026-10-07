@@ -8,10 +8,13 @@ const URL_OK = /^https?:\/\/[A-Za-z0-9.:_-]+$/;
 const KEY_OK = /^[A-Za-z0-9._-]+$/;
 
 export const supabaseProblem: string | null =
-  !SUPABASE_URL || !SUPABASE_KEY ? null :
-  !URL_OK.test(SUPABASE_URL.replace(/\/+$/, "")) ? "NEXT_PUBLIC_SUPABASE_URL isn’t a valid address (it should look like https://your-project.supabase.co)." :
-  !KEY_OK.test(SUPABASE_KEY) ? "NEXT_PUBLIC_SUPABASE_ANON_KEY contains characters that aren’t allowed — for example “…”, quotes or spaces. Copy the full key again from Supabase → Project Settings → API." :
-  null;
+  !SUPABASE_URL || !SUPABASE_KEY
+    ? null
+    : !URL_OK.test(SUPABASE_URL.replace(/\/+$/, ""))
+      ? "NEXT_PUBLIC_SUPABASE_URL isn’t a valid address (it should look like https://your-project.supabase.co)."
+      : !KEY_OK.test(SUPABASE_KEY)
+        ? "NEXT_PUBLIC_SUPABASE_ANON_KEY contains characters that aren’t allowed — for example “…”, quotes or spaces. Copy the full key again from Supabase → Project Settings → API."
+        : null;
 
 export const supabaseConfigured = Boolean(SUPABASE_URL && SUPABASE_KEY) && !supabaseProblem;
 

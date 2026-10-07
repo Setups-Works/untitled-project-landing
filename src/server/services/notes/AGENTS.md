@@ -5,6 +5,7 @@
 **Responsibilities:** list/search/create/update/delete notes, pin and categorise, reorder (`sort_order`), manage attachments, expose history (`note_versions`), enforce workspace permissions, later tags/backlinks/trash.
 
 **This folder defines the pattern every other domain copies** — keep it exemplary:
+
 1. `notes.schema.ts` — Zod input/output types.
 2. `notes.service.ts` — functions taking `ctx` + input; permission check → rules → repository.
 3. `src/server/repositories/notes.repository.ts` — queries only.

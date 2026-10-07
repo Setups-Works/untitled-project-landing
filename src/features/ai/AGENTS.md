@@ -7,6 +7,7 @@
 **Backed by:** `chats`, `chat_messages`, `chat_folders`; target `src/server/services/ai` (orchestrator) + provider router + `/api/v1/ai/*`.
 
 **Rules**
+
 - **No AI replies exist yet.** The UI says so ("No AI" mode) and must keep working with zero providers.
 - Server providers (Groq) are called only from the orchestrator. Puter runs in the browser: stream locally, then post the final message to `/api/v1/ai/messages`.
 - Streaming: SSE, honour Stop (abort), persist partial answers on interruption.

@@ -7,6 +7,7 @@
 **Backed by:** Supabase Auth (`auth.users`), `profiles`. Cookies are refreshed in `src/proxy.ts`.
 
 **Rules**
+
 - Redirect targets go through `safeNext()`. Don't build redirect URLs from raw query params.
 - The Supabase URL/key are validated in `lib/supabase/config.ts` — if they're invalid the UI explains which variable is wrong; keep that behaviour.
 - `AuthLink` / `useAuthState` are cookie-hinted + Supabase-confirmed so static marketing pages can show "Dashboard" vs "Get started" without becoming dynamic. Don't read `cookies()` in the root layout (it would make every page dynamic).

@@ -11,12 +11,24 @@ const NODES: N[] = [
   { id: "doc", label: "Pricing page copy", kind: "Doc", x: 50, y: 10, tone: "blue" },
 ];
 const EDGES: [string, string][] = [
-  ["plan", "mail"], ["plan", "meet"], ["plan", "task"], ["plan", "day"], ["plan", "doc"], ["meet", "task"], ["mail", "doc"], ["meet", "day"],
+  ["plan", "mail"],
+  ["plan", "meet"],
+  ["plan", "task"],
+  ["plan", "day"],
+  ["plan", "doc"],
+  ["meet", "task"],
+  ["mail", "doc"],
+  ["meet", "day"],
 ];
 const WHY: Record<string, string> = {
-  "plan-mail": "Mentioned in the thread", "plan-meet": "Discussed in the meeting", "plan-task": "Task linked from the note",
-  "plan-day": "Referenced in your journal", "plan-doc": "Backlink to the doc", "meet-task": "Action item from the meeting",
-  "mail-doc": "Attachment in the thread", "meet-day": "Written up in your journal",
+  "plan-mail": "Mentioned in the thread",
+  "plan-meet": "Discussed in the meeting",
+  "plan-task": "Task linked from the note",
+  "plan-day": "Referenced in your journal",
+  "plan-doc": "Backlink to the doc",
+  "meet-task": "Action item from the meeting",
+  "mail-doc": "Attachment in the thread",
+  "meet-day": "Written up in your journal",
 };
 
 export default function GraphDemo() {
@@ -35,16 +47,32 @@ export default function GraphDemo() {
           {EDGES.map(([a, b]) => {
             const on = a === sel || b === sel;
             return (
-              <line key={a + b} x1={get(a).x} y1={get(a).y} x2={get(b).x} y2={get(b).y}
-                stroke={on ? "#1f5d49" : "#1b1c1433"} strokeWidth={on ? 2 : 1.2} vectorEffect="non-scaling-stroke" strokeDasharray={on ? "0" : "4 4"} />
+              <line
+                key={a + b}
+                x1={get(a).x}
+                y1={get(a).y}
+                x2={get(b).x}
+                y2={get(b).y}
+                stroke={on ? "#1f5d49" : "#1b1c1433"}
+                strokeWidth={on ? 2 : 1.2}
+                vectorEffect="non-scaling-stroke"
+                strokeDasharray={on ? "0" : "4 4"}
+              />
             );
           })}
         </svg>
         {NODES.map((n) => {
           const dim = n.id !== sel && !linked(sel, n.id);
           return (
-            <button key={n.id} className={`gnode at-${n.tone}`} data-on={n.id === sel} data-dim={dim}
-              style={{ left: `${n.x}%`, top: `${n.y}%` }} onClick={() => setSel(n.id)} aria-pressed={n.id === sel}>
+            <button
+              key={n.id}
+              className={`gnode at-${n.tone}`}
+              data-on={n.id === sel}
+              data-dim={dim}
+              style={{ left: `${n.x}%`, top: `${n.y}%` }}
+              onClick={() => setSel(n.id)}
+              aria-pressed={n.id === sel}
+            >
               <small>{n.kind}</small>
               {n.label}
             </button>
@@ -53,19 +81,27 @@ export default function GraphDemo() {
       </div>
       <aside className="gdemo-side">
         <div className="eyebrow">Selected · {cur.kind}</div>
-        <h3 className="h3" style={{ margin: "8px 0 14px" }}>{cur.label}</h3>
-        <div className="eyebrow" style={{ marginBottom: 8 }}>{conns.length} connections</div>
+        <h3 className="h3" style={{ margin: "8px 0 14px" }}>
+          {cur.label}
+        </h3>
+        <div className="eyebrow" style={{ marginBottom: 8 }}>
+          {conns.length} connections
+        </div>
         <ul>
           {conns.map((c) => (
             <li key={c.other.id}>
               <button onClick={() => setSel(c.other.id)}>
                 <b>{c.other.label}</b>
-                <small>{c.other.kind} · {c.why}</small>
+                <small>
+                  {c.other.kind} · {c.why}
+                </small>
               </button>
             </li>
           ))}
         </ul>
-        <p className="meta" style={{ marginTop: 12 }}>Sample data for illustration. Click any node.</p>
+        <p className="meta" style={{ marginTop: 12 }}>
+          Sample data for illustration. Click any node.
+        </p>
       </aside>
     </div>
   );

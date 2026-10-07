@@ -29,8 +29,15 @@ export default function TaskItem({ task: t, ctx, showList = true }: { task: Task
       data-cancelled={t.cancelled}
       data-selected={chosen}
       tabIndex={0}
-      onClick={(e) => { if (e.metaKey || e.ctrlKey) { e.preventDefault(); ctx.onSelect(t); } else ctx.onOpen(t); }}
-      onKeyDown={(e) => { if (e.key === "Enter" && e.target === e.currentTarget) ctx.onOpen(t); }}
+      onClick={(e) => {
+        if (e.metaKey || e.ctrlKey) {
+          e.preventDefault();
+          ctx.onSelect(t);
+        } else ctx.onOpen(t);
+      }}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" && e.target === e.currentTarget) ctx.onOpen(t);
+      }}
     >
       <button
         className="ti-check"
@@ -38,7 +45,10 @@ export default function TaskItem({ task: t, ctx, showList = true }: { task: Task
         role="checkbox"
         aria-checked={t.done}
         aria-label={`Mark “${t.title}” ${t.done ? "not done" : "done"}`}
-        onClick={(e) => { e.stopPropagation(); ctx.onToggle(t); }}
+        onClick={(e) => {
+          e.stopPropagation();
+          ctx.onToggle(t);
+        }}
         disabled={t.cancelled || t.archived}
       >
         {t.done && <FA icon={faCheck} />}
@@ -48,19 +58,53 @@ export default function TaskItem({ task: t, ctx, showList = true }: { task: Task
         {t.description && <span className="ti-desc">{t.description}</span>}
         {(t.due_date || t.recurrence) && (
           <span className="ti-meta">
-            {t.due_date && <span data-tone={tone}><FA icon={faCalendarDay} /> {dayLabel(t.due_date, ctx.today)}</span>}
-            {t.recurrence && <span title="Repeats"><FA icon={faRotate} /> {t.recurrence}</span>}
+            {t.due_date && (
+              <span data-tone={tone}>
+                <FA icon={faCalendarDay} /> {dayLabel(t.due_date, ctx.today)}
+              </span>
+            )}
+            {t.recurrence && (
+              <span title="Repeats">
+                <FA icon={faRotate} /> {t.recurrence}
+              </span>
+            )}
           </span>
         )}
       </div>
       {showList && (
         <span className="ti-list" data-tone={list?.color}>
-          {list ? <><FA icon={faHashtag} /> {list.name}</> : <>Inbox <FA icon={faInbox} /></>}
+          {list ? (
+            <>
+              <FA icon={faHashtag} /> {list.name}
+            </>
+          ) : (
+            <>
+              Inbox <FA icon={faInbox} />
+            </>
+          )}
         </span>
       )}
       <span className="ti-acts">
-        <button className="icon-btn" aria-label={`Edit “${t.title}”`} onClick={(e) => { e.stopPropagation(); ctx.onOpen(t); }}><FA icon={faPen} /></button>
-        <button className="icon-btn" aria-label={`Delete “${t.title}”`} onClick={(e) => { e.stopPropagation(); ctx.onDelete(t); }}><FA icon={faTrash} /></button>
+        <button
+          className="icon-btn"
+          aria-label={`Edit “${t.title}”`}
+          onClick={(e) => {
+            e.stopPropagation();
+            ctx.onOpen(t);
+          }}
+        >
+          <FA icon={faPen} />
+        </button>
+        <button
+          className="icon-btn"
+          aria-label={`Delete “${t.title}”`}
+          onClick={(e) => {
+            e.stopPropagation();
+            ctx.onDelete(t);
+          }}
+        >
+          <FA icon={faTrash} />
+        </button>
       </span>
     </li>
   );

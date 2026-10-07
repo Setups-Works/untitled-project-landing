@@ -1,6 +1,6 @@
 # src/features — one folder per product feature
 
-**Purpose:** Everything the *client* needs for a feature: components, hooks, client-side state and helpers. Business rules and data access are in `src/server`.
+**Purpose:** Everything the _client_ needs for a feature: components, hooks, client-side state and helpers. Business rules and data access are in `src/server`.
 
 ## Structure of a feature folder
 
@@ -20,12 +20,12 @@ features/<name>/
 - Features never import `src/server/**`.
 - Migrating existing code: move components + helpers in one PR per feature, no behaviour change, parity checklist in the PR (Jira: UNT-60 notes, UNT-61 tasks, UNT-62 journal, UNT-81 chat/AI, UNT-69 insights, UNT-63 search).
 
-| Feature | Track | Phase | State |
-| --- | --- | --- | --- |
-| `auth` | A | 0–1 | built (in `components/auth`, `lib/supabase`) |
-| `workspace` | A | 1 | planned (UNT-55) |
-| `notes`, `tasks`, `journal`, `search`, `insights` | B | 2 | built in legacy location → migrate |
-| `calendar`, `email` | B (UI) + C (services) | 3 | planned |
-| `integrations` | B (UI) + C (service) | 3 | planned |
-| `ai` | C (+ B for chat UI) | 4 | planned |
-| `meetings`, `automation` | B (UI) + C (engine) | 5 | planned |
+| Feature                                           | Track                 | Phase | State                                        |
+| ------------------------------------------------- | --------------------- | ----- | -------------------------------------------- |
+| `auth`                                            | A                     | 0–1   | built (in `components/auth`, `lib/supabase`) |
+| `workspace`                                       | A                     | 1     | planned (UNT-55)                             |
+| `notes`, `tasks`, `journal`, `search`, `insights` | B                     | 2     | built in legacy location → migrate           |
+| `calendar`, `email`                               | B (UI) + C (services) | 3     | planned                                      |
+| `integrations`                                    | B (UI) + C (service)  | 3     | planned                                      |
+| `ai`                                              | C (+ B for chat UI)   | 4     | planned                                      |
+| `meetings`, `automation`                          | B (UI) + C (engine)   | 5     | planned                                      |

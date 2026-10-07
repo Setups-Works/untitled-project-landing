@@ -4,7 +4,7 @@ One workspace for **notes, tasks, journal, chat, calendar, email, meetings and a
 
 This repository contains the marketing site **and** the signed-in app (user panel + admin panel). Built with **Next.js 16 (App Router)**, **React 19**, **TypeScript**, **Supabase** (Postgres, Auth, Storage, Realtime). Styling is hand-written CSS with design tokens — no Tailwind, no UI kit.
 
-> **Working on this project?** Read [`AGENTS.md`](AGENTS.md) (rules for humans *and* AI agents), then [`docs/ONBOARDING.md`](docs/ONBOARDING.md). Plan and tasks live in Jira: https://setups-works.atlassian.net/jira/software/projects/UNT/boards
+> **Working on this project?** Read [`AGENTS.md`](AGENTS.md) (rules for humans _and_ AI agents), then [`docs/ONBOARDING.md`](docs/ONBOARDING.md). Plan and tasks live in Jira: https://setups-works.atlassian.net/jira/software/projects/UNT/boards
 
 ## What's built
 
@@ -25,11 +25,11 @@ cp .env.example .env.local    # fill in the dev values — see below
 npm run dev                   # http://localhost:3000
 ```
 
-| Command | Purpose |
-| --- | --- |
-| `npm run dev` | Dev server with hot reload |
-| `npx tsc --noEmit` | Typecheck (must pass before every push) |
-| `npx next build` | Production build (must pass before every PR) |
+| Command                         | Purpose                                             |
+| ------------------------------- | --------------------------------------------------- |
+| `npm run dev`                   | Dev server with hot reload                          |
+| `npx tsc --noEmit`              | Typecheck (must pass before every push)             |
+| `npx next build`                | Production build (must pass before every PR)        |
 | `npx supabase db push --linked` | Apply new migrations to the linked Supabase project |
 
 > Don't run `next build` while `npm run dev` is running — both write to `.next`. Stop dev (or delete `.next`) first.
@@ -38,19 +38,19 @@ npm run dev                   # http://localhost:3000
 
 See [`.env.example`](.env.example). Never commit `.env*` files; never prefix a secret with `NEXT_PUBLIC_`.
 
-| Variable | Needed for |
-| --- | --- |
-| `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Everything signed-in (without them pages show a setup notice) |
-| `SUPABASE_SERVICE_ROLE_KEY` | Admin panel, public chat links, account deletion (server only) |
-| `ADMIN_EMAILS` | Comma-separated emails that are always admins |
-| `GROQ_API_KEY`, `COMPOSIO_API_KEY`, `CRON_SECRET`, Sentry/PostHog keys | Later phases |
+| Variable                                                               | Needed for                                                     |
+| ---------------------------------------------------------------------- | -------------------------------------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`            | Everything signed-in (without them pages show a setup notice)  |
+| `SUPABASE_SERVICE_ROLE_KEY`                                            | Admin panel, public chat links, account deletion (server only) |
+| `ADMIN_EMAILS`                                                         | Comma-separated emails that are always admins                  |
+| `GROQ_API_KEY`, `COMPOSIO_API_KEY`, `CRON_SECRET`, Sentry/PostHog keys | Later phases                                                   |
 
 If a key contains an invalid character (a pasted "…", a quote or a space) the login page names the variable that's wrong.
 
 ### Supabase setup
 
 1. Create a project; copy the URL and anon key into `.env.local`.
-2. Authentication → URL Configuration: set *Site URL* and add `<site>/auth/callback` to *Redirect URLs* (local and production).
+2. Authentication → URL Configuration: set _Site URL_ and add `<site>/auth/callback` to _Redirect URLs_ (local and production).
 3. Enable the Google provider if you want Google sign-in.
 4. Apply the migrations in `supabase/migrations/` (`npx supabase login`, `npx supabase link --project-ref <ref>`, `npx supabase db push --linked`).
 
