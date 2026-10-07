@@ -49,7 +49,7 @@ export default function FilePreviewList({
           return (
             <li
               key={`${f.name}${f.size}${i}`}
-              className="flex max-w-full items-center gap-3 rounded-r3 bg-white p-2 pr-3 shadow-[inset_0_0_0_1px_var(--line)]"
+              className="flex w-full max-w-[380px] items-center gap-3 rounded-r3 bg-white p-2 pr-2.5 shadow-[inset_0_0_0_1px_var(--line)]"
             >
               {k === "image" && url ? (
                 <button
@@ -69,10 +69,10 @@ export default function FilePreviewList({
                   <FA icon={k === "audio" ? faMicrophone : k === "pdf" ? faFilePdf : k === "video" ? faFileLines : faFile} />
                 </span>
               )}
-              <span className="min-w-0 max-w-[220px]">
+              <span className="min-w-0 flex-1 text-left">
                 <span className="block truncate text-[13px] font-medium text-fg">{f.name}</span>
                 <span className="block text-[12px] text-fg-subtle">{size(f.size)}</span>
-                {k === "audio" && url && <audio controls src={url} aria-label={f.name} className="mt-1 h-8 w-full max-w-[220px]" />}
+                {k === "audio" && url && <audio controls src={url} aria-label={f.name} className="mt-1 h-8 w-full" />}
               </span>
               {(k === "pdf" || k === "video") && url && (
                 <button
