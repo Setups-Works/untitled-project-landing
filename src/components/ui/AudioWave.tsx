@@ -1,9 +1,11 @@
 "use client";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { FontAwesomeIcon as FA } from "@fortawesome/react-fontawesome";
 import { faPause, faPlay } from "@fortawesome/free-solid-svg-icons";
+import { AudioScrubber } from "./waveform";
 
-const BARS = 44;
+// Enough samples for the widest layout; the canvas resamples them to however many bars fit.
+const BARS = 96;
 const fmt = (s: number) => {
   if (!Number.isFinite(s) || s < 0) s = 0;
   return `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
@@ -66,7 +68,13 @@ export default function AudioWave({ src, label, bare = false }: { src: string; l
 
   // Recordings made in the browser (webm) often report an unknown length; fall back to the decoded length above.
   const total = Number.isFinite(el.current?.duration) && el.current!.duration > 0 ? el.current!.duration : duration;
-  const progress = total ? Math.min(1, time / total) : 0;
+
+  const seek = (t: number) => {
+    const a = el.current;
+    if (!a) return;
+    a.currentTime = t;
+    setTime(t);
+  };
 
   const toggle = () => {
     const a = el.current;
@@ -77,17 +85,6 @@ export default function AudioWave({ src, label, bare = false }: { src: string; l
       void a.play();
     } else a.pause();
   };
-
-  const seekTo = useCallback(
-    (clientX: number, box: HTMLElement) => {
-      const a = el.current;
-      if (!a || !total) return;
-      const r = box.getBoundingClientRect();
-      a.currentTime = Math.min(1, Math.max(0, (clientX - r.left) / r.width)) * total;
-      setTime(a.currentTime);
-    },
-    [total],
-  );
 
   return (
     <div
@@ -114,41 +111,21 @@ export default function AudioWave({ src, label, bare = false }: { src: string; l
       >
         <FA icon={isPlaying ? faPause : faPlay} className={isPlaying ? "" : "translate-x-px"} />
       </button>
-      <div
-        role="slider"
-        tabIndex={0}
-        aria-label={`Seek ${label}`}
-        aria-valuemin={0}
-        aria-valuemax={Math.round(total)}
-        aria-valuenow={Math.round(time)}
-        aria-valuetext={`${fmt(time)} of ${fmt(total)}`}
-        className="flex h-9 min-w-0 flex-1 cursor-pointer touch-none items-center gap-[2px] rounded-r1 outline-offset-2 focus-visible:outline-2 focus-visible:outline-violet-fg"
-        onPointerDown={(e) => {
-          e.currentTarget.setPointerCapture(e.pointerId);
-          seekTo(e.clientX, e.currentTarget);
-        }}
-        onPointerMove={(e) => e.buttons === 1 && seekTo(e.clientX, e.currentTarget)}
-        onKeyDown={(e) => {
-          const a = el.current;
-          if (!a || !total) return;
-          if (e.key === "ArrowRight") a.currentTime = Math.min(total, a.currentTime + 5);
-          else if (e.key === "ArrowLeft") a.currentTime = Math.max(0, a.currentTime - 5);
-          else if (e.key === " ") {
-            e.preventDefault();
-            toggle();
-          } else return;
-          setTime(a.currentTime);
-        }}
-      >
-        {peaks.map((p, i) => (
-          <span
-            key={i}
-            aria-hidden
-            className={`min-w-[2px] flex-1 rounded-full transition-colors ${i / BARS < progress ? "bg-green-fg" : "bg-line-strong"}`}
-            style={{ height: `${Math.round(p * 100)}%` }}
-          />
-        ))}
-      </div>
+      {/* ElevenLabs-style canvas waveform (src/components/ui/waveform.tsx): click or drag to seek, arrow keys skip 5 s. */}
+      <AudioScrubber
+        className="min-w-0 flex-1"
+        label={`Seek ${label}`}
+        data={peaks}
+        currentTime={time}
+        duration={total}
+        height={40}
+        barWidth={3}
+        barGap={2}
+        barRadius={1.5}
+        barColor="#1b1c14"
+        accent="#1f5d49"
+        onSeek={seek}
+      />
       <span className="flex-none text-[12px] tabular-nums text-fg-subtle">{fmt(isPlaying || time > 0 ? time : total)}</span>
     </div>
   );
