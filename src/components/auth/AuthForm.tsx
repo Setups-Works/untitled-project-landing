@@ -84,6 +84,12 @@ export default function AuthForm({ mode }: { mode: Mode }) {
     void oneTapAuthClient(cfg.googleClientId)
       .oneTap({
         callbackURL: next,
+        // Wording of the prompt: "Sign in with Google" on the login page, "Sign up with Google" on the signup page.
+        context: mode === "signup" ? "signup" : "signin",
+        // Keep the upgraded One Tap experience on Safari/Firefox (they block third-party cookies via ITP).
+        additionalOptions: { itp_support: true },
+        // We never sign in silently: the visitor always taps "Continue as …" first.
+        autoSelect: false,
         fetchOptions: { onSuccess: () => window.location.assign(next) },
       })
       .catch(() => undefined);
