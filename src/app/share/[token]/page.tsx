@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { FontAwesomeIcon as FA } from "@fortawesome/react-fontawesome";
 import { faEarthAmericas, faPaperclip } from "@fortawesome/free-solid-svg-icons";
-import { serviceConfigured, supabaseAdmin } from "../../../lib/supabase/admin";
+import { adminDb, serverConfigured } from "../../../server/session";
+import { objectUrl, ownsKey, validKey } from "../../../server/storage";
 import { prettyTitle } from "../../../lib/chat";
 import type { Attachment } from "../../../lib/workspace";
 import AuthLink from "../../../components/auth/AuthLink";
@@ -20,7 +21,7 @@ type Row = { id: string; role: "user" | "assistant"; body: string; created_at: s
 export default async function Page({ params }: { params: Promise<{ token: string }> }) {
   const { token } = await params;
   if (!/^[a-f0-9]{32}$/.test(token)) notFound();
-  if (!serviceConfigured)
+  if (!serverConfigured())
     return (
       <main className="section">
         <div className="container" style={{ maxWidth: 640 }}>
@@ -32,17 +33,16 @@ export default async function Page({ params }: { params: Promise<{ token: string
     );
 
   // Looked up by exact token on the server, so the database never exposes the list of shared chats.
-  const sb = supabaseAdmin();
-  const { data: chat } = await sb.from("chats").select("id,title,shared_at,updated_at").eq("share_token", token).maybeSingle();
+  const sb = adminDb();
+  const { data: chat } = await sb.from("chats").select("id,user_id,title,shared_at,updated_at").eq("share_token", token).maybeSingle();
   if (!chat) notFound();
 
   const { data } = await sb.from("chat_messages").select("id,role,body,created_at,attachments").eq("chat_id", chat.id).order("created_at");
   const msgs = (data ?? []) as Row[];
-  const paths = msgs.flatMap((m) => m.attachments.map((a) => a.path));
+  // Attachment paths are user-supplied data, so only sign files that really live in the chat owner's own folder.
   const urls = new Map<string, string>();
-  if (paths.length) {
-    const { data: signed } = await sb.storage.from("note-files").createSignedUrls(paths, 3600);
-    (signed ?? []).forEach((s) => s.path && s.signedUrl && urls.set(s.path, s.signedUrl));
+  for (const a of msgs.flatMap((m) => m.attachments)) {
+    if (validKey(a.path) && ownsKey(chat.user_id as string, a.path)) urls.set(a.path, objectUrl("note-files", a.path, 3600));
   }
   const since = new Date(chat.shared_at ?? chat.updated_at).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
 

@@ -11,7 +11,7 @@ import {
   faMessage,
   faCrown,
 } from "@fortawesome/free-solid-svg-icons";
-import { countRows, isAdmin, listAllUsers, serviceConfigured, supabaseAdmin } from "../../lib/supabase/admin";
+import { countRows, isAdmin, listAllUsers, serverConfigured, adminDb } from "../../server/session";
 import SetupNotice from "../../components/admin/SetupNotice";
 
 const DAY = 86_400_000;
@@ -37,7 +37,7 @@ function Bars({ title, tone, data, note }: { title: string; tone: string; data: 
 }
 
 export default async function Page() {
-  if (!serviceConfigured) return <SetupNotice />;
+  if (!serverConfigured()) return <SetupNotice />;
   const [users, notes, tasks, journal, chats, messages, profiles] = await Promise.all([
     listAllUsers(),
     countRows("notes"),
@@ -45,7 +45,7 @@ export default async function Page() {
     countRows("journal_entries"),
     countRows("chats"),
     countRows("chat_messages"),
-    supabaseAdmin().from("profiles").select("plan"),
+    adminDb().from("profiles").select("plan"),
   ]);
   const now = Date.now();
   const since = (iso?: string | null, days = 7) => !!iso && now - new Date(iso).getTime() < days * DAY;
@@ -53,9 +53,9 @@ export default async function Page() {
 
   const stats = [
     [faUsers, "Total users", users.length, "violet"],
-    [faUserPlus, "New this week", users.filter((u) => since(u.created_at)).length, "amber"],
-    [faBolt, "Active this week", users.filter((u) => since(u.last_sign_in_at)).length, "blue"],
-    [faEnvelopeCircleCheck, "Email confirmed", users.filter((u) => u.email_confirmed_at).length, "green"],
+    [faUserPlus, "New this week", users.filter((u) => since(u.createdAt)).length, "amber"],
+    [faBolt, "Active this week", users.filter((u) => since(u.lastSignIn)).length, "blue"],
+    [faEnvelopeCircleCheck, "Email confirmed", users.filter((u) => u.emailVerified).length, "green"],
   ] as const;
   const content = [
     [faPenToSquare, "Notes", notes, "violet"],
@@ -71,12 +71,12 @@ export default async function Page() {
     const key = d.toDateString();
     return {
       label: d.toLocaleDateString(undefined, { day: "numeric", month: "short" }),
-      joined: users.filter((u) => new Date(u.created_at).toDateString() === key).length,
-      seen: users.filter((u) => u.last_sign_in_at && new Date(u.last_sign_in_at).toDateString() === key).length,
+      joined: users.filter((u) => new Date(u.createdAt).toDateString() === key).length,
+      seen: users.filter((u) => u.lastSignIn && new Date(u.lastSignIn).toDateString() === key).length,
     };
   });
-  const recent = [...users].sort((a, b) => +new Date(b.created_at) - +new Date(a.created_at)).slice(0, 6);
-  const google = users.filter((u) => u.app_metadata?.provider === "google").length;
+  const recent = [...users].sort((a, b) => +new Date(b.createdAt) - +new Date(a.createdAt)).slice(0, 6);
+  const google = users.filter((u) => u.providers.includes("google")).length;
   const avgNotes = users.length ? (notes / users.length).toFixed(1) : "0";
 
   return (
@@ -129,10 +129,10 @@ export default async function Page() {
           {recent.length === 0 && <p className="meta">No users yet.</p>}
           {recent.map((u) => (
             <blockquote key={u.id} style={{ fontStyle: "normal" }}>
-              {(u.user_metadata?.full_name as string) || u.email}
+              {u.name || u.email}
               {isAdmin(u) && <b> · admin</b>}
               <small>
-                {u.email} · {new Date(u.created_at).toLocaleDateString()}
+                {u.email} · {new Date(u.createdAt).toLocaleDateString()}
               </small>
             </blockquote>
           ))}
@@ -154,11 +154,11 @@ export default async function Page() {
             </div>
             <div>
               <dt>Banned</dt>
-              <dd>{users.filter((u) => u.banned_until && new Date(u.banned_until) > new Date()).length}</dd>
+              <dd>{users.filter((u) => u.banned).length}</dd>
             </div>
             <div>
               <dt>Unconfirmed</dt>
-              <dd>{users.filter((u) => !u.email_confirmed_at).length}</dd>
+              <dd>{users.filter((u) => !u.emailVerified).length}</dd>
             </div>
           </dl>
         </div>

@@ -17,7 +17,7 @@ import {
   faWaveSquare,
 } from "@fortawesome/free-solid-svg-icons";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabaseBrowser } from "../../lib/supabase/client";
+import { api } from "../../lib/api/client";
 import { qk } from "../../lib/query/keys";
 import { useRealtimeInvalidate } from "../../hooks/useRealtimeInvalidate";
 import type { Attachment, Note } from "../../lib/workspace";
@@ -34,7 +34,7 @@ const MAX_BYTES = 10 * 1024 * 1024;
 const EMPTY_NOTES: Note[] = []; // stable reference while the query loads
 
 export default function NotesView() {
-  const sb = useMemo(supabaseBrowser, []);
+  const sb = useMemo(api, []);
   const router = useRouter();
   const params = useSearchParams();
   const qc = useQueryClient();

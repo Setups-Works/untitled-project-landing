@@ -16,7 +16,7 @@ import {
   faTag,
   faWandMagicSparkles,
 } from "@fortawesome/free-solid-svg-icons";
-import { supabaseBrowser } from "../../lib/supabase/client";
+import { api } from "../../lib/api/client";
 import { analyse, type InEntry, type InNote, type InTask, type Observation } from "../../lib/insights";
 import Radar from "./Radar";
 import { Tabs, TabsList, TabsTrigger } from "../ui/Tabs";
@@ -34,7 +34,7 @@ const ICONS: Record<Observation["icon"], IconDefinition> = {
 
 /** Personality insights, worked out from the user's own journal, notes and tasks. Nothing leaves the browser. */
 export default function InsightsCard() {
-  const sb = useMemo(supabaseBrowser, []);
+  const sb = useMemo(api, []);
   const [data, setData] = useState<{ tasks: InTask[]; entries: InEntry[]; notes: InNote[] } | null>(null);
   const [err, setErr] = useState(false);
   const [page, setPage] = useState(0);

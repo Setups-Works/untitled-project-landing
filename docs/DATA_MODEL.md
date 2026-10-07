@@ -1,6 +1,6 @@
 # Data model
 
-Supabase Postgres. **All tables have Row-Level Security enabled.** Migrations live in `supabase/migrations/` and are append-only. Update this file in the same PR as any schema change.
+PostgreSQL 16 (Docker). **All tables have Row-Level Security enabled.** Migrations live in `db/migrations/` and are append-only. Update this file in the same PR as any schema change.
 
 ## Current tables
 

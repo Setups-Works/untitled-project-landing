@@ -9,5 +9,5 @@
 **Rules**
 
 - Add every new environment variable in **three places**: here (typed access), `.env.example` (with a comment), and `docs/SECURITY.md` (secrets inventory). Secrets never start with `NEXT_PUBLIC_`.
-- Supabase URL/key validation stays in `src/lib/supabase/config.ts` (needed by the edge proxy).
+- Server settings (database, Redis, S3, auth, SMTP) are read only through `serverEnv()`.
 - Per-user/per-plan gating belongs in the database (entitlements, UNT-39), not here.

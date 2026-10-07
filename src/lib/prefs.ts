@@ -17,7 +17,7 @@ export const DEFAULT_PREFS: Prefs = {
 };
 const KEY = "up_prefs";
 
-/** Preferences live in the user's Supabase profile; a copy in localStorage lets plain helpers (like time formatting) read them. */
+/** Preferences live in the user's profile (profiles.preferences); a copy in localStorage lets plain helpers (like time formatting) read them. */
 export function cleanPrefs(v: unknown, categories: readonly string[]): Prefs {
   const o = (v && typeof v === "object" ? v : {}) as Partial<Prefs>;
   return {

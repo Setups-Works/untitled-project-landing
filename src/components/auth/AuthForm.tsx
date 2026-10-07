@@ -1,7 +1,7 @@
 "use client";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { FontAwesomeIcon as FA } from "@fortawesome/react-fontawesome";
 import {
   faArrowRight,
@@ -12,9 +12,9 @@ import {
   faSpinner,
   faTriangleExclamation,
 } from "@fortawesome/free-solid-svg-icons";
-import { supabaseBrowser } from "../../lib/supabase/client";
+import { authClient } from "../../lib/auth/client";
 import { EMAIL_RE } from "../../lib/validate";
-import { safeNext, supabaseConfigured, supabaseProblem } from "../../lib/supabase/config";
+import { safeNext } from "../../lib/auth/redirect";
 
 type Mode = "login" | "signup" | "forgot" | "reset";
 
@@ -55,10 +55,10 @@ const LABELS = ["Too short", "Weak", "Okay", "Good", "Strong"];
 
 function friendly(msg: string) {
   const m = msg.toLowerCase();
-  if (m.includes("invalid login")) return "That email and password don’t match.";
-  if (m.includes("email not confirmed")) return "Please confirm your email first — check your inbox.";
-  if (m.includes("already registered") || m.includes("already been registered"))
-    return "An account with this email already exists. Try logging in.";
+  if (m.includes("invalid login") || m.includes("invalid email or password")) return "That email and password don’t match.";
+  if (m.includes("not verified") || m.includes("not confirmed")) return "Please confirm your email first — check your inbox.";
+  if (m.includes("already exists") || m.includes("already registered")) return "An account with this email already exists. Try logging in.";
+  if (m.includes("suspended")) return "This account has been suspended. Contact support if you think this is a mistake.";
   if (m.includes("rate limit") || m.includes("too many")) return "Too many attempts. Please wait a minute and try again.";
   if (m.includes("password should be")) return "Choose a stronger password (at least 8 characters).";
   return msg;
@@ -75,7 +75,14 @@ export default function AuthForm({ mode }: { mode: Mode }) {
   const [email, setEmail] = useState("");
   const [pw, setPw] = useState("");
   const [show, setShow] = useState(false);
+  const [cfg, setCfg] = useState<{ google: boolean; configured: boolean } | null>(null);
   const score = useMemo(() => strength(pw), [pw]);
+  useEffect(() => {
+    fetch("/api/v1/auth-config")
+      .then((r) => r.json())
+      .then(setCfg)
+      .catch(() => setCfg(null));
+  }, []);
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -85,42 +92,41 @@ export default function AuthForm({ mode }: { mode: Mode }) {
     if (mode !== "reset" && !EMAIL_RE.test(email.trim())) return setErr("Please enter a valid email address.");
     if ((mode === "signup" || mode === "reset") && pw.length < 8) return setErr("Your password needs at least 8 characters.");
     if (mode === "signup" && !name) return setErr("Please tell us your name.");
-    if (!supabaseConfigured) return setErr("Supabase isn’t configured yet. Add your project keys to .env.local.");
+    if (cfg && !cfg.configured) return setErr("The server isn’t configured yet. Start Docker and copy .env.example to .env.local.");
 
     setBusy(true);
-    const sb = supabaseBrowser();
     try {
       if (mode === "login") {
-        const { error } = await sb.auth.signInWithPassword({ email: email.trim(), password: pw });
-        if (error) throw error;
+        const { error } = await authClient.signIn.email({ email: email.trim(), password: pw });
+        if (error) {
+          // Unverified accounts get a fresh verification email automatically; show the "confirm" screen.
+          if (error.status === 403 && /verif/i.test(error.message ?? "")) return setDone("confirm");
+          throw new Error(error.message || "Invalid login");
+        }
         router.push(next);
         router.refresh();
         return;
       }
       if (mode === "signup") {
-        const { data, error } = await sb.auth.signUp({
-          email: email.trim(),
-          password: pw,
-          options: { data: { full_name: name }, emailRedirectTo: `${location.origin}/auth/callback?next=/dashboard` },
-        });
-        if (error) throw error;
-        if (data.session) {
+        const { data, error } = await authClient.signUp.email({ email: email.trim(), password: pw, name, callbackURL: "/dashboard" });
+        if (error) throw new Error(error.message || "Couldn’t create the account.");
+        if (data?.token) {
           router.push("/dashboard");
           router.refresh();
         } else setDone("confirm");
         return;
       }
       if (mode === "forgot") {
-        const { error } = await sb.auth.resetPasswordForEmail(email.trim(), {
-          redirectTo: `${location.origin}/auth/callback?next=/reset-password`,
-        });
-        if (error) throw error;
+        const { error } = await authClient.requestPasswordReset({ email: email.trim(), redirectTo: "/reset-password" });
+        if (error) throw new Error(error.message || "Couldn’t send the email.");
         setDone("sent");
         return;
       }
-      const { error } = await sb.auth.updateUser({ password: pw });
-      if (error) throw error;
-      router.push("/dashboard");
+      const token = params.get("token");
+      if (!token) throw new Error("That link has expired or was already used. Please request a new one.");
+      const { error } = await authClient.resetPassword({ newPassword: pw, token });
+      if (error) throw new Error(error.message || "Couldn’t update the password.");
+      router.push("/login");
       router.refresh();
     } catch (x) {
       setErr(friendly(x instanceof Error ? x.message : "Something went wrong."));
@@ -130,19 +136,15 @@ export default function AuthForm({ mode }: { mode: Mode }) {
   }
 
   async function google() {
-    if (!supabaseConfigured) return setErr("Supabase isn’t configured yet. Add your project keys to .env.local.");
-    const { error } = await supabaseBrowser().auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: `${location.origin}/auth/callback?next=${encodeURIComponent(next)}` },
-    });
-    if (error) setErr(friendly(error.message));
+    const { error } = await authClient.signIn.social({ provider: "google", callbackURL: next });
+    if (error) setErr(friendly(error.message ?? ""));
   }
 
   async function resend() {
     setBusy(true);
-    const { error } = await supabaseBrowser().auth.resend({ type: "signup", email: email.trim() });
+    const { error } = await authClient.sendVerificationEmail({ email: email.trim(), callbackURL: "/dashboard" });
     setBusy(false);
-    setErr(error ? friendly(error.message) : "");
+    setErr(error ? friendly(error.message ?? "") : "");
   }
 
   if (done)
@@ -187,21 +189,17 @@ export default function AuthForm({ mode }: { mode: Mode }) {
       </h1>
       <p className="body">{c.sub}</p>
 
-      {!supabaseConfigured && (
+      {cfg && !cfg.configured && (
         <p className="au-note" role="note">
           <FA icon={faTriangleExclamation} />{" "}
           <span>
-            {supabaseProblem ?? (
-              <>
-                Supabase isn’t connected yet. Add <code>NEXT_PUBLIC_SUPABASE_URL</code> and <code>NEXT_PUBLIC_SUPABASE_ANON_KEY</code> to{" "}
-                <code>.env.local</code>.
-              </>
-            )}
+            The server isn’t connected yet. Run <code>docker compose up -d</code>, then copy <code>.env.example</code> to{" "}
+            <code>.env.local</code>.
           </span>
         </p>
       )}
 
-      {(mode === "login" || mode === "signup") && (
+      {cfg?.google && (mode === "login" || mode === "signup") && (
         <>
           <button type="button" className="au-google" onClick={google}>
             <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden>

@@ -38,12 +38,5 @@ end $$;
 drop trigger if exists notes_snapshot on public.notes;
 create trigger notes_snapshot before update on public.notes for each row execute function public.snapshot_note();
 
--- Private bucket for note images, files and voice recordings. Each user can only touch their own folder.
-insert into storage.buckets (id, name, public, file_size_limit)
-values ('note-files', 'note-files', false, 10485760)
-on conflict (id) do update set public = false, file_size_limit = 10485760;
-
-drop policy if exists "note files owner" on storage.objects;
-create policy "note files owner" on storage.objects for all to authenticated
-  using (bucket_id = 'note-files' and (storage.foldername(name))[1] = auth.uid()::text)
-  with check (bucket_id = 'note-files' and (storage.foldername(name))[1] = auth.uid()::text);
+-- Files (note images, attachments, voice recordings) live in the `note-files` object-storage bucket, not in Postgres.
+-- Access is enforced by the storage API: a user can only touch keys under their own id (see src/server/storage).

@@ -14,7 +14,7 @@ import {
   faXmark,
 } from "@fortawesome/free-solid-svg-icons";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabaseBrowser } from "../../lib/supabase/client";
+import { api } from "../../lib/api/client";
 import { qk } from "../../lib/query/keys";
 import { useRealtimeInvalidate } from "../../hooks/useRealtimeInvalidate";
 import { addDays, isoDate } from "../../lib/dates";
@@ -36,7 +36,7 @@ const parse = (iso: string) => {
 };
 
 export default function JournalView() {
-  const sb = useMemo(supabaseBrowser, []);
+  const sb = useMemo(api, []);
   const today = useMemo(() => isoDate(), []);
   const { ask, dialog } = useConfirm();
   const [date, setDate] = useState(today);

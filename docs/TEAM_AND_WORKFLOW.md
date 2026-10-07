@@ -34,19 +34,19 @@ How three developers (each with AI agents) work in one repository without breaki
 
 ## 5. Environments
 
-| Env        | Where                 | Database                                                   | Notes                            |
-| ---------- | --------------------- | ---------------------------------------------------------- | -------------------------------- |
-| Local      | `npm run dev`         | Shared dev Supabase project, or local via `supabase start` | `.env.local` from `.env.example` |
-| Preview    | Vercel preview per PR | Dev/staging Supabase                                       | Env vars scoped to Preview       |
-| Staging    | Vercel (Phase 6)      | Staging Supabase                                           | Release rehearsal                |
-| Production | Vercel + Cloudflare   | Production Supabase                                        | Migrations applied before deploy |
+| Env        | Where                 | Database                                             | Notes                            |
+| ---------- | --------------------- | ---------------------------------------------------- | -------------------------------- |
+| Local      | `npm run dev`         | Docker Compose on your machine (`npm run docker:up`) | `.env.local` from `.env.example` |
+| Preview    | Vercel preview per PR | Preview database (own Docker/Postgres)               | Env vars scoped to Preview       |
+| Staging    | Vercel (Phase 6)      | Staging stack (docker compose on a server)           | Release rehearsal                |
+| Production | Vercel + Cloudflare   | Production stack (docker compose, backups on)        | Migrations applied before deploy |
 
 Never point local or preview at the production database.
 
 ## 6. Database changes
 
-1. `npx supabase migration new <name>` → write SQL (RLS included).
-2. Test locally or on the dev project (`npx supabase db push --linked`).
+1. Add `db/migrations/<timestamp>_<name>.sql` → write SQL (RLS included).
+2. Test locally or on the dev project (`npm run db:migrate`).
 3. PR includes the migration + `docs/DATA_MODEL.md` update; tech lead reviews.
 4. Release: apply migrations to production first, then deploy the code that uses them (migrations must be backward compatible with the previous code for one release).
 

@@ -4,13 +4,13 @@ For every new developer (and the AI agent you'll work with). About 30 minutes.
 
 ## 1. Get access
 
-| Tool     | What you need                                                                                    | Ask       |
-| -------- | ------------------------------------------------------------------------------------------------ | --------- |
-| GitHub   | Member of the **Setups-Works** org with write access to `untitled-project-landing`               | tech lead |
-| Jira     | Access to project **UNT** — https://setups-works.atlassian.net/jira/software/projects/UNT/boards | tech lead |
-| Supabase | Invite to the dev project (never the production one by default)                                  | tech lead |
-| Vercel   | Read access to deployments / preview logs                                                        | tech lead |
-| Secrets  | A `.env.local` for **dev** (shared securely, e.g. a password manager — never chat/email/git)     | tech lead |
+| Tool    | What you need                                                                                    | Ask       |
+| ------- | ------------------------------------------------------------------------------------------------ | --------- |
+| GitHub  | Member of the **Setups-Works** org with write access to `untitled-project-landing`               | tech lead |
+| Jira    | Access to project **UNT** — https://setups-works.atlassian.net/jira/software/projects/UNT/boards | tech lead |
+| Docker  | Install Docker Desktop; `npm run docker:up` gives you Postgres, Redis, storage and mail locally  | you       |
+| Vercel  | Read access to deployments / preview logs                                                        | tech lead |
+| Secrets | A `.env.local` for **dev** (shared securely, e.g. a password manager — never chat/email/git)     | tech lead |
 
 ## 2. Run it locally
 

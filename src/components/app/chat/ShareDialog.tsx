@@ -2,7 +2,7 @@
 import { useState } from "react";
 import { FontAwesomeIcon as FA } from "@fortawesome/react-fontawesome";
 import { faCheck, faCopy, faEarthAmericas, faLock, faXmark } from "@fortawesome/free-solid-svg-icons";
-import type { SupabaseClient } from "@supabase/supabase-js";
+import type { ApiClient } from "../../../lib/api/client";
 import type { Chat } from "../../../lib/workspace";
 import Modal from "../../ui/Modal";
 
@@ -14,7 +14,7 @@ export default function ShareDialog({
   onChange,
 }: {
   chat: Chat;
-  sb: SupabaseClient;
+  sb: ApiClient;
   onClose: () => void;
   onChange: (token: string | null) => void;
 }) {

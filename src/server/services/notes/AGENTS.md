@@ -10,7 +10,7 @@
 2. `notes.service.ts` — functions taking `ctx` + input; permission check → rules → repository.
 3. `src/server/repositories/notes.repository.ts` — queries only.
 4. `src/app/api/v1/notes/route.ts` — built with the shared `handler()`; calls the service.
-5. `src/features/notes` — hooks call the API; components never touch Supabase.
+5. `src/features/notes` — hooks call the API; components never touch the database.
 6. Tests for rules (ownership, validation, ordering).
 
 **Rules:** the note body is markdown (store as given, sanitise on render); never trust `user_id`/`workspace_id` from the client — take them from `ctx`.

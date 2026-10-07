@@ -17,7 +17,7 @@ import {
   faTriangleExclamation,
 } from "@fortawesome/free-solid-svg-icons";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabaseBrowser } from "../../../lib/supabase/client";
+import { api } from "../../../lib/api/client";
 import { qk } from "../../../lib/query/keys";
 import { useRealtimeInvalidate } from "../../../hooks/useRealtimeInvalidate";
 import type { Attachment, Chat, ChatFolder, Message } from "../../../lib/workspace";
@@ -42,7 +42,7 @@ const SIDE_KEY = "up_chat_sidebar";
 const titleFrom = (text: string, files: File[]) => prettyTitle((text.split("\n")[0].trim() || files[0]?.name || "New chat").slice(0, 60));
 
 export default function ChatApp({ name }: { name: string }) {
-  const sb = useMemo(supabaseBrowser, []);
+  const sb = useMemo(api, []);
   const router = useRouter();
   const params = useSearchParams();
   const { ask, dialog: confirmDialog } = useConfirm();

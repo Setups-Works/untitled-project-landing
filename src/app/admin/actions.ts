@@ -1,23 +1,26 @@
 "use server";
+import { randomBytes } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
-import type { User } from "@supabase/supabase-js";
-import { assertAdmin, audit, isRootAdmin, supabaseAdmin } from "../../lib/supabase/admin";
+import { auth } from "../../server/auth";
+import { pool } from "../../server/db/pool";
+import { purgePrefix } from "../../server/storage";
+import { adminDb, assertAdmin, audit, getUserById, isRootAdmin, type AdminUser, type AppUser } from "../../server/session";
 import { EMAIL_RE } from "../../lib/validate";
 
 type Result = { ok: true; message?: string } | { ok: false; error: string };
 const UUID = /^[0-9a-f-]{36}$/i;
 
 /** Loads the target user and refuses to touch yourself or an ADMIN_EMAILS account. */
-type Guarded = { error: string; me?: undefined; user?: undefined } | { error?: undefined; me: User; user: User };
+type Guarded = { error: string; me?: undefined; user?: undefined } | { error?: undefined; me: AppUser; user: AdminUser };
 async function guard(id: string, protect = true): Promise<Guarded> {
   const me = await assertAdmin();
   if (typeof id !== "string" || !UUID.test(id)) return { error: "Bad user id." };
-  const { data, error } = await supabaseAdmin().auth.admin.getUserById(id);
-  if (error || !data.user) return { error: "User not found." };
-  if (protect && data.user.id === me.id) return { error: "You can’t do that to your own account." };
-  if (protect && isRootAdmin(data.user.email)) return { error: "This account is a protected admin (ADMIN_EMAILS)." };
-  return { me, user: data.user };
+  const user = await getUserById(id);
+  if (!user) return { error: "User not found." };
+  if (protect && user.id === me.id) return { error: "You can’t do that to your own account." };
+  if (protect && isRootAdmin(user.email)) return { error: "This account is a protected admin (ADMIN_EMAILS)." };
+  return { me, user };
 }
 
 async function origin() {
@@ -30,15 +33,15 @@ async function origin() {
 async function run(
   id: string,
   action: string,
-  fn: (userId: string, email: string) => Promise<{ error: { message: string } | null }>,
+  fn: (userId: string, email: string) => Promise<{ error: { message: string } | null } | void>,
   opts: { protect?: boolean; meta?: Record<string, unknown>; message?: string } = {},
 ): Promise<Result> {
   try {
     const g = await guard(id, opts.protect ?? true);
     if (g.error !== undefined) return { ok: false, error: g.error };
-    const { error } = await fn(g.user.id, g.user.email ?? "");
-    if (error) return { ok: false, error: error.message };
-    await audit(g.me, action, g.user.email ?? id, opts.meta);
+    const r = await fn(g.user.id, g.user.email);
+    if (r && r.error) return { ok: false, error: r.error.message };
+    await audit(g.me, action, g.user.email || id, opts.meta);
     revalidatePath("/admin", "layout");
     return { ok: true, message: opts.message };
   } catch {
@@ -47,24 +50,30 @@ async function run(
 }
 
 export async function setAdminRole(id: string, makeAdmin: boolean) {
-  return run(id, makeAdmin ? "user.make_admin" : "user.remove_admin", (i) =>
-    supabaseAdmin().auth.admin.updateUserById(i, { app_metadata: { role: makeAdmin ? "admin" : null } }),
-  );
+  return run(id, makeAdmin ? "user.make_admin" : "user.remove_admin", async (i) => {
+    await pool().query("update auth.users set role = $2, updated_at = now() where id = $1", [i, makeAdmin ? "admin" : null]);
+  });
 }
 
 export async function setBanned(id: string, banned: boolean) {
-  return run(id, banned ? "user.ban" : "user.unban", (i) =>
-    supabaseAdmin().auth.admin.updateUserById(i, { ban_duration: banned ? "876000h" : "none" }),
-  );
+  return run(id, banned ? "user.ban" : "user.unban", async (i) => {
+    await pool().query("update auth.users set banned = $2, updated_at = now() where id = $1", [i, banned]);
+    // Suspending also signs them out everywhere.
+    if (banned) await pool().query("delete from auth.sessions where user_id = $1", [i]);
+  });
 }
 
 export async function deleteUser(id: string) {
-  return run(id, "user.delete", (i) => supabaseAdmin().auth.admin.deleteUser(i));
+  return run(id, "user.delete", async (i) => {
+    await purgePrefix("note-files", `${i}/`);
+    await purgePrefix("avatars", `${i}/`);
+    await pool().query("delete from auth.users where id = $1", [i]);
+  });
 }
 
 export async function setPlan(id: string, plan: string) {
   if (plan !== "free" && plan !== "pro") return { ok: false, error: "Unknown plan." } as Result;
-  return run(id, "user.set_plan", async (i) => supabaseAdmin().from("profiles").upsert({ user_id: i, plan }, { onConflict: "user_id" }), {
+  return run(id, "user.set_plan", async (i) => adminDb().from("profiles").upsert({ user_id: i, plan }, { onConflict: "user_id" }), {
     protect: false,
     meta: { plan },
     message: `Plan set to ${plan}.`,
@@ -76,7 +85,9 @@ export async function sendPasswordReset(id: string) {
   return run(
     id,
     "user.password_reset",
-    (_i, email) => supabaseAdmin().auth.resetPasswordForEmail(email, { redirectTo: `${base}/auth/callback?next=/reset-password` }),
+    async (_i, email) => {
+      await auth.api.requestPasswordReset({ body: { email, redirectTo: `${base}/reset-password` } });
+    },
     { protect: false, message: "Password reset email sent." },
   );
 }
@@ -86,12 +97,14 @@ export async function resendConfirmation(id: string) {
   return run(
     id,
     "user.resend_confirmation",
-    (_i, email) =>
-      supabaseAdmin().auth.resend({ type: "signup", email, options: { emailRedirectTo: `${base}/auth/callback?next=/dashboard` } }),
+    async (_i, email) => {
+      await auth.api.sendVerificationEmail({ body: { email, callbackURL: `${base}/dashboard` } });
+    },
     { protect: false, message: "Confirmation email sent." },
   );
 }
 
+/** Creates an account for the email (verified, with an unusable random password) and emails a link to choose a password. */
 export async function inviteUser(email: string): Promise<Result> {
   try {
     const me = await assertAdmin();
@@ -99,15 +112,21 @@ export async function inviteUser(email: string): Promise<Result> {
       .trim()
       .toLowerCase();
     if (!EMAIL_RE.test(e)) return { ok: false, error: "Please enter a valid email address." };
-    const { error } = await supabaseAdmin().auth.admin.inviteUserByEmail(e, {
-      redirectTo: `${await origin()}/auth/callback?next=/dashboard`,
-    });
-    if (error) return { ok: false, error: error.message };
+    if (
+      await pool()
+        .query("select 1 from auth.users where email = $1", [e])
+        .then((r) => r.rowCount)
+    )
+      return { ok: false, error: "That email already has an account." };
+    const base = await origin();
+    await auth.api.signUpEmail({ body: { email: e, password: randomBytes(24).toString("base64url"), name: e.split("@")[0] } });
+    await pool().query("update auth.users set email_verified = true where email = $1", [e]);
+    await auth.api.requestPasswordReset({ body: { email: e, redirectTo: `${base}/reset-password` } });
     await audit(me, "user.invite", e);
     revalidatePath("/admin", "layout");
     return { ok: true, message: `Invitation sent to ${e}.` };
   } catch {
-    return { ok: false, error: "Not allowed." };
+    return { ok: false, error: "Couldn’t send that invitation." };
   }
 }
 
@@ -127,7 +146,7 @@ export async function getUserDetail(id: string): Promise<{ ok: true; detail: Det
   try {
     await assertAdmin();
     if (!UUID.test(id)) return { ok: false, error: "Bad user id." };
-    const sb = supabaseAdmin();
+    const sb = adminDb();
     const n = async (t: string) => (await sb.from(t).select("*", { count: "exact", head: true }).eq("user_id", id)).count ?? 0;
     const [notes, tasks, journal, chats, messages, profile, u] = await Promise.all([
       n("notes"),
@@ -136,7 +155,7 @@ export async function getUserDetail(id: string): Promise<{ ok: true; detail: Det
       n("chats"),
       n("chat_messages"),
       sb.from("profiles").select("plan").eq("user_id", id).maybeSingle(),
-      sb.auth.admin.getUserById(id),
+      getUserById(id),
     ]);
     return {
       ok: true,
@@ -147,7 +166,7 @@ export async function getUserDetail(id: string): Promise<{ ok: true; detail: Det
         chats,
         messages,
         plan: (profile.data?.plan as string) ?? "free",
-        lastSignIn: u.data.user?.last_sign_in_at ?? null,
+        lastSignIn: u?.lastSignIn ?? null,
         id,
       },
     };
@@ -165,7 +184,7 @@ export async function createAnnouncement(message: string, tone: string): Promise
       .slice(0, 500);
     if (!m) return { ok: false, error: "Write a message first." };
     if (!["info", "success", "warning"].includes(tone)) return { ok: false, error: "Unknown tone." };
-    const { error } = await supabaseAdmin().from("announcements").insert({ message: m, tone, active: true });
+    const { error } = await adminDb().from("announcements").insert({ message: m, tone, active: true });
     if (error) return { ok: false, error: error.message };
     await audit(me, "announcement.create", m.slice(0, 60), { tone });
     revalidatePath("/admin", "layout");
@@ -179,7 +198,7 @@ export async function toggleAnnouncement(id: string, active: boolean): Promise<R
   try {
     const me = await assertAdmin();
     if (!UUID.test(id)) return { ok: false, error: "Bad id." };
-    const { error } = await supabaseAdmin().from("announcements").update({ active }).eq("id", id);
+    const { error } = await adminDb().from("announcements").update({ active }).eq("id", id);
     if (error) return { ok: false, error: error.message };
     await audit(me, active ? "announcement.show" : "announcement.hide", id);
     revalidatePath("/admin", "layout");
@@ -193,7 +212,7 @@ export async function deleteAnnouncement(id: string): Promise<Result> {
   try {
     const me = await assertAdmin();
     if (!UUID.test(id)) return { ok: false, error: "Bad id." };
-    const { error } = await supabaseAdmin().from("announcements").delete().eq("id", id);
+    const { error } = await adminDb().from("announcements").delete().eq("id", id);
     if (error) return { ok: false, error: error.message };
     await audit(me, "announcement.delete", id);
     revalidatePath("/admin", "layout");

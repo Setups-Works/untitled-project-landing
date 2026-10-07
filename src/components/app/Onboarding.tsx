@@ -15,7 +15,8 @@ import {
   faPenToSquare,
   faWandMagicSparkles,
 } from "@fortawesome/free-solid-svg-icons";
-import { supabaseBrowser } from "../../lib/supabase/client";
+import { api } from "../../lib/api/client";
+import { authClient } from "../../lib/auth/client";
 import { qk } from "../../lib/query/keys";
 import { isoDate } from "../../lib/dates";
 import { CATEGORIES } from "../../lib/notes";
@@ -43,7 +44,7 @@ export default function Onboarding({
   state: Onboarding;
   show: boolean;
 }) {
-  const sb = useMemo(supabaseBrowser, []);
+  const sb = useMemo(api, []);
   const qc = useQueryClient();
   const router = useRouter();
   const [open, setOpen] = useState(show);
@@ -66,9 +67,16 @@ export default function Onboarding({
     return () => window.removeEventListener(OPEN_ONBOARDING_EVENT, again);
   }, []);
 
-  const persist = async (patch: Partial<Onboarding>, data: Record<string, unknown> = {}) => {
+  /** Progress (and optionally preferences) are saved on the profile; a changed name goes to the account. */
+  const persist = async (patch: Partial<Onboarding>, extra: { preferences?: Prefs; name?: string } = {}) => {
     const next: Onboarding = { completed: state.completed, step, skippedAt: null, ...patch };
-    const { error } = await sb.auth.updateUser({ data: { ...data, onboarding: next } });
+    if (extra.name) {
+      const { error } = await authClient.updateUser({ name: extra.name });
+      if (error) return error;
+    }
+    const { error } = await sb
+      .from("profiles")
+      .upsert({ onboarding: next, ...(extra.preferences ? { preferences: extra.preferences } : {}) }, { onConflict: "user_id" });
     return error;
   };
 
@@ -76,7 +84,7 @@ export default function Onboarding({
     setErr("");
     if (step === 0 && display.trim() && display.trim() !== name) {
       setBusy("save");
-      const e = await persist({ step: to }, { full_name: display.trim() });
+      const e = await persist({ step: to }, { name: display.trim() });
       setBusy(null);
       if (e) return setErr("Couldn’t save your name. Try again.");
     } else if (step === 1) {

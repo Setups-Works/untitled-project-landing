@@ -26,7 +26,7 @@ import {
   faChevronDown,
   faCheck,
 } from "@fortawesome/free-solid-svg-icons";
-import type { SupabaseClient } from "@supabase/supabase-js";
+import type { ApiClient } from "../../lib/api/client";
 import type { Attachment, Note, NoteVersion } from "../../lib/workspace";
 import { CATEGORIES, TONES, editedLabel, lineCount, plural, toneOf, wordCount } from "../../lib/notes";
 import { useAutosave, statusText } from "./useAutosave";
@@ -66,7 +66,7 @@ export default function NoteEditor({
   onRemoveAttachment,
 }: {
   note: Note;
-  sb: SupabaseClient;
+  sb: ApiClient;
   onClose: () => void;
   onLocal: (id: string, p: { title: string; body: string }) => void;
   onSaved: (id: string, updated_at: string) => void;
