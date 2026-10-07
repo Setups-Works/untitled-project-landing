@@ -7,6 +7,8 @@ import { objectUrl, ownsKey, validKey } from "../../../server/storage";
 import { prettyTitle } from "../../../lib/chat";
 import type { Attachment } from "../../../lib/workspace";
 import AuthLink from "../../../components/auth/AuthLink";
+import AttachmentImage from "../../../components/ui/AttachmentImage";
+import AudioWave from "../../../components/ui/AudioWave";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -69,10 +71,8 @@ export default async function Page({ params }: { params: Promise<{ token: string
                   const u = urls.get(a.path);
                   return (
                     <div key={a.path} className="cx-att">
-                      {u && a.type.startsWith("image/") && (
-                        /* eslint-disable-next-line @next/next/no-img-element */ <img src={u} alt={a.name} />
-                      )}
-                      {u && a.type.startsWith("audio/") && <audio controls src={u} aria-label={a.name} />}
+                      {u && a.type.startsWith("image/") && <AttachmentImage src={u} name={a.name} />}
+                      {u && a.type.startsWith("audio/") && <AudioWave src={u} label={a.name} />}
                       {!a.type.startsWith("image/") &&
                         !a.type.startsWith("audio/") &&
                         (u ? (

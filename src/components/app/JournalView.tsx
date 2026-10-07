@@ -24,6 +24,8 @@ import Markdown from "./Markdown";
 import JournalCalendar from "./JournalCalendar";
 import { useConfirm } from "../ui/Confirm";
 import FilePreviewList from "../ui/FilePreviewList";
+import AttachmentImage from "../ui/AttachmentImage";
+import AudioWave from "../ui/AudioWave";
 import { useRecorder } from "./useRecorder";
 
 const COLS = "id,entry_date,body,created_at,updated_at,kind,attachments";
@@ -297,10 +299,8 @@ export default function JournalView() {
                     const u = urls[a.path];
                     return (
                       <li key={a.path}>
-                        {u && a.type.startsWith("image/") && (
-                          /* eslint-disable-next-line @next/next/no-img-element */ <img src={u} alt={a.name} />
-                        )}
-                        {u && a.type.startsWith("audio/") && <audio controls src={u} aria-label={a.name} />}
+                        {u && a.type.startsWith("image/") && <AttachmentImage src={u} name={a.name} />}
+                        {u && a.type.startsWith("audio/") && <AudioWave src={u} label={a.name} />}
                         {!a.type.startsWith("image/") &&
                           !a.type.startsWith("audio/") &&
                           (u ? (

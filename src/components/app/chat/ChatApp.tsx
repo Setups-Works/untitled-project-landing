@@ -26,6 +26,8 @@ import { fmtTime } from "../../../lib/prefs";
 import { safeName } from "../../../lib/notes";
 import Menu, { MenuItem, MenuSeparator } from "../../ui/Menu";
 import { useConfirm, usePrompt } from "../../ui/Confirm";
+import AttachmentImage from "../../ui/AttachmentImage";
+import AudioWave from "../../ui/AudioWave";
 import { openSearch } from "../UniversalSearch";
 import ChatSidebar, { type Tab } from "./ChatSidebar";
 import Composer from "./Composer";
@@ -538,10 +540,8 @@ export default function ChatApp({ name }: { name: string }) {
                       const u = urls[a.path];
                       return (
                         <div key={a.path} className="cx-att">
-                          {u && a.type.startsWith("image/") && (
-                            /* eslint-disable-next-line @next/next/no-img-element */ <img src={u} alt={a.name} />
-                          )}
-                          {u && a.type.startsWith("audio/") && <audio controls src={u} aria-label={a.name} />}
+                          {u && a.type.startsWith("image/") && <AttachmentImage src={u} name={a.name} />}
+                          {u && a.type.startsWith("audio/") && <AudioWave src={u} label={a.name} />}
                           {!a.type.startsWith("image/") &&
                             !a.type.startsWith("audio/") &&
                             (u ? (

@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { FontAwesomeIcon as FA } from "@fortawesome/react-fontawesome";
 import { faFile, faFileLines, faFilePdf, faMagnifyingGlassPlus, faMicrophone, faXmark } from "@fortawesome/free-solid-svg-icons";
 import Modal from "./Modal";
+import AudioWave from "./AudioWave";
 
 const size = (n: number) => (n < 1024 ? `${n} B` : n < 1024 * 1024 ? `${Math.round(n / 1024)} KB` : `${(n / 1024 / 1024).toFixed(1)} MB`);
 const kind = (f: File) =>
@@ -49,7 +50,7 @@ export default function FilePreviewList({
           return (
             <li
               key={`${f.name}${f.size}${i}`}
-              className="flex w-full max-w-[380px] items-center gap-3 rounded-r3 bg-white p-2 pr-2.5 shadow-[inset_0_0_0_1px_var(--line)]"
+              className="flex w-full max-w-[460px] items-center gap-3 rounded-r3 bg-white p-2 pr-2.5 shadow-[inset_0_0_0_1px_var(--line)]"
             >
               {k === "image" && url ? (
                 <button
@@ -64,15 +65,22 @@ export default function FilePreviewList({
                     <FA icon={faMagnifyingGlassPlus} />
                   </span>
                 </button>
-              ) : (
+              ) : k === "audio" && url ? null : (
                 <span className="grid size-14 flex-none place-items-center rounded-r2 bg-surface-sunken text-[20px] text-fg-muted">
                   <FA icon={k === "audio" ? faMicrophone : k === "pdf" ? faFilePdf : k === "video" ? faFileLines : faFile} />
                 </span>
               )}
               <span className="min-w-0 flex-1 text-left">
-                <span className="block truncate text-[13px] font-medium text-fg">{f.name}</span>
-                <span className="block text-[12px] text-fg-subtle">{size(f.size)}</span>
-                {k === "audio" && url && <audio controls src={url} aria-label={f.name} className="mt-1 h-8 w-full" />}
+                <span className="flex items-center gap-2 text-[13px]">
+                  {k === "audio" && <FA icon={faMicrophone} className="flex-none text-fg-subtle" />}
+                  <span className="truncate font-medium text-fg">{f.name}</span>
+                  <span className="flex-none text-[12px] text-fg-subtle">{size(f.size)}</span>
+                </span>
+                {k === "audio" && url && (
+                  <span className="mt-1.5 block">
+                    <AudioWave src={url} label={f.name} bare />
+                  </span>
+                )}
               </span>
               {(k === "pdf" || k === "video") && url && (
                 <button

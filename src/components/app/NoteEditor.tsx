@@ -32,6 +32,8 @@ import { CATEGORIES, TONES, editedLabel, lineCount, plural, toneOf, wordCount } 
 import { useAutosave, statusText } from "./useAutosave";
 import Menu, { MenuItem, MenuLabel, MenuRadioGroup, MenuRadioItem, MenuSeparator } from "../ui/Menu";
 import { usePrompt } from "../ui/Confirm";
+import AttachmentImage from "../ui/AttachmentImage";
+import AudioWave from "../ui/AudioWave";
 
 const SLASH = [
   { k: "h1", t: "Heading 1", s: "# " },
@@ -497,8 +499,8 @@ export default function NoteEditor({
             const u = urls[a.path];
             return (
               <li key={a.path}>
-                {u && a.type.startsWith("image/") && /* eslint-disable-next-line @next/next/no-img-element */ <img src={u} alt={a.name} />}
-                {u && a.type.startsWith("audio/") && <audio controls src={u} aria-label={a.name} />}
+                {u && a.type.startsWith("image/") && <AttachmentImage src={u} name={a.name} />}
+                {u && a.type.startsWith("audio/") && <AudioWave src={u} label={a.name} />}
                 {!a.type.startsWith("image/") &&
                   !a.type.startsWith("audio/") &&
                   (u ? (
