@@ -12,6 +12,7 @@ import { AiProviderError, type AiChunk, type AiProvider, type AiRequest } from "
 export const puterProvider: AiProvider = {
   id: "puter",
   label: "Puter",
+  note: "Use your own Puter account (runs in your browser)",
   runtime: "client",
   isAvailable: () => false,
   // eslint-disable-next-line require-yield

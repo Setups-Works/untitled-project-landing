@@ -25,6 +25,8 @@ export interface AiProvider {
   /** Stable id stored in the database (e.g. "groq"). Never rename it once data exists. */
   readonly id: string;
   readonly label: string;
+  /** One line shown under the name in the model picker (e.g. which model answers). */
+  readonly note: string;
   /**
    * Where the provider runs. "server" providers use a secret key and are called from src/server.
    * "client" providers (Puter.js) run in the browser and must be called from client code.

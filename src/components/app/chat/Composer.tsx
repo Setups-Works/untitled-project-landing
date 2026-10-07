@@ -2,7 +2,7 @@
 import { useRef } from "react";
 import { FontAwesomeIcon as FA } from "@fortawesome/react-fontawesome";
 import { faArrowUp, faChevronDown, faPaperclip } from "@fortawesome/free-solid-svg-icons";
-import { PROVIDERS } from "../../../lib/ai";
+import type { Provider } from "../../../lib/ai";
 import Menu, { MenuLabel, MenuRadioGroup, MenuRadioItem } from "../../ui/Menu";
 import FilePreviewList from "../../ui/FilePreviewList";
 import RecordButton from "../../ui/RecordButton";
@@ -13,14 +13,20 @@ const MAX_BYTES = 10 * 1024 * 1024;
 
 export default function Composer({
   busy,
+  providers,
   provider,
+  onProvider,
   onSend,
   onError,
   autoFocus,
   draftKey,
 }: {
   busy: boolean;
+  /** Every AI choice (the server decides which are available). */
+  providers: Provider[];
+  /** Id of the selected provider. */
   provider: string;
+  onProvider: (id: string) => void;
   onSend: (text: string, files: File[]) => Promise<boolean>;
   onError: (m: string) => void;
   autoFocus?: boolean;
@@ -31,7 +37,7 @@ export default function Composer({
   const [files, setFiles] = useDraftFiles(draftKey);
   const ta = useRef<HTMLTextAreaElement>(null);
   const picker = useRef<HTMLInputElement>(null);
-  const current = PROVIDERS.find((p) => p.id === provider) ?? PROVIDERS[0];
+  const current = providers.find((p) => p.id === provider) ?? providers[0];
 
   const rec = useRecorder((blob, type, secs) => {
     setFiles((f) => [...f, new File([blob], `voice-note-${secs}s.${type.includes("mp4") ? "m4a" : "webm"}`, { type })]);
@@ -110,13 +116,8 @@ export default function Composer({
           }
         >
           <MenuLabel>AI</MenuLabel>
-          <MenuRadioGroup
-            value={current.id}
-            onValueChange={() => {
-              /* only "No AI" can be selected until a provider is connected */
-            }}
-          >
-            {PROVIDERS.map((p) => (
+          <MenuRadioGroup value={current.id} onValueChange={onProvider}>
+            {providers.map((p) => (
               <MenuRadioItem key={p.id} value={p.id} disabled={!p.available}>
                 <span className="cx-prov">
                   <b>{p.label}</b>

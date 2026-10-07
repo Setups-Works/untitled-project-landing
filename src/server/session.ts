@@ -3,9 +3,8 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { serverEnv } from "../config/env";
 import { auth } from "./auth";
-import { execute } from "./db/execute";
+import { adminDb, userDb } from "./db/builders";
 import { pool } from "./db/pool";
-import { makeFrom } from "../lib/api/builder";
 
 /** The signed-in user as the rest of the app sees them. */
 export type AppUser = {
@@ -72,14 +71,8 @@ export async function assertAdmin() {
   return user;
 }
 
-/**
- * Query builder that runs as the database owner and therefore bypasses Row-Level Security.
- * Only use it on the server, after verifying the caller (admin panel, public shared chats, account deletion).
- */
-export const adminDb = () => makeFrom((spec) => execute(spec, { kind: "owner" }));
-
-/** Query builder for server code that should see exactly what this user sees (Row-Level Security applies). */
-export const userDb = (userId: string) => makeFrom((spec) => execute(spec, { kind: "user", userId }));
+// The query builders live in db/builders.ts (so services can use them without importing next/*); re-exported for pages and actions.
+export { adminDb, userDb };
 
 /** Row count of a table (all users). */
 export async function countRows(table: string) {

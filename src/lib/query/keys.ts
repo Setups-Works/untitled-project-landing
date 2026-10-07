@@ -26,4 +26,5 @@ export const qk = {
     messages: (chatId: string) => ["chats", "messages", chatId] as const,
   },
   profile: ["profile"] as const,
+  aiProviders: ["ai", "providers"] as const,
 } as const;

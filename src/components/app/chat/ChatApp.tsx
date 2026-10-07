@@ -28,6 +28,8 @@ import Menu, { MenuItem, MenuSeparator } from "../../ui/Menu";
 import { useConfirm, usePrompt } from "../../ui/Confirm";
 import AttachmentImage from "../../ui/AttachmentImage";
 import AudioWave from "../../ui/AudioWave";
+import Markdown from "../Markdown";
+import { useAiProviders } from "../../../features/ai/useAiProviders";
 import { openSearch } from "../UniversalSearch";
 import ChatSidebar, { type Tab } from "./ChatSidebar";
 import Composer from "./Composer";
@@ -63,7 +65,10 @@ export default function ChatApp({ name }: { name: string }) {
   const uid = useRef("");
   const end = useRef<HTMLDivElement>(null);
 
-  const provider = "none";
+  // Which AI answers: the server says what is configured, the person's choice is remembered in this browser.
+  const { providers, provider, select: selectProvider } = useAiProviders();
+  // The reply that is being written right now (shown as it arrives; the saved copy replaces it when finished).
+  const [streaming, setStreaming] = useState<{ chatId: string; text: string } | null>(null);
   const hello = useMemo(() => chatGreeting(name), [name]);
   const today = useMemo(() => new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" }), []);
 
@@ -162,7 +167,7 @@ export default function ChatApp({ name }: { name: string }) {
 
   useEffect(() => {
     end.current?.scrollIntoView({ block: "end" });
-  }, [msgs.length, activeId]);
+  }, [msgs.length, activeId, streaming?.text]);
 
   const paths = msgs.flatMap((m) => m.attachments.map((a) => a.path)).join("|");
   useEffect(() => {
@@ -192,6 +197,37 @@ export default function ChatApp({ name }: { name: string }) {
     setDrawer(false);
     router.push("/dashboard/chat", { scroll: false });
   }, [router]);
+
+  /** Asks the server for the assistant's reply and shows it as it streams in. The server saves the finished reply. */
+  async function reply(id: string) {
+    setStreaming({ chatId: id, text: "" });
+    try {
+      const res = await fetch("/api/v1/ai/chat", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ chatId: id, provider }),
+      });
+      if (!res.ok || !res.body) {
+        const j = (await res.json().catch(() => ({}))) as { error?: string };
+        setErr(j.error ?? "The AI couldn’t reply. Your message was saved.");
+        return;
+      }
+      const reader = res.body.getReader();
+      const dec = new TextDecoder();
+      let text = "";
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        text += dec.decode(value, { stream: true });
+        setStreaming({ chatId: id, text });
+      }
+    } catch {
+      setErr("The AI couldn’t reply. Your message was saved.");
+    } finally {
+      setStreaming(null);
+      await load();
+    }
+  }
 
   async function send(text: string, files: File[]): Promise<boolean> {
     setBusy(true);
@@ -232,6 +268,7 @@ export default function ChatApp({ name }: { name: string }) {
       if (!activeId) router.replace(`/dashboard/chat?c=${id}`, { scroll: false });
       else setMsgs((m) => [...m, msg as Message]);
       await load();
+      if (provider !== "none") await reply(id);
       return true;
     } finally {
       setBusy(false);
@@ -535,7 +572,7 @@ export default function ChatApp({ name }: { name: string }) {
               {msgs.map((m) => (
                 <div key={m.id} className="cx-msg" data-role={m.role}>
                   <div className="cx-bubble">
-                    {m.body && <p>{m.body}</p>}
+                    {m.body && (m.role === "assistant" ? <Markdown text={m.body} /> : <p>{m.body}</p>)}
                     {m.attachments.map((a) => {
                       const u = urls[a.path];
                       return (
@@ -558,22 +595,31 @@ export default function ChatApp({ name }: { name: string }) {
                   </div>
                 </div>
               ))}
+              {streaming && streaming.chatId === activeId && (
+                <div className="cx-msg" data-role="assistant" aria-busy="true">
+                  <div className="cx-bubble">
+                    {streaming.text ? <Markdown text={streaming.text} /> : <p className="ap-none">Thinking…</p>}
+                  </div>
+                </div>
+              )}
               <div ref={end} />
             </div>
           )}
         </div>
 
         <div className="cx-foot">
-          {activeId && (
+          {activeId && provider === "none" && (
             <p className="cx-note">
-              <FA icon={faTriangleExclamation} /> No AI is connected, so replies aren’t generated. Your messages are saved to this chat.
+              <FA icon={faTriangleExclamation} /> No AI is selected, so replies aren’t generated. Your messages are saved to this chat.
             </p>
           )}
           <Composer
             key={activeId ?? "new"}
             draftKey={`chat:${activeId ?? "new"}`}
             busy={busy}
+            providers={providers}
             provider={provider}
+            onProvider={selectProvider}
             onSend={send}
             onError={setErr}
             autoFocus
