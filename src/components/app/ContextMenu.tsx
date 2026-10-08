@@ -4,14 +4,9 @@ import { usePathname, useRouter } from "next/navigation";
 import { FontAwesomeIcon as FA } from "@fortawesome/react-fontawesome";
 import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import {
-  faArrowLeft,
-  faArrowRight,
-  faArrowRotateRight,
   faArrowUpRightFromSquare,
-  faBookOpen,
   faCommentDots,
   faCopy,
-  faHouse,
   faLink,
   faListCheck,
   faMagnifyingGlass,
@@ -19,11 +14,7 @@ import {
   faPenToSquare,
   faRightToBracket,
   faTag,
-  faCalendarDay,
-  faCalendarPlus,
   faCircleCheck,
-  faClone,
-  faEnvelopeOpen,
   faPen,
   faRotateLeft,
   faThumbtack,
@@ -43,37 +34,32 @@ const ITEM_ACTIONS: Record<
   task: {
     heading: "To-do",
     items: (s) => [
-      ["open", "Edit task", faPen],
+      ["open", "Edit", faPen],
       ["toggle", s.done ? "Mark as not done" : "Mark as done", s.done ? faRotateLeft : faCircleCheck],
-      ["today", "Due today", faCalendarDay],
-      ["tomorrow", "Due tomorrow", faCalendarPlus],
-      ["delete", "Delete task", faTrash, true],
+      ["delete", "Delete", faTrash, true],
     ],
   },
   note: {
     heading: "Note",
     items: (s) => [
-      ["open", "Open note", faPenToSquare],
-      ["pin", s.pinned ? "Unpin note" : "Pin note", faThumbtack],
-      ["duplicate", "Duplicate", faClone],
-      ["delete", "Delete note", faTrash, true],
+      ["open", "Open", faPenToSquare],
+      ["pin", s.pinned ? "Unpin" : "Pin", faThumbtack],
+      ["delete", "Delete", faTrash, true],
     ],
   },
   chat: {
     heading: "Chat",
     items: (s) => [
-      ["open", "Open chat", faCommentDots],
-      ["pin", s.pinned ? "Unpin chat" : "Pin chat", faThumbtack],
       ["rename", "Rename", faPen],
-      ["read", s.unread ? "Mark as read" : "Mark as unread", faEnvelopeOpen],
-      ["delete", "Delete chat", faTrash, true],
+      ["pin", s.pinned ? "Unpin" : "Pin", faThumbtack],
+      ["delete", "Delete", faTrash, true],
     ],
   },
   entry: {
     heading: "Journal entry",
     items: () => [
-      ["edit", "Edit entry", faPen],
-      ["delete", "Delete entry", faTrash, true],
+      ["edit", "Edit", faPen],
+      ["delete", "Delete", faTrash, true],
     ],
   },
 };
@@ -117,7 +103,6 @@ export default function ContextMenu() {
           /* no state: default labels */
         }
         const def = ITEM_ACTIONS[kind];
-        out.push({ heading: def.heading });
         for (const [action, label, icon, danger] of def.items(state))
           out.push({ label, icon, danger, run: () => runCtxAction({ kind, id, action }) });
         out.push("sep");
@@ -143,9 +128,8 @@ export default function ContextMenu() {
         out.push({ label: "Copy", icon: faCopy, run: () => void navigator.clipboard?.writeText(text) });
         if (inApp) {
           out.push(
-            { label: "Search the workspace", icon: faMagnifyingGlass, run: openSearch },
             {
-              label: "Save selection as a note",
+              label: "Save as note",
               icon: faNoteSticky,
               run: async () => {
                 const first = text.split("\n")[0].slice(0, 60);
@@ -158,7 +142,7 @@ export default function ContextMenu() {
               },
             },
             {
-              label: "Add selection as a to-do",
+              label: "Add as to-do",
               icon: faListCheck,
               run: async () => {
                 const title = text.replace(/\s+/g, " ").slice(0, 300);
@@ -171,37 +155,26 @@ export default function ContextMenu() {
         out.push("sep");
       }
 
+      // Over something specific (an item, a link, selected text) only its own actions are shown.
+      if (out.length) {
+        if (out[out.length - 1] === "sep") out.pop();
+        return out;
+      }
+
+      // Over empty space: just the quick ways to start something.
       if (inApp) {
         out.push(
-          { heading: "Create" },
           { label: "New to-do", icon: faListCheck, run: go("/dashboard/todo?add=1") },
           { label: "New note", icon: faPenToSquare, run: go("/dashboard/notes?new=1") },
-          { label: "Write in journal", icon: faBookOpen, run: go("/dashboard/journal") },
           { label: "New chat", icon: faCommentDots, run: go("/dashboard/chat") },
           { label: "Search", icon: faMagnifyingGlass, run: openSearch },
-          "sep",
-          { heading: "Go to" },
-          { label: "Home", icon: faHouse, run: go("/dashboard") },
-          { label: "Journal", icon: faBookOpen, run: go("/dashboard/journal") },
-          { label: "Chat", icon: faCommentDots, run: go("/dashboard/chat") },
-          { label: "Notes", icon: faPenToSquare, run: go("/dashboard/notes") },
-          { label: "To-do", icon: faListCheck, run: go("/dashboard/todo") },
         );
       } else {
         out.push(
-          { heading: "Explore" },
-          { label: "Home", icon: faHouse, run: go("/") },
-          { label: "How it works", icon: faBookOpen, run: go("/how-it-works") },
           { label: "Pricing", icon: faTag, run: go("/pricing") },
           { label: "Open the app", icon: faRightToBracket, run: go("/dashboard") },
         );
       }
-      out.push(
-        "sep",
-        { label: "Back", icon: faArrowLeft, run: () => window.history.back() },
-        { label: "Forward", icon: faArrowRight, run: () => window.history.forward() },
-        { label: "Reload", icon: faArrowRotateRight, run: () => window.location.reload() },
-      );
       return out;
     },
     [pathname, router],
