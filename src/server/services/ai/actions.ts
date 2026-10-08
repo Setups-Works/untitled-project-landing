@@ -9,7 +9,7 @@ import {
   type ChatProposal,
   type CreatedItem,
 } from "../../../lib/chat-actions";
-import { firstDue } from "../../../lib/tasks";
+import { draftDue } from "../../../lib/tasks";
 import { userDb } from "../../db/builders";
 import { getMessageBody, replaceMessageBody } from "../../repositories/chat-messages.repository";
 import { createJournalEntry, setJournalBody } from "../../repositories/journal.repository";
@@ -44,7 +44,7 @@ async function create(db: Db, action: ChatAction, links: Links): Promise<Created
   const t = await createTask(db, {
     title: action.title,
     description: action.description,
-    due_date: firstDue(action.due_date, recurrence),
+    due_date: draftDue(action.due_date, recurrence),
     recurrence,
   });
   return { kind: "task", id: t.id, path: itemPath("task", t.id) };

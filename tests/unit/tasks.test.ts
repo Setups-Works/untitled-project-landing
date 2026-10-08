@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   applyOpts,
   DEFAULT_OPTS,
+  draftDue,
   firstDue,
   groupTasks,
   inView,
@@ -42,6 +43,13 @@ describe("every n-th weekday of the month", () => {
     expect(firstDue("2026-12-09", "monthly", "2026-10-08")).toBe("2026-12-09"); // simple rules keep the date
     expect(firstDue(null, "weekly", "2026-10-08")).toBe("2026-10-08");
     expect(firstDue("2026-10-08", null, "2026-10-08")).toBe("2026-10-08");
+  });
+  it("ignores a drafted date that doesn't fit the rule instead of skipping a month", () => {
+    expect(draftDue("2026-10-15", "nth:2:wed", "2026-10-08")).toBe("2026-10-14"); // model was a day off
+    expect(draftDue("2026-10-14", "nth:2:wed", "2026-10-08")).toBe("2026-10-14"); // correct date kept
+    expect(draftDue(null, "nth:2:wed", "2026-10-08")).toBe("2026-10-14");
+    expect(draftDue("2026-11-11", "nth:2:wed", "2026-10-08")).toBe("2026-11-11"); // a later matching date is kept
+    expect(draftDue("2026-10-12", "weekly", "2026-10-08")).toBe("2026-10-12");
   });
   it("repeats on the n-th weekday of each following month", () => {
     expect(nextDue("2026-10-14", "nth:2:wed", "2026-10-14")).toBe("2026-11-11");

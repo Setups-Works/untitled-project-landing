@@ -224,6 +224,16 @@ export function upcomingDates(due: string, rule: string, to: string, max = 60): 
   return out;
 }
 
+/**
+ * The first date for a repeating to-do the assistant drafted. Models often get the arithmetic of "the 2nd Wednesday" wrong by a day
+ * or two, and moving a wrong date forward to the next match can skip a whole month; so a date that does not fit the rule is
+ * ignored and the first matching day from today is used instead.
+ */
+export function draftDue(due: string | null, rule: string | null, from = isoDate()): string | null {
+  if (rule && NTH_RULE.test(rule) && due && (nthRuleFor(due) !== rule || due < from)) return firstDue(null, rule, from);
+  return firstDue(due, rule, from);
+}
+
 /** The next occurrence of a recurring task, strictly after `after` (default today). */
 export function nextDue(due: string, rule: string, after = isoDate()): string {
   let cur = due;
