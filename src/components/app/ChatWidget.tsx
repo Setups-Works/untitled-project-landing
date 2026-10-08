@@ -166,19 +166,22 @@ export default function ChatWidget() {
   }
 
   return (
-    <div data-no-swipe className="fixed bottom-4 right-4 z-40 flex flex-col items-end gap-3 max-[600px]:bottom-3 max-[600px]:right-3">
+    <div
+      data-no-swipe
+      className="fixed bottom-4 right-4 z-40 flex font-sans text-fg flex-col items-end gap-3 max-[600px]:bottom-3 max-[600px]:right-3"
+    >
       {open && (
         <section
           role="dialog"
           aria-label="Chat assistant"
-          className="animate-glass-in flex h-[min(560px,calc(100dvh-110px))] w-[min(380px,calc(100vw-24px))] flex-col overflow-hidden rounded-[26px] bg-linear-to-b from-white/90 to-white/70 shadow-[inset_0_1px_0_rgba(255,255,255,1),inset_0_0_0_1px_rgba(255,255,255,0.75),0_30px_70px_-20px_rgba(27,28,20,0.45)] backdrop-blur-3xl backdrop-saturate-200 motion-reduce:animate-none [html[data-motion=reduce]_&]:animate-none"
+          className="animate-glass-in flex h-[min(560px,calc(100dvh-110px))] w-[min(380px,calc(100vw-24px))] flex-col overflow-hidden rounded-r4 border border-line bg-page shadow-e4 motion-reduce:animate-none [html[data-motion=reduce]_&]:animate-none"
         >
           <header className="flex items-center gap-3 border-b border-line px-4 py-3">
             <span className="grid size-9 place-items-center rounded-full bg-fill-dark text-on-dark" aria-hidden>
               <FA icon={faCommentDots} />
             </span>
             <div className="min-w-0 flex-1">
-              <p className="font-semibold leading-tight text-fg-strong">Assistant</p>
+              <p className="font-serif text-[22px] leading-tight text-fg-strong">Assistant</p>
               <p className="text-xs text-fg-muted">{noAi ? "AI is off · messages are saved" : "Ask anything or organise your day"}</p>
             </div>
             <button type="button" className="icon-btn" aria-label="New conversation" title="New conversation" onClick={fresh}>
@@ -197,7 +200,7 @@ export default function ChatWidget() {
           <div ref={listRef} className="flex flex-1 flex-col gap-3 overflow-y-auto px-4 py-4" aria-live="polite">
             {list.length === 0 && live === null && (
               <div className="my-auto text-center">
-                <p className="text-lg font-semibold text-fg-strong">Hi, how can I help?</p>
+                <p className="font-serif text-[28px] leading-tight text-fg-strong">Hi, how can I help?</p>
                 <p className="mt-1 text-sm text-fg-muted">
                   I can answer questions and turn what you tell me into journal entries, to-dos and notes.
                 </p>
@@ -206,7 +209,7 @@ export default function ChatWidget() {
                     <button
                       key={s}
                       type="button"
-                      className="rounded-full bg-white/70 px-4 py-2 text-left text-sm text-fg shadow-[inset_0_0_0_1px_var(--line)] transition hover:bg-white"
+                      className="rounded-pill bg-surface px-4 py-2 text-left text-sm text-fg shadow-e1 transition hover:bg-surface-muted"
                       onClick={() => {
                         setText(s);
                         inputRef.current?.focus();
@@ -223,17 +226,14 @@ export default function ChatWidget() {
                 return (
                   <div
                     key={m.id}
-                    className="max-w-[85%] self-end whitespace-pre-wrap break-words rounded-[18px] rounded-br-md bg-fill-dark px-3.5 py-2 text-sm text-on-dark"
+                    className="max-w-[85%] self-end whitespace-pre-wrap break-words rounded-r3 rounded-br-lg bg-fg px-4 py-2.5 text-sm text-on-dark"
                   >
                     {m.body}
                   </div>
                 );
               const parsed = parseChatActions(m.body);
               return (
-                <div
-                  key={m.id}
-                  className="max-w-[92%] self-start rounded-[18px] rounded-bl-md bg-white px-3.5 py-2.5 text-sm shadow-[inset_0_0_0_1px_var(--line)]"
-                >
+                <div key={m.id} className="max-w-[92%] self-start rounded-r3 rounded-bl-lg bg-surface px-4 py-3 text-sm shadow-e1">
                   {parsed.body && <Markdown text={parsed.body} />}
                   {parsed.proposals.length > 0 && chatId && (
                     <ChatActionProposal proposals={parsed.proposals} messageId={m.id} chatId={chatId} />
@@ -242,7 +242,7 @@ export default function ChatWidget() {
               );
             })}
             {live !== null && (
-              <div className="max-w-[92%] self-start rounded-[18px] rounded-bl-md bg-white px-3.5 py-2.5 text-sm shadow-[inset_0_0_0_1px_var(--line)]">
+              <div className="max-w-[92%] self-start rounded-r3 rounded-bl-lg bg-surface px-4 py-3 text-sm shadow-e1">
                 {live ? <Markdown text={parseChatActions(live).body} /> : <span className="text-fg-muted">Thinking…</span>}
               </div>
             )}
@@ -266,7 +266,7 @@ export default function ChatWidget() {
               value={text}
               aria-label="Message"
               placeholder="Type a message…"
-              className="max-h-28 min-h-10 flex-1 resize-none rounded-[20px] bg-white/80 px-4 py-2.5 text-sm shadow-[inset_0_0_0_1px_var(--line)] outline-none focus:shadow-[inset_0_0_0_2px_var(--fill-dark)]"
+              className="max-h-28 min-h-10 flex-1 resize-none rounded-r3 bg-surface px-4 py-2.5 font-sans text-sm text-fg shadow-[inset_0_0_0_1px_var(--line)] outline-none placeholder:text-fg-faint focus:shadow-[inset_0_0_0_2px_var(--fg)]"
               onChange={(e) => setText(e.target.value)}
               onKeyDown={(e) => {
                 if (e.key === "Enter" && !e.shiftKey && !e.nativeEvent.isComposing) {
@@ -292,7 +292,7 @@ export default function ChatWidget() {
         type="button"
         aria-label={open ? "Close chat" : "Open chat"}
         aria-expanded={open}
-        className="grid size-14 place-items-center rounded-full bg-fill-dark text-xl text-on-dark shadow-[0_14px_30px_-10px_rgba(27,28,20,0.55),inset_0_1px_0_rgba(255,255,255,0.25)] transition-transform duration-300 hover:scale-105 active:scale-95"
+        className="grid size-14 place-items-center rounded-full bg-fill-dark text-xl text-on-dark shadow-e3 transition-transform duration-300 hover:scale-105 active:scale-95"
         onClick={() => setOpen((o) => !o)}
       >
         <FA icon={open ? faXmark : faCommentDots} />
