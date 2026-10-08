@@ -72,6 +72,33 @@ function hasSavedClaim(text: string) {
   );
 }
 
+const DRAFT_BLOCK = /<create-item>([\s\S]*?)<\/create-item>/g;
+
+/**
+ * Repairs the draft blocks of a finished reply. A block whose JSON is broken (code pasted into a JSON string almost always breaks it)
+ * is dropped, so it can't show up as a second, empty draft. A note whose body is the placeholder `{{reply}}` gets the reply text itself,
+ * so whatever the assistant wrote (code, a plan, a recipe) is saved exactly as shown, without being squeezed through JSON.
+ */
+function settleBlocks(full: string): string {
+  const prose = full
+    .replace(DRAFT_BLOCK, "")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim()
+    .slice(0, 9_000);
+  return full.replace(DRAFT_BLOCK, (all, json: string) => {
+    let a: { kind?: string; body?: unknown };
+    try {
+      a = JSON.parse(json) as typeof a;
+    } catch {
+      return "";
+    }
+    if (a.kind === "note" && typeof a.body === "string" && a.body.trim() === "{{reply}}") {
+      return `<create-item>${JSON.stringify({ ...a, body: prose })}</create-item>`;
+    }
+    return all;
+  });
+}
+
 function prepareCreateProposal(
   rows: { role: "user" | "assistant"; body: string }[],
   assistantText: string,
@@ -209,6 +236,7 @@ export async function startChatReply(opts: {
         // A broken stream still keeps whatever was already written.
       } finally {
         if (completed && !cancelled) {
+          full = settleBlocks(full);
           const prepared = prepareCreateProposal(rows, full, opts.localDate);
           if (prepared) {
             full = prepared.text;

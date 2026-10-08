@@ -211,6 +211,19 @@ export function firstDue(due: string | null, rule: string | null, from = isoDate
   return start;
 }
 
+/** The dates a repeating task will come back on after its own due date, up to and including `to` (used to show it on a calendar). */
+export function upcomingDates(due: string, rule: string, to: string, max = 60): string[] {
+  const out: string[] = [];
+  let cur = due;
+  while (out.length < max) {
+    const next = nextDue(cur, rule, cur);
+    if (next <= cur || next > to) break;
+    out.push(next);
+    cur = next;
+  }
+  return out;
+}
+
 /** The next occurrence of a recurring task, strictly after `after` (default today). */
 export function nextDue(due: string, rule: string, after = isoDate()): string {
   let cur = due;

@@ -5,6 +5,13 @@ import type { Task, TaskList } from "../../../lib/workspace";
 import { dayLabel } from "../../../lib/dates";
 import { ctxProps } from "../../../lib/context-actions";
 import { recurrenceLabel } from "../../../lib/tasks";
+import Markdown from "../Markdown";
+
+/** The first few lines of a description for the list row, with an ellipsis when there is more. */
+const shortDescription = (text: string) => {
+  const lines = text.trim().split("\n");
+  return lines.length > 4 ? `${lines.slice(0, 4).join("\n")}\n…` : text.trim();
+};
 
 export type RowCtx = {
   today: string;
@@ -58,7 +65,18 @@ export default function TaskItem({ task: t, ctx, showList = true }: { task: Task
       </button>
       <div className="ti-main">
         <span className="ti-title">{t.title}</span>
-        {t.description && <span className="ti-desc">{t.description}</span>}
+        {t.description && (
+          // Rendered as Markdown so lists (a shopping list) and links to other items, with their hover cards, work here too.
+          // The hover card needs room, so the text is cut by lines instead of clipped by the box.
+          <div
+            className="ti-desc-md"
+            onClick={(e) => {
+              if ((e.target as HTMLElement).closest("a")) e.stopPropagation(); // a link opens its target, not the task
+            }}
+          >
+            <Markdown text={shortDescription(t.description)} />
+          </div>
+        )}
         {(t.due_date || t.recurrence) && (
           <span className="ti-meta">
             {t.due_date && (

@@ -4,7 +4,8 @@ import { readText, writeText } from "../../../lib/drafts";
 import { FontAwesomeIcon as FA } from "@fortawesome/react-fontawesome";
 import { faCalendarDay, faFlag, faRotate, faXmark, faHashtag } from "@fortawesome/free-solid-svg-icons";
 import { PRIORITIES, recurrenceChoices, type Draft } from "../../../lib/tasks";
-import { addDays, isoDate } from "../../../lib/dates";
+import { addDays, dayLabel, isoDate } from "../../../lib/dates";
+import JournalCalendar from "../JournalCalendar";
 import type { TaskList } from "../../../lib/workspace";
 
 /** Used for quick add, inline add and editing. */
@@ -39,6 +40,15 @@ export default function TaskForm({
   const set = <K extends keyof Draft>(k: K, v: Draft[K]) => setD((x) => ({ ...x, [k]: v }));
   const today = isoDate();
   const sent = useRef(false);
+  const desc = useRef<HTMLTextAreaElement>(null);
+
+  // The description grows with its text (up to a limit, then scrolls) so a list or a long note is readable without hunting for it.
+  useEffect(() => {
+    const el = desc.current;
+    if (!el) return;
+    el.style.height = "auto";
+    el.style.height = `${Math.min(el.scrollHeight, 240)}px`;
+  }, [d.description]);
 
   useEffect(() => {
     if (!draftKey || sent.current) return;
@@ -78,6 +88,7 @@ export default function TaskForm({
         aria-label="Task name"
       />
       <textarea
+        ref={desc}
         className="tf-desc"
         value={d.description}
         onChange={(e) => set("description", e.target.value)}
@@ -87,22 +98,23 @@ export default function TaskForm({
         aria-label="Description"
       />
       <div className="tf-pills">
-        <label className="tf-pill" data-set={!!d.due_date} data-tone={d.due_date && d.due_date < today ? "late" : undefined}>
+        <div className="tf-pill tf-date" data-set={!!d.due_date} data-tone={d.due_date && d.due_date < today ? "late" : undefined}>
           <FA icon={faCalendarDay} />
-          <input type="date" value={d.due_date ?? ""} onChange={(e) => set("due_date", e.target.value || null)} aria-label="Due date" />
+          {/* The site's own calendar instead of the browser's date picker. */}
+          <JournalCalendar
+            value={d.due_date ?? today}
+            today={today}
+            counts={{}}
+            allowFuture
+            label={d.due_date ? dayLabel(d.due_date, today) : "Due date"}
+            onPick={(iso) => set("due_date", iso)}
+          />
           {d.due_date && (
-            <button
-              type="button"
-              aria-label="Clear date"
-              onClick={(e) => {
-                e.preventDefault();
-                set("due_date", null);
-              }}
-            >
+            <button type="button" aria-label="Clear date" onClick={() => set("due_date", null)}>
               <FA icon={faXmark} />
             </button>
           )}
-        </label>
+        </div>
         <button type="button" className="tf-quick" onClick={() => set("due_date", today)}>
           Today
         </button>

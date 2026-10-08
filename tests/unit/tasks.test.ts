@@ -11,6 +11,7 @@ import {
   nextDue,
   nthRuleFor,
   recurrenceLabel,
+  upcomingDates,
 } from "../../src/lib/tasks";
 import type { Task, TaskList } from "../../src/lib/workspace";
 
@@ -47,6 +48,11 @@ describe("every n-th weekday of the month", () => {
     expect(nextDue("2026-11-11", "nth:2:wed", "2026-11-11")).toBe("2026-12-09");
     expect(nextDue("2026-12-09", "nth:2:wed", "2026-12-09")).toBe("2027-01-13");
     expect(nextDue("2026-01-07", "nth:2:wed", "2026-10-08")).toBe("2026-10-14"); // catches up
+  });
+  it("lists every later occurrence up to a date, for a calendar", () => {
+    expect(upcomingDates("2026-10-14", "nth:2:wed", "2027-01-31")).toEqual(["2026-11-11", "2026-12-09", "2027-01-13"]);
+    expect(upcomingDates("2026-10-14", "weekly", "2026-11-05")).toEqual(["2026-10-21", "2026-10-28", "2026-11-04"]);
+    expect(upcomingDates("2026-10-14", "monthly", "2026-10-31")).toEqual([]);
   });
   it("derives the rule from a date and labels it", () => {
     expect(nthRuleFor("2026-10-14")).toBe("nth:2:wed");

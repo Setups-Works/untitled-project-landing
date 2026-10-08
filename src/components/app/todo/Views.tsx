@@ -21,6 +21,7 @@ import {
   groupTasks,
   isOpen,
   isOverdue,
+  upcomingDates,
   type Draft,
   type Group,
   type ViewKey,
@@ -327,16 +328,28 @@ export function CalendarLayout({
     return { y: d.getFullYear(), m: d.getMonth() };
   });
   const sorted = useMemo(() => applyOpts(tasks, opts), [tasks, opts]);
-  const by = useMemo(() => {
-    const m = new Map<string, Task[]>();
-    sorted.forEach((t) => {
-      if (t.due_date) m.set(t.due_date, [...(m.get(t.due_date) ?? []), t]);
-    });
-    return m;
-  }, [sorted]);
   const first = new Date(view.y, view.m, 1);
   const offset = weekdayIndex(first);
   const cells = Array.from({ length: 42 }, (_, i) => new Date(view.y, view.m, 1 - offset + i));
+  const lastDay = isoDate(cells[cells.length - 1]);
+  // Open repeating tasks also appear on every later day they come back on (shown softer, and they open the real task).
+  const { by, original } = useMemo(() => {
+    const m = new Map<string, Task[]>();
+    const original = new Map<Task, Task>();
+    const add = (iso: string, t: Task) => m.set(iso, [...(m.get(iso) ?? []), t]);
+    sorted.forEach((t) => {
+      if (!t.due_date) return;
+      add(t.due_date, t);
+      if (t.recurrence && !t.done && !t.cancelled && !t.archived) {
+        for (const iso of upcomingDates(t.due_date, t.recurrence, lastDay)) {
+          const copy = { ...t, due_date: iso };
+          original.set(copy, t);
+          add(iso, copy);
+        }
+      }
+    });
+    return { by: m, original };
+  }, [sorted, lastDay]);
   const shift = (n: number) =>
     setView(({ y, m }) => {
       const d = new Date(y, m + n, 1);
@@ -378,19 +391,23 @@ export function CalendarLayout({
               <button className="tv-cal-num" aria-label={`Add task on ${iso}`} onClick={() => onAddOn(iso)}>
                 {d.getDate()}
               </button>
-              {list.slice(0, 3).map((t) => (
-                <button
-                  key={t.id}
-                  className="tv-cal-chip"
-                  {...ctxProps("task", t.id, { done: t.done })}
-                  data-p={t.priority}
-                  data-done={t.done}
-                  onClick={() => ctx.onOpen(t)}
-                  title={t.title}
-                >
-                  {t.title}
-                </button>
-              ))}
+              {list.slice(0, 3).map((t) => {
+                const real = original.get(t); // set when this chip is a repeat of a task whose own date is earlier
+                return (
+                  <button
+                    key={t.id}
+                    className="tv-cal-chip"
+                    {...(real ? {} : ctxProps("task", t.id, { done: t.done }))}
+                    data-p={t.priority}
+                    data-done={t.done}
+                    data-repeat={!!real}
+                    onClick={() => ctx.onOpen(real ?? t)}
+                    title={real ? `${t.title} (repeats)` : t.title}
+                  >
+                    {t.title}
+                  </button>
+                );
+              })}
               {list.length > 3 && <small>+{list.length - 3} more</small>}
             </div>
           );
