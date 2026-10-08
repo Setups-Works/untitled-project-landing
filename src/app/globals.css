@@ -6769,8 +6769,6 @@
     justify-content: center;
     align-items: center;
     padding: 14px clamp(16px, 3vw, 32px);
-    background: #f5f4ebd9;
-    backdrop-filter: blur(14px);
   }
   .ap-logo {
     position: absolute;
