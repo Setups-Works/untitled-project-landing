@@ -134,19 +134,27 @@ export default function ChatWidget() {
     setBusy(true);
     setErr("");
     try {
-      let id = chatId;
-      if (!id) {
+      const startChat = async () => {
         const { data, error } = await sb
           .from("chats")
           .insert({ title: prettyTitle(body.split("\n")[0].trim().slice(0, 60)) })
           .select("id")
           .single();
-        if (error || !data) return setErr("Couldn’t start that chat.");
-        id = data.id as string;
-        setChatId(id);
-        saveChat(id);
+        if (error || !data) return null;
+        setChatId(data.id as string);
+        saveChat(data.id as string);
+        return data.id as string;
+      };
+      const post = (chat: string) => sb.from("chat_messages").insert({ chat_id: chat, role: "user", body, attachments: [] });
+      let id = chatId ?? (await startChat());
+      if (!id) return setErr("Couldn’t start that chat.");
+      let { error } = await post(id);
+      // The remembered conversation may have been deleted (e.g. from the chat page): carry on in a new one.
+      if (error && chatId) {
+        id = await startChat();
+        if (!id) return setErr("Couldn’t start that chat.");
+        ({ error } = await post(id));
       }
-      const { error } = await sb.from("chat_messages").insert({ chat_id: id, role: "user", body, attachments: [] });
       if (error) return setErr("Couldn’t send that message.");
       setText("");
       const now = new Date().toISOString();
