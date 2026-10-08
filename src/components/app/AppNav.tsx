@@ -21,6 +21,8 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { authClient } from "../../lib/auth/client";
 import { clearDrafts } from "../../lib/drafts";
+import { useSwipeNav } from "../../hooks/useSwipeNav";
+import SectionTabs from "./SectionTabs";
 
 /** One line per workspace section — pages live in app/dashboard/<section>. */
 const TABS = [
@@ -63,6 +65,12 @@ export default function AppNav({
   const closeSettings = useCallback(() => setSettings(false), []);
   const box = useRef<HTMLDivElement>(null);
 
+  // Which section we are on (the tab pill itself lives in SectionTabs).
+  const current = TABS.findIndex((t) => (t.href === "/dashboard" ? path === "/dashboard" : path.startsWith(t.href)));
+
+  // On a touch screen, swipe the page sideways to go to the next or previous section.
+  useSwipeNav(current, TABS.length, (to) => router.push(TABS[to].href));
+
   useEffect(() => {
     const close = (e: MouseEvent | KeyboardEvent) => {
       if (e instanceof KeyboardEvent ? e.key === "Escape" : !box.current?.contains(e.target as Node)) setOpen(false);
@@ -95,16 +103,8 @@ export default function AppNav({
         <i />
         <span>untitled project</span>
       </Link>
-      <nav className="ap-tabs" aria-label="Workspace">
-        {TABS.map((t) => {
-          const on = t.href === "/dashboard" ? path === "/dashboard" : path.startsWith(t.href);
-          return (
-            <Link key={t.href} href={t.href} aria-current={on ? "page" : undefined}>
-              <FA icon={t.icon} /> <span>{t.t}</span>
-            </Link>
-          );
-        })}
-      </nav>
+      {/* Liquid-glass section switcher: click, or drag the glass lens across and let go (see SectionTabs). */}
+      <SectionTabs tabs={TABS} current={current} onGo={(href) => router.push(href)} />
       <div className="ap-user" ref={box}>
         <UniversalSearch admin={admin} />
         <button className="ap-avatar" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)} aria-label="Account menu">
