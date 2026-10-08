@@ -21,6 +21,8 @@ import {
 } from "@fortawesome/free-solid-svg-icons";
 import { authClient } from "../../lib/auth/client";
 import { clearDrafts } from "../../lib/drafts";
+import { useSwipeNav } from "../../hooks/useSwipeNav";
+import SectionTabs from "./SectionTabs";
 
 /** One line per workspace section — pages live in app/dashboard/<section>. */
 const TABS = [
@@ -63,6 +65,12 @@ export default function AppNav({
   const closeSettings = useCallback(() => setSettings(false), []);
   const box = useRef<HTMLDivElement>(null);
 
+  // Which section we are on (the tab pill itself lives in SectionTabs).
+  const current = TABS.findIndex((t) => (t.href === "/dashboard" ? path === "/dashboard" : path.startsWith(t.href)));
+
+  // On a touch screen, swipe the page sideways to go to the next or previous section.
+  useSwipeNav(current, TABS.length, (to) => router.push(TABS[to].href));
+
   useEffect(() => {
     const close = (e: MouseEvent | KeyboardEvent) => {
       if (e instanceof KeyboardEvent ? e.key === "Escape" : !box.current?.contains(e.target as Node)) setOpen(false);
@@ -95,18 +103,15 @@ export default function AppNav({
         <i />
         <span>untitled project</span>
       </Link>
-      <nav className="ap-tabs" aria-label="Workspace">
-        {TABS.map((t) => {
-          const on = t.href === "/dashboard" ? path === "/dashboard" : path.startsWith(t.href);
-          return (
-            <Link key={t.href} href={t.href} aria-current={on ? "page" : undefined}>
-              <FA icon={t.icon} /> <span>{t.t}</span>
-            </Link>
-          );
-        })}
-      </nav>
+      {/* Liquid-glass section switcher (click, or drag the glass lens across and let go) with the search button beside it. */}
+      <div className="flex items-center gap-2.5">
+        <SectionTabs tabs={TABS} current={current} onGo={(href) => router.push(href)} />
+        <UniversalSearch
+          admin={admin}
+          className="relative size-12 justify-center rounded-full bg-white/60 p-0 text-[15px] text-fg-muted [&_kbd]:hidden [&_span]:hidden backdrop-blur-xl backdrop-saturate-150 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.85),inset_0_1px_3px_rgba(27,28,20,0.06)] transition-[transform,background-color,color,box-shadow] duration-300 ease-[cubic-bezier(0.34,1.45,0.5,1)] hover:bg-white/80 hover:text-fg hover:shadow-[inset_0_1px_0_#fff,inset_0_0_0_1px_rgba(255,255,255,0.95)] active:scale-95 motion-reduce:transition-none"
+        />
+      </div>
       <div className="ap-user" ref={box}>
-        <UniversalSearch admin={admin} />
         <button className="ap-avatar" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(!open)} aria-label="Account menu">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           {account.avatarUrl ? <img src={account.avatarUrl} alt="" /> : (name[0] || "?").toUpperCase()}
