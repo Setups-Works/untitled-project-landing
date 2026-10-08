@@ -10796,7 +10796,9 @@
     cursor: pointer;
   }
   .tf-pill select {
-    max-width: 150px;
+    /* Wide enough for "Every month on the 2nd Wednesday"; the pill grows with the chosen text. */
+    max-width: 280px;
+    field-sizing: content;
     appearance: none;
     padding-right: 2px;
   }
@@ -10817,7 +10819,7 @@
   .tf-pill[data-p="3"] svg {
     color: var(--blue-fg);
   }
-  .tf-pill button {
+  .tf-pill > button {
     width: 20px;
     height: 20px;
     border-radius: 50%;
@@ -10826,7 +10828,7 @@
     font-size: 10px;
     color: var(--fg-subtle);
   }
-  .tf-pill button:hover {
+  .tf-pill > button:hover {
     background: var(--surface-muted);
   }
   .tf-quick {
