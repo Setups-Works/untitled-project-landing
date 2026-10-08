@@ -28,6 +28,7 @@ import Menu, { MenuCheckItem, MenuItem, MenuLabel, MenuRadioGroup, MenuRadioItem
 import { useConfirm } from "../ui/Confirm";
 import { readPrefs } from "../../lib/prefs";
 import NoteEditor from "./NoteEditor";
+import { ctxProps, useCtxActions } from "../../lib/context-actions";
 
 type Filter = "all" | "pinned" | "voice";
 type Sort = "manual" | "edited" | "title";
@@ -172,6 +173,16 @@ export default function NotesView() {
     const c = await create({ title: `${n.title || displayTitle(n)} (copy)`, body: n.body, category: n.category, kind: "text" });
     if (c) open(c.id);
   }
+
+  // Right-click actions on a note card (see lib/context-actions).
+  useCtxActions("note", (id, action) => {
+    const n = notes.find((x) => x.id === id);
+    if (!n) return;
+    if (action === "open") open(id);
+    else if (action === "pin") void patch(id, { pinned: !n.pinned });
+    else if (action === "duplicate") void duplicate(id);
+    else if (action === "delete") void remove(id);
+  });
 
   /* ---- quick capture ---- */
   async function capture(openEditor = false) {
@@ -377,6 +388,7 @@ export default function NotesView() {
               role="listitem"
               tabIndex={0}
               className={`nt-card at-${toneOf(n)}`}
+              {...ctxProps("note", n.id, { pinned: n.pinned })}
               data-on={n.id === openId}
               data-over={overId === n.id && dragId !== n.id}
               data-drag={dragId === n.id}

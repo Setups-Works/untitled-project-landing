@@ -1,5 +1,6 @@
 "use client";
 import { useMemo, useState, type ReactNode } from "react";
+import { ctxProps } from "../../../lib/context-actions";
 import { FontAwesomeIcon as FA } from "@fortawesome/react-fontawesome";
 import {
   faBan,
@@ -381,6 +382,7 @@ export function CalendarLayout({
                 <button
                   key={t.id}
                   className="tv-cal-chip"
+                  {...ctxProps("task", t.id, { done: t.done })}
                   data-p={t.priority}
                   data-done={t.done}
                   onClick={() => ctx.onOpen(t)}

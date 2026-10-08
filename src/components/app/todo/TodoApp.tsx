@@ -20,7 +20,8 @@ import { useRealtimeInvalidate } from "../../../hooks/useRealtimeInvalidate";
 import { useTaskActions, useTaskLists, useTasks } from "../../../features/tasks/queries";
 import type { Task, TaskList } from "../../../lib/workspace";
 import { DEFAULT_OPTS, VIEW_TITLES, emptyDraft, inView, isOpen, isView, type Draft, type ViewKey, type ViewOpts } from "../../../lib/tasks";
-import { isoDate } from "../../../lib/dates";
+import { addDays, isoDate } from "../../../lib/dates";
+import { useCtxActions } from "../../../lib/context-actions";
 import { readPrefs } from "../../../lib/prefs";
 import Menu, { MenuItem, MenuSeparator } from "../../ui/Menu";
 import Modal from "../../ui/Modal";
@@ -155,6 +156,17 @@ export default function TodoApp() {
     },
     [ask, actions],
   );
+
+  // Right-click actions on a task (see lib/context-actions): the same handlers the row's own buttons use.
+  useCtxActions("task", (id, action) => {
+    const t = tasks.find((x) => x.id === id);
+    if (!t) return;
+    if (action === "open") setDialog({ mode: "edit", task: t });
+    else if (action === "toggle") void toggle(t);
+    else if (action === "today") void reschedule([id], today);
+    else if (action === "tomorrow") void reschedule([id], addDays(today, 1));
+    else if (action === "delete") void removeTask(t);
+  });
 
   const bulkComplete = async () => {
     for (const t of tasks.filter((x) => selected.has(x.id))) await toggle(t);

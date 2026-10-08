@@ -128,7 +128,8 @@ export default function SettingsView({ account, prefs: initial }: { account: Acc
   useEffect(() => {
     if (tab !== "security") return;
     let live = true;
-    void authClient.$fetch("/passkey/list-user-passkeys", { method: "GET" })
+    void authClient
+      .$fetch("/passkey/list-user-passkeys", { method: "GET" })
       .then(({ data, error }) => {
         if (live && !error && Array.isArray(data)) setPasskeys(data as typeof passkeys);
       })
@@ -281,7 +282,9 @@ export default function SettingsView({ account, prefs: initial }: { account: Acc
     }
     run("username", async () => {
       const { error } = await authClient.updateUser({ username: v, displayUsername: v });
-      setUsernameMsg(error ? { ok: false, text: friendly(error.message ?? "Couldn’t update your username.") } : { ok: true, text: "Username updated." });
+      setUsernameMsg(
+        error ? { ok: false, text: friendly(error.message ?? "Couldn’t update your username.") } : { ok: true, text: "Username updated." },
+      );
       if (!error) router.refresh();
     });
   };
@@ -704,7 +707,12 @@ export default function SettingsView({ account, prefs: initial }: { account: Acc
                 ))}
                 <label>
                   <span>Passkey name (optional)</span>
-                  <input value={passkeyName} onChange={(event) => setPasskeyName(event.target.value)} maxLength={100} placeholder="e.g. My laptop" />
+                  <input
+                    value={passkeyName}
+                    onChange={(event) => setPasskeyName(event.target.value)}
+                    maxLength={100}
+                    placeholder="e.g. My laptop"
+                  />
                 </label>
                 <button className="btn btn-primary btn-sm st-fit" type="button" disabled={busy === "passkey"} onClick={addPasskey}>
                   {spin("passkey", "Add a passkey")}

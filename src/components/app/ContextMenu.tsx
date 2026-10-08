@@ -19,11 +19,64 @@ import {
   faPenToSquare,
   faRightToBracket,
   faTag,
+  faCalendarDay,
+  faCalendarPlus,
+  faCircleCheck,
+  faClone,
+  faEnvelopeOpen,
+  faPen,
+  faRotateLeft,
+  faThumbtack,
+  faTrash,
 } from "@fortawesome/free-solid-svg-icons";
 import { api } from "../../lib/api/client";
 import { openSearch } from "./UniversalSearch";
+import { runCtxAction, type CtxKind } from "../../lib/context-actions";
 
-type Entry = { label: string; icon: IconDefinition; run: () => void } | "sep" | { heading: string };
+type Entry = { label: string; icon: IconDefinition; run: () => void; danger?: boolean } | "sep" | { heading: string };
+
+/** What can be done to a thing under the cursor. `s` is the state the page attached to it, which picks the right labels. */
+const ITEM_ACTIONS: Record<
+  CtxKind,
+  { heading: string; items: (s: Record<string, boolean>) => [action: string, label: string, icon: IconDefinition, danger?: boolean][] }
+> = {
+  task: {
+    heading: "To-do",
+    items: (s) => [
+      ["open", "Edit task", faPen],
+      ["toggle", s.done ? "Mark as not done" : "Mark as done", s.done ? faRotateLeft : faCircleCheck],
+      ["today", "Due today", faCalendarDay],
+      ["tomorrow", "Due tomorrow", faCalendarPlus],
+      ["delete", "Delete task", faTrash, true],
+    ],
+  },
+  note: {
+    heading: "Note",
+    items: (s) => [
+      ["open", "Open note", faPenToSquare],
+      ["pin", s.pinned ? "Unpin note" : "Pin note", faThumbtack],
+      ["duplicate", "Duplicate", faClone],
+      ["delete", "Delete note", faTrash, true],
+    ],
+  },
+  chat: {
+    heading: "Chat",
+    items: (s) => [
+      ["open", "Open chat", faCommentDots],
+      ["pin", s.pinned ? "Unpin chat" : "Pin chat", faThumbtack],
+      ["rename", "Rename", faPen],
+      ["read", s.unread ? "Mark as read" : "Mark as unread", faEnvelopeOpen],
+      ["delete", "Delete chat", faTrash, true],
+    ],
+  },
+  entry: {
+    heading: "Journal entry",
+    items: () => [
+      ["edit", "Edit entry", faPen],
+      ["delete", "Delete entry", faTrash, true],
+    ],
+  },
+};
 type Open = { x: number; y: number; entries: Entry[] };
 
 // Places where the browser's own menu is useful (spell check, paste, dictionary) and must stay.
@@ -51,6 +104,24 @@ export default function ContextMenu() {
       const inApp = pathname.startsWith("/dashboard") || pathname.startsWith("/admin");
       const go = (path: string) => () => router.push(path);
       const out: Entry[] = [];
+
+      // The most specific thing under the cursor comes first: a task, note, chat or journal entry.
+      const thing = target.closest<HTMLElement>("[data-ctx]");
+      const kind = thing?.dataset.ctx as CtxKind | undefined;
+      const id = thing?.dataset.ctxId;
+      if (inApp && kind && id && ITEM_ACTIONS[kind]) {
+        let state: Record<string, boolean> = {};
+        try {
+          state = JSON.parse(thing?.dataset.ctxState ?? "{}") as Record<string, boolean>;
+        } catch {
+          /* no state: default labels */
+        }
+        const def = ITEM_ACTIONS[kind];
+        out.push({ heading: def.heading });
+        for (const [action, label, icon, danger] of def.items(state))
+          out.push({ label, icon, danger, run: () => runCtxAction({ kind, id, action }) });
+        out.push("sep");
+      }
 
       const link = target.closest<HTMLAnchorElement>("a[href]");
       if (link) {
@@ -230,6 +301,7 @@ export default function ContextMenu() {
             role="menuitem"
             className="mn-item w-full text-left"
             data-highlighted={idx === active ? "" : undefined}
+            data-danger={e.danger}
             onMouseEnter={() => setActive(idx)}
             onClick={() => choose(e)}
           >

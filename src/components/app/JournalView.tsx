@@ -20,6 +20,7 @@ import AudioWave from "../ui/AudioWave";
 import RecordButton from "../ui/RecordButton";
 import { useDraftFiles, useDraftText } from "../../hooks/useDraft";
 import { useRecorder } from "./useRecorder";
+import { ctxProps, useCtxActions } from "../../lib/context-actions";
 
 const COLS = "id,entry_date,body,created_at,updated_at,kind,attachments";
 const DAY_TONES = TONES.filter((t) => t !== "sand");
@@ -200,6 +201,16 @@ export default function JournalView() {
     await Promise.all([loadDay(), loadCounts()]);
   }
 
+  // Right-click actions on a journal entry (see lib/context-actions).
+  useCtxActions("entry", (id, action) => {
+    const e = entries.find((x) => x.id === id);
+    if (!e) return;
+    if (action === "edit") {
+      setEditing(e.id);
+      setDraft(e.body);
+    } else if (action === "delete") void remove(e);
+  });
+
   const days = useMemo(() => {
     const set = new Set([...Object.keys(counts), today, date]);
     return [...set].sort().reverse().slice(0, 120);
@@ -282,7 +293,7 @@ export default function JournalView() {
             </p>
           )}
           {entries.map((e) => (
-            <article key={e.id} className="jr-entry">
+            <article key={e.id} className="jr-entry" {...ctxProps("entry", e.id)}>
               <div className="jr-meta">
                 <time dateTime={e.created_at}>{fmtTime(e.created_at)}</time>
                 <span className="jr-acts">

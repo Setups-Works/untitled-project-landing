@@ -21,7 +21,7 @@ import { api } from "../../../lib/api/client";
 import { qk } from "../../../lib/query/keys";
 import { useRealtimeInvalidate } from "../../../hooks/useRealtimeInvalidate";
 import type { Attachment, Chat, ChatFolder, Message } from "../../../lib/workspace";
-import { chatGreeting, prettyTitle } from "../../../lib/chat";
+import { chatGreeting, isUnread, prettyTitle } from "../../../lib/chat";
 import { fmtTime } from "../../../lib/prefs";
 import { safeName } from "../../../lib/notes";
 import Menu, { MenuItem, MenuSeparator } from "../../ui/Menu";
@@ -38,6 +38,7 @@ import ShareDialog from "./ShareDialog";
 import ChatActionProposal from "./ChatActionProposal";
 import { parseChatAction, parseChatActions } from "../../../lib/chat-actions";
 import { isoDate } from "../../../lib/dates";
+import { useCtxActions } from "../../../lib/context-actions";
 
 // Stable empty values so a loading query doesn't create a new array each render.
 const EMPTY_CHATS: Chat[] = [];
@@ -388,6 +389,17 @@ export default function ChatApp({ name }: { name: string }) {
   };
   const setRead = (c: Chat, read: boolean) =>
     patchChat(c, { last_read_at: read ? new Date().toISOString() : new Date(new Date(c.updated_at).getTime() - 5000).toISOString() });
+
+  // Right-click actions on a chat in the list (see lib/context-actions).
+  useCtxActions("chat", (id, action) => {
+    const c = chats.find((x) => x.id === id);
+    if (!c) return;
+    if (action === "open") open(id);
+    else if (action === "pin") void patchChat(c, { pinned: !c.pinned });
+    else if (action === "rename") void rename(c);
+    else if (action === "read") void setRead(c, isUnread(c) && c.id !== activeId);
+    else if (action === "delete") void removeChat(c);
+  });
 
   const duplicate = async (c: Chat) => {
     const { data: copy, error } = await sb

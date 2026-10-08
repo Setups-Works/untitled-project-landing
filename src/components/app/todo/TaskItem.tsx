@@ -3,6 +3,7 @@ import { FontAwesomeIcon as FA } from "@fortawesome/react-fontawesome";
 import { faCalendarDay, faCheck, faInbox, faPen, faRotate, faTrash, faHashtag } from "@fortawesome/free-solid-svg-icons";
 import type { Task, TaskList } from "../../../lib/workspace";
 import { dayLabel } from "../../../lib/dates";
+import { ctxProps } from "../../../lib/context-actions";
 
 export type RowCtx = {
   today: string;
@@ -25,6 +26,7 @@ export default function TaskItem({ task: t, ctx, showList = true }: { task: Task
       className="ti"
       data-task-row
       data-task-id={t.id}
+      {...ctxProps("task", t.id, { done: t.done })}
       data-done={t.done}
       data-cancelled={t.cancelled}
       data-selected={chosen}

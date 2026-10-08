@@ -24,6 +24,7 @@ import type { Chat, ChatFolder } from "../../../lib/workspace";
 import { ageShort, groupByDate, isUnread, prettyTitle } from "../../../lib/chat";
 import Menu, { MenuItem, MenuLabel, MenuRadioGroup, MenuRadioItem, MenuSeparator } from "../../ui/Menu";
 import { Tabs, TabsList, TabsTrigger } from "../../ui/Tabs";
+import { ctxProps } from "../../../lib/context-actions";
 
 export type Tab = "all" | "unread";
 
@@ -55,7 +56,7 @@ export type SidebarProps = {
 function Row({ c, p }: { c: Chat; p: SidebarProps }) {
   const unread = isUnread(c) && c.id !== p.activeId;
   return (
-    <li className="cx-row" data-on={c.id === p.activeId} data-unread={unread}>
+    <li className="cx-row" data-on={c.id === p.activeId} data-unread={unread} {...ctxProps("chat", c.id, { pinned: c.pinned, unread })}>
       <button className="cx-row-main" aria-current={c.id === p.activeId ? "page" : undefined} onClick={() => p.onOpen(c.id)}>
         {c.pinned && <FA icon={faThumbtack} className="cx-pin" />}
         <span className="cx-row-t">{prettyTitle(c.title)}</span>
