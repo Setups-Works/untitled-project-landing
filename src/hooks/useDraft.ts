@@ -6,14 +6,17 @@ import { readFiles, readText, writeFiles, writeText } from "../lib/drafts";
  * Like `useState("")`, but the value survives a refresh. Give each input its own key (e.g. `journal:2026-10-07`, `chat:<id>`);
  * when the key changes the draft for the new key is loaded. Clear it the normal way (`setValue("")`) after sending.
  */
-export function useDraftText(key: string, initial = ""): [string, Dispatch<SetStateAction<string>>] {
+export function useDraftText(key: string, initial = ""): [string, Dispatch<SetStateAction<string>>, boolean] {
   const [value, setValue] = useState(initial);
+  // The text that was found saved when this input appeared; while the box still holds exactly that, it is a restored draft.
+  const [restoredText, setRestoredText] = useState("");
   const loadedKey = useRef<string | null>(null);
 
   const skipNextWrite = useRef(false);
 
   useEffect(() => {
     const stored = readText(key) ?? initial;
+    setRestoredText(stored && stored !== initial ? stored : "");
     // The write effect below runs in the same pass with the old value; it must not overwrite the draft we are about to show.
     skipNextWrite.current = stored !== value;
     setValue(stored);
@@ -32,7 +35,7 @@ export function useDraftText(key: string, initial = ""): [string, Dispatch<SetSt
     writeText(key, value);
   }, [key, value]);
 
-  return [value, setValue];
+  return [value, setValue, restoredText !== "" && value === restoredText];
 }
 
 /** Like `useState<File[]>([])`, but attached files and voice recordings survive a refresh (stored in IndexedDB). */

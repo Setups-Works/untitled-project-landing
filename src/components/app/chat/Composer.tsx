@@ -35,7 +35,7 @@ export default function Composer({
   /** Where the unsent message, attachments and voice recordings are kept so a refresh doesn't lose them (one per chat). */
   draftKey: string;
 }) {
-  const [text, setText] = useDraftText(draftKey);
+  const [text, setText, restored] = useDraftText(draftKey);
   const [files, setFiles] = useDraftFiles(draftKey);
   const ta = useRef<HTMLTextAreaElement>(null);
   const picker = useRef<HTMLInputElement>(null);
@@ -80,6 +80,14 @@ export default function Composer({
       }}
     >
       <FilePreviewList files={files} onRemove={(i) => setFiles((x) => x.filter((_, j) => j !== i))} />
+      {restored && (
+        <p className="mb-1 flex items-center gap-2 text-[12.5px] text-fg-subtle" role="status">
+          Restored your unsent draft.
+          <button type="button" className="underline underline-offset-2 hover:text-fg" onClick={sent}>
+            Discard it
+          </button>
+        </p>
+      )}
       <textarea
         ref={ta}
         value={text}
