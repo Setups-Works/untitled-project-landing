@@ -6873,9 +6873,11 @@
     min-width: 220px;
     padding: 8px;
     border-radius: var(--r3);
-    background: var(--surface);
+    background: linear-gradient(to bottom, #ffffffe6, #ffffffb3);
+    backdrop-filter: blur(40px) saturate(2);
     box-shadow:
-      inset 0 0 0 1px var(--line),
+      inset 0 1px 0 #fff,
+      inset 0 0 0 1px #ffffffbf,
       var(--e3);
     display: flex;
     flex-direction: column;
@@ -8112,9 +8114,11 @@
     min-width: 210px;
     padding: 6px;
     border-radius: var(--r2);
-    background: var(--surface);
+    background: linear-gradient(to bottom, #ffffffe6, #ffffffb3);
+    backdrop-filter: blur(40px) saturate(2);
     box-shadow:
-      inset 0 0 0 1px var(--line),
+      inset 0 1px 0 #fff,
+      inset 0 0 0 1px #ffffffbf,
       var(--e3);
   }
   .ne-slash li {
@@ -10650,11 +10654,19 @@
     height: 38px;
     padding: 0 12px;
     border-radius: 99px;
-    background: #fff;
-    box-shadow: inset 0 0 0 1px var(--line-strong);
+    background: var(--glass);
+    backdrop-filter: var(--glass-blur);
+    box-shadow: var(--glass-ring);
     font-size: 13.5px;
     color: var(--fg-muted);
     cursor: pointer;
+    transition:
+      background-color 0.3s,
+      box-shadow 0.3s;
+  }
+  .tf-pill:hover {
+    background: var(--glass-hi);
+    box-shadow: var(--glass-ring-hi);
   }
   .tf-pill:focus-within {
     box-shadow: inset 0 0 0 2px var(--violet-fg);
@@ -10710,10 +10722,18 @@
     border-radius: 99px;
     font-size: 13px;
     color: var(--green-fg);
-    background: var(--green-bg);
+    background: color-mix(in srgb, var(--green-bg) 75%, transparent);
+    backdrop-filter: var(--glass-blur);
+    box-shadow: inset 0 0 0 1px #ffffffb3;
+    transition:
+      transform 0.3s var(--spring),
+      background-color 0.3s;
   }
   .tf-quick:hover {
-    filter: brightness(0.96);
+    background: var(--green-bg);
+  }
+  .tf-quick:active {
+    transform: scale(0.95);
   }
   .tf-acts {
     display: flex;
@@ -10768,9 +10788,12 @@
   .tm {
     width: min(620px, 100%);
     border-radius: var(--r4);
-    background: var(--surface);
+    /* Dialogs and menus are the thick, frosted version of the glass so text stays easy to read. */
+    background: linear-gradient(to bottom, #ffffffe0, #ffffffa8);
+    backdrop-filter: blur(40px) saturate(2);
     box-shadow:
-      inset 0 0 0 1px var(--line),
+      inset 0 1px 0 #fff,
+      inset 0 0 0 1px #ffffffbf,
       var(--e4);
     animation: cdPop 0.22s var(--ease);
     outline: 0;
@@ -10876,9 +10899,11 @@
     width: min(340px, calc(100vw - 32px));
     padding: 18px;
     border-radius: var(--r3);
-    background: var(--surface);
+    background: linear-gradient(to bottom, #ffffffe6, #ffffffb3);
+    backdrop-filter: blur(40px) saturate(2);
     box-shadow:
-      inset 0 0 0 1px var(--line),
+      inset 0 1px 0 #fff,
+      inset 0 0 0 1px #ffffffbf,
       var(--e4);
     animation: cdPop 0.18s var(--ease);
   }
@@ -11415,9 +11440,11 @@
     width: 340px;
     padding: 18px;
     border-radius: var(--r3);
-    background: var(--surface);
+    background: linear-gradient(to bottom, #ffffffe6, #ffffffb3);
+    backdrop-filter: blur(40px) saturate(2);
     box-shadow:
-      inset 0 0 0 1px var(--line),
+      inset 0 1px 0 #fff,
+      inset 0 0 0 1px #ffffffbf,
       var(--e4);
     animation: cdPop 0.2s var(--ease);
   }
@@ -12488,9 +12515,11 @@
     max-height: min(var(--radix-dropdown-menu-content-available-height, 460px), 460px);
     padding: 8px;
     border-radius: var(--r3);
-    background: var(--surface);
+    background: linear-gradient(to bottom, #ffffffe6, #ffffffb3);
+    backdrop-filter: blur(40px) saturate(2);
     box-shadow:
-      inset 0 0 0 1px var(--line),
+      inset 0 1px 0 #fff,
+      inset 0 0 0 1px #ffffffbf,
       var(--e4);
     display: flex;
     flex-direction: column;
@@ -12529,7 +12558,8 @@
     color: var(--fg-subtle);
   }
   .mn-item[data-highlighted] {
-    background: var(--surface-muted);
+    background: #ffffffb3;
+    box-shadow: inset 0 0 0 1px #ffffffe6;
   }
   .mn-item[data-disabled] {
     opacity: 0.5;
