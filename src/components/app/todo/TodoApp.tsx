@@ -386,6 +386,7 @@ export default function TodoApp() {
           onSearch={openSearch}
           onAddList={addList}
           onCollapse={toggleSide}
+          collapsed={!showSide}
         />
       </div>
 

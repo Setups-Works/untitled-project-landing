@@ -29,7 +29,10 @@ export default function Sidebar({
   onSearch,
   onAddList,
   onCollapse,
+  collapsed = false,
 }: {
+  /** Desktop "closed" state: the sidebar shrinks to a rail of icons (the labels become tooltips). */
+  collapsed?: boolean;
   view: ViewKey;
   lists: TaskList[];
   counts: Counts;
@@ -50,6 +53,8 @@ export default function Sidebar({
       className="tsb-item"
       data-on={view === v || (v === "filters" && ["cancelled", "overdue", "recurring", "archived"].includes(view))}
       aria-current={view === v ? "page" : undefined}
+      aria-label={label}
+      title={label}
       onClick={() => onGo(v)}
     >
       <FA icon={icon} /> <span>{label}</span>
@@ -68,16 +73,21 @@ export default function Sidebar({
   }
 
   return (
-    <aside className="tsb at-sand" aria-label="Task navigation">
+    <aside className="tsb at-sand" data-rail={collapsed} aria-label="Task navigation">
       <div className="tsb-top">
-        <button className="ne-btn" aria-label="Hide sidebar" title="Hide sidebar (M)" onClick={onCollapse}>
+        <button
+          className="ne-btn"
+          aria-label={collapsed ? "Show sidebar" : "Hide sidebar"}
+          title={collapsed ? "Show sidebar (M)" : "Hide sidebar (M)"}
+          onClick={onCollapse}
+        >
           <FA icon={faTableColumns} />
         </button>
       </div>
-      <button className="tsb-item tsb-add" onClick={onAdd}>
+      <button className="tsb-item tsb-add" aria-label="Add task" title="Add task" onClick={onAdd}>
         <FA icon={faCirclePlus} /> <span>Add task</span>
       </button>
-      <button className="tsb-item" onClick={onSearch}>
+      <button className="tsb-item" aria-label="Search" title="Search" onClick={onSearch}>
         <FA icon={faMagnifyingGlass} /> <span>Search</span>
       </button>
       <nav className="tsb-nav">
@@ -88,7 +98,7 @@ export default function Sidebar({
         {item("completed", "Completed", faCircleCheck)}
       </nav>
 
-      <button className="tsb-sec" aria-expanded={open} onClick={() => setOpen(!open)}>
+      <button className="tsb-sec" aria-expanded={open} onClick={() => setOpen(!open)} title="My Lists">
         <FA icon={open ? faChevronDown : faChevronRight} /> My Lists
       </button>
       {open && (
@@ -101,6 +111,8 @@ export default function Sidebar({
               data-on={view === `list:${l.id}`}
               data-tone={l.color}
               aria-current={view === `list:${l.id}` ? "page" : undefined}
+              aria-label={l.name}
+              title={l.name}
               onClick={() => onGo(`list:${l.id}`)}
             >
               <FA icon={faHashtag} className="tsb-dot" /> <span>{l.name}</span>
@@ -146,7 +158,7 @@ export default function Sidebar({
               </div>
             </form>
           ) : (
-            <button className="tsb-item" onClick={() => setAdding(true)}>
+            <button className="tsb-item" aria-label="Add list" title="Add list" onClick={() => setAdding(true)}>
               <FA icon={faPlus} /> <span>Add list</span>
             </button>
           )}

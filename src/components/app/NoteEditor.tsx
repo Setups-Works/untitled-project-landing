@@ -25,6 +25,8 @@ import {
   faChevronUp,
   faChevronDown,
   faCheck,
+  faEye,
+  faPen,
 } from "@fortawesome/free-solid-svg-icons";
 import type { ApiClient } from "../../lib/api/client";
 import type { Attachment, Note, NoteVersion } from "../../lib/workspace";
@@ -34,6 +36,7 @@ import Menu, { MenuItem, MenuLabel, MenuRadioGroup, MenuRadioItem, MenuSeparator
 import { usePrompt } from "../ui/Confirm";
 import AttachmentImage from "../ui/AttachmentImage";
 import AudioWave from "../ui/AudioWave";
+import Markdown from "./Markdown";
 
 const SLASH = [
   { k: "h1", t: "Heading 1", s: "# " },
@@ -90,6 +93,16 @@ export default function NoteEditor({
   const [hist, setHist] = useState<NoteVersion[] | null>(null);
   const [urls, setUrls] = useState<Record<string, string>>({});
   const [msg, setMsg] = useState("");
+  // A note with text opens as it will read (headings, lists and code blocks rendered, like its card); click it, or any
+  // toolbar button, to edit the Markdown source. The textarea stays mounted so the toolbar helpers always have it.
+  const [editing, setEditing] = useState(() => !note.body.trim());
+  useEffect(() => {
+    setEditing(!note.body.trim());
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- only when a different note is opened
+  }, [note.id]);
+  useEffect(() => {
+    if (editing && document.activeElement === document.body) ta.current?.focus();
+  }, [editing]);
   const [range, setRange] = useState<[number, number]>([0, 0]);
   const selected = range[1] > range[0] ? body.slice(range[0], range[1]) : "";
   const { prompt: askLink, dialog: linkDialog } = usePrompt();
@@ -311,7 +324,12 @@ export default function NoteEditor({
       disabled={extra.disabled}
       data-on={extra.on}
       onMouseDown={(e) => e.preventDefault()}
-      onClick={run}
+      onClick={() => {
+        // Formatting works on the source text, so leave the rendered view first.
+        if (editing) return run();
+        setEditing(true);
+        requestAnimationFrame(run);
+      }}
     >
       <FA icon={icon} />
     </button>
@@ -352,6 +370,18 @@ export default function NoteEditor({
       </div>
 
       <div className="ne-bar" role="toolbar" aria-label="Formatting">
+        <button
+          type="button"
+          className="ne-btn"
+          aria-label={editing ? "Preview note" : "Edit note"}
+          title={editing ? "Preview" : "Edit"}
+          aria-pressed={!editing}
+          data-on={!editing}
+          onMouseDown={(e) => e.preventDefault()}
+          onClick={() => setEditing(!editing)}
+        >
+          <FA icon={editing ? faEye : faPen} />
+        </button>
         {tb("Bold", faBold, () => wrap("**"))}
         {tb("Quote", faQuoteLeft, () => prefix("> "))}
         {tb("Heading", faHeading, () => prefix("# "))}
@@ -458,7 +488,25 @@ export default function NoteEditor({
       )}
 
       <div className="ne-body">
+        {!editing && (
+          <div
+            className="ne-read"
+            role="button"
+            tabIndex={0}
+            aria-label="Note preview. Press Enter to edit"
+            onClick={(e) => {
+              // Links inside the note keep working; anywhere else starts editing.
+              if (!(e.target as HTMLElement).closest("a")) setEditing(true);
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") setEditing(true);
+            }}
+          >
+            <Markdown text={body} />
+          </div>
+        )}
         <textarea
+          hidden={!editing}
           ref={ta}
           value={body}
           onChange={(e) => {
