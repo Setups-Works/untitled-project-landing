@@ -60,7 +60,7 @@ function Marked({ text, q }: { text: string; q: string }): ReactNode {
   return parts.map((p, i) => (p.toLowerCase() === t.toLowerCase() ? <mark key={i}>{p}</mark> : p));
 }
 
-export default function UniversalSearch({ admin }: { admin: boolean }) {
+export default function UniversalSearch({ admin, className = "" }: { admin: boolean; className?: string }) {
   const sb = useMemo(api, []);
   const router = useRouter();
   const [open, setOpen] = useState(false);
@@ -264,7 +264,7 @@ export default function UniversalSearch({ admin }: { admin: boolean }) {
   return (
     <>
       <button
-        className="us-btn"
+        className={`us-btn ${className}`}
         aria-label={`Search everything (${kbd})`}
         title={`Search everything (${kbd})`}
         onClick={() => {

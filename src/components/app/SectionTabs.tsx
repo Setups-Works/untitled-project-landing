@@ -103,7 +103,7 @@ export default function SectionTabs({ tabs, current, onGo }: { tabs: SectionTab[
     <nav
       ref={nav}
       aria-label="Workspace"
-      className="ap-tabs relative touch-none bg-white/60 backdrop-blur-xl backdrop-saturate-150 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.85),inset_0_1px_3px_rgba(27,28,20,0.06),0_10px_30px_-14px_rgba(27,28,20,0.3)]"
+      className="ap-tabs relative touch-none bg-white/60 backdrop-blur-xl backdrop-saturate-150 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.85),inset_0_1px_3px_rgba(27,28,20,0.06)]"
       onPointerDown={(e) => {
         if (e.button === 0) drag.current = { x: e.clientX, moved: false };
       }}
