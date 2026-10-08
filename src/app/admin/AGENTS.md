@@ -20,5 +20,6 @@ Add a section: create `app/admin/<section>/page.tsx` and one line in `components
 - Admin code uses owner-level database access (`adminDb()` from `src/server/session.ts`, runs as the database owner) — keep that usage inside this folder and `src/server`.
 - **Admins must not see user content** (notes, journal, chat text). Show counts and metadata only.
 - Every state-changing action writes to `admin_audit` via `audit()`.
+- Better Auth admin APIs use the `admin` role; custom admin actions must retain their server-side `assertAdmin()` checks, protected-account checks, and audit records.
 - Protect against self-harm: no demote/ban/delete of yourself or `ADMIN_EMAILS` accounts (see `guard()`).
 - Destructive buttons use `useConfirm()`; show friendly errors.

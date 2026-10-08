@@ -2,7 +2,8 @@ import "server-only";
 import { betterAuth } from "better-auth";
 import { nextCookies } from "better-auth/next-js";
 import { APIError } from "better-auth/api";
-import { oneTap } from "better-auth/plugins";
+import { admin, emailOTP, lastLoginMethod, oneTap, username } from "better-auth/plugins";
+import { passkey } from "@better-auth/passkey";
 import pg from "pg";
 import { serverEnv } from "../config/env";
 import { sendMail } from "./mail";
@@ -29,7 +30,13 @@ function create() {
 
     user: {
       modelName: "users",
-      fields: { emailVerified: "email_verified", createdAt: "created_at", updatedAt: "updated_at" },
+      fields: {
+        emailVerified: "email_verified",
+        createdAt: "created_at",
+        updatedAt: "updated_at",
+        username: "username",
+        displayUsername: "display_username",
+      },
       additionalFields: {
         role: { type: "string", required: false, input: false },
         banned: { type: "boolean", required: false, input: false, defaultValue: false },
@@ -95,6 +102,8 @@ function create() {
         });
       },
     },
+    // Username availability is not exposed publicly, to avoid making account discovery easier.
+    disabledPaths: ["/is-username-available"],
     emailVerification: {
       sendOnSignUp: true,
       sendOnSignIn: true,
@@ -125,15 +134,70 @@ function create() {
       session: {
         create: {
           before: async (session) => {
-            const { rows } = await authPool().query<{ banned: boolean }>("select banned from auth.users where id = $1", [session.userId]);
+            const { rows } = await authPool().query<{ banned: boolean; email: string; role: string | null }>(
+              "select banned, email, role from auth.users where id = $1",
+              [session.userId],
+            );
             if (rows[0]?.banned) throw new APIError("FORBIDDEN", { message: "This account has been suspended." });
+            if (rows[0] && env.adminEmails.includes(rows[0].email.toLowerCase()) && rows[0].role !== "admin") {
+              await authPool().query("update auth.users set role = 'admin', updated_at = now() where id = $1", [session.userId]);
+            }
             return { data: session };
           },
         },
       },
     },
     // One Tap uses the same Google credentials as the redirect sign-in; nextCookies() must stay last.
-    plugins: [oneTap(), nextCookies()],
+    plugins: [
+      // Verify One Tap ID tokens against the same public client ID used by the Google provider.
+      oneTap({ clientId: env.google.clientId }),
+      admin({
+        defaultRole: "user",
+        adminRoles: ["admin"],
+        schema: {
+          user: { fields: { banReason: "ban_reason", banExpires: "ban_expires" } },
+          session: { fields: { impersonatedBy: "impersonated_by" } },
+        },
+      }),
+      lastLoginMethod({
+        // The username endpoint and One Tap callback are custom paths; label them with their actual methods.
+        customResolveMethod: (ctx) => {
+          if (ctx.path === "/sign-in/username") return "username";
+          if (ctx.path === "/one-tap/callback") return "google";
+          return null;
+        },
+      }),
+      username(),
+      emailOTP({
+        otpLength: 6,
+        expiresIn: 5 * 60,
+        allowedAttempts: 3,
+        storeOTP: "hashed",
+        rateLimit: { window: 60, max: 3 },
+        sendVerificationOTP: async ({ email, otp }) => {
+          await sendMail(email, "Your password reset code", `Your password reset code is ${otp}. It expires in 5 minutes. If you didn’t request this, you can ignore this email.`);
+        },
+      }),
+      passkey({
+        rpID: new URL(env.authUrl).hostname,
+        rpName: "untitled project",
+        origin: env.authUrl,
+        schema: {
+          passkey: {
+            modelName: "passkeys",
+            fields: {
+              userId: "user_id",
+              publicKey: "public_key",
+              credentialID: "credential_id",
+              deviceType: "device_type",
+              backedUp: "backed_up",
+              createdAt: "created_at",
+            },
+          },
+        },
+      }),
+      nextCookies(),
+    ],
   });
 }
 

@@ -6057,6 +6057,10 @@
   .au-google:hover {
     box-shadow: inset 0 0 0 1px var(--fg);
   }
+  .au-passkey {
+    width: 100%;
+    justify-content: center;
+  }
   .au-or {
     display: flex;
     align-items: center;
@@ -6086,6 +6090,15 @@
   }
   .au-link:hover {
     color: var(--fg);
+  }
+  .au-last-used {
+    padding: 3px 8px;
+    border-radius: 99px;
+    background: var(--green-bg);
+    color: var(--green-fg);
+    font-size: 11px;
+    font-weight: 600;
+    line-height: 1.2;
   }
   .au-pw {
     position: relative;
@@ -11846,6 +11859,45 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
+  }
+  .st-passkey-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    min-width: 0;
+    padding: 12px 14px;
+    border-radius: var(--r2);
+    background: #ffffff80;
+    box-shadow: inset 0 0 0 1px var(--abl);
+  }
+  .st-passkey-info {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+  }
+  .st .st-passkey-name {
+    overflow: hidden;
+    color: var(--fg);
+    font-size: 14px;
+    line-height: 1.35;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .st-passkey-info small {
+    color: var(--fg-subtle);
+    font-size: 12.5px;
+    line-height: 1.35;
+  }
+  .st .st-passkey-remove {
+    flex: none;
+    width: auto;
+    height: 36px;
+    padding: 0 14px;
+    border-radius: 99px;
+    font-size: 13px;
   }
   .st-two {
     display: grid;

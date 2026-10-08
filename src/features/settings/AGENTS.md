@@ -1,6 +1,6 @@
 # features/settings
 
-**Does:** the Settings popup (opened from the avatar menu): Profile (name, email, picture), Preferences (time format, default note category, week start, To-do start page), Appearance (density, reduce motion), Security (password, sessions), Your data (JSON/CSV/Markdown export), Danger zone (reset workspace, delete account). **Track B. Built.**
+**Does:** the Settings popup (opened from the avatar menu): Profile (name, username, email, picture), Preferences (time format, default note category, week start, To-do start page), Appearance (density, reduce motion), Security (password, passkeys, sessions), Your data (JSON/CSV/Markdown export), Danger zone (reset workspace, delete account). **Track B. Built.**
 
 **Today (legacy):** `components/app/{SettingsView,SettingsModal,PrefsSync}.tsx`, `lib/prefs.ts`, `app/dashboard/settings/actions.ts`.
 

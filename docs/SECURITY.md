@@ -26,6 +26,12 @@ Rotation: change the value in `.env.selfhost` / your secret manager and recreate
 ## Auth and sessions
 
 - Better Auth with email+password and Google; sessions stored in PostgreSQL (cookie `better-auth.session_token`); `src/proxy.ts` only redirects, every page re-verifies the session.
+- Google One Tap runs on the login and signup pages through Better Auth. The public client ID is returned by `/api/v1/auth-config`; the secret stays server-side. Add each deployed site origin (including `http://localhost:3000` for local development) to the Google OAuth client's Authorized JavaScript origins. The standard Google button remains available if the prompt is unavailable or dismissed.
+- Better Auth's last-login-method plugin keeps only the most recently used method name in a readable, first-party cookie for 30 days, so the login form can show a “Last used” hint. It does not store this preference in the database.
+- Better Auth's admin plugin endpoints require the `admin` role. The app's `/admin` pages and server actions continue to enforce `requireAdmin`/`assertAdmin`, protect the acting admin and `ADMIN_EMAILS` accounts, and record admin-panel mutations in `admin_audit`.
+- Usernames are optional for existing accounts, required for new email/password signups, normalized to lowercase, and unique. Users can set or change them in Profile settings; the public availability endpoint is disabled to reduce username enumeration.
+- Passkeys use Better Auth WebAuthn and are stored in `auth.passkeys`, an RLS-enabled server-only table with no client policies. `BETTER_AUTH_URL` must match the public auth origin; production passkeys require HTTPS.
+- Forgot-password uses Better Auth email OTPs: six digits, five-minute expiry, three attempts, hashed at rest, and limited to three requests per minute. The UI uses a generic response so it does not reveal whether an email has an account. OTPs are sent through the configured SMTP transport and must never be logged.
 - Redirect targets (`?next=`) are validated by `safeNext` (same-site relative paths only).
 - Admin = `app_metadata.role = 'admin'` or an email in `ADMIN_EMAILS`. Every `/admin/*` page and server action re-checks on the server (`requireAdmin` / `assertAdmin`). Admins can't demote/ban/delete themselves or `ADMIN_EMAILS` accounts.
 - Account deletion and "reset workspace" remove rows **and** storage files.

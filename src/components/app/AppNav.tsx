@@ -34,6 +34,8 @@ const TABS = [
 type Account = {
   name: string;
   email: string;
+  username: string | null;
+  displayUsername: string | null;
   hasPassword: boolean;
   providers: string[];
   createdAt: string;

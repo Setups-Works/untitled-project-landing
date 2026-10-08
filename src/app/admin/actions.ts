@@ -51,15 +51,14 @@ async function run(
 
 export async function setAdminRole(id: string, makeAdmin: boolean) {
   return run(id, makeAdmin ? "user.make_admin" : "user.remove_admin", async (i) => {
-    await pool().query("update auth.users set role = $2, updated_at = now() where id = $1", [i, makeAdmin ? "admin" : null]);
+    await auth.api.setRole({ body: { userId: i, role: makeAdmin ? "admin" : "user" }, headers: await headers() });
   });
 }
 
 export async function setBanned(id: string, banned: boolean) {
   return run(id, banned ? "user.ban" : "user.unban", async (i) => {
-    await pool().query("update auth.users set banned = $2, updated_at = now() where id = $1", [i, banned]);
-    // Suspending also signs them out everywhere.
-    if (banned) await pool().query("delete from auth.sessions where user_id = $1", [i]);
+    if (banned) await auth.api.banUser({ body: { userId: i }, headers: await headers() });
+    else await auth.api.unbanUser({ body: { userId: i }, headers: await headers() });
   });
 }
 

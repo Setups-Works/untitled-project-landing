@@ -17,6 +17,9 @@ PostgreSQL 16 (Docker). **All tables have Row-Level Security enabled.** Migratio
 | `chat_messages`   | Messages                         | `chat_id`→`chats` cascade, `user_id`, `role` (user/assistant), `body`, `attachments` jsonb                                                                                                   | Owner only; chat must be the user's                                                                                                                    |
 | `admin_audit`     | Admin action log                 | `admin_id`, `admin_email`, `action`, `target`, `meta` jsonb                                                                                                                                  | RLS on with **no policies** → service role only                                                                                                        |
 | `announcements`   | Banners from admins              | `message`, `tone`, `active`                                                                                                                                                                  | Authenticated can **select where active**; writes service-role only                                                                                    |
+| `auth.users`      | Better Auth accounts             | `email`, nullable unique `username`, nullable `"displayUsername"` (username plugin display value; backfilled from `display_username`), role, ban state/reason/expiry                   | Auth schema, server only; username availability endpoint disabled                                                                                      |
+| `auth.sessions`   | Better Auth sessions             | `user_id`, token, expiry, optional `impersonated_by`                                                                                                                                        | Auth schema, server only                                                                                                                               |
+| `auth.passkeys`   | Better Auth WebAuthn credentials | `user_id`, `credential_id`, `public_key`, counter and authenticator metadata                                                                                                                 | Auth schema, RLS enabled with no client policies; Better Auth server only                                                                              |
 
 `attachments` is `[{ path, name, type, size }]` where `path` is a key in a Storage bucket.
 
@@ -42,6 +45,10 @@ PostgreSQL 16 (Docker). **All tables have Row-Level Security enabled.** Migratio
 6. `…050000_admin_and_avatars.sql` — `admin_audit`, `announcements`, `avatars` bucket
 7. `…060000_chat_v2.sql` — folders, pin, unread, message attachments
 8. `…070000_chat_share.sql` — `share_token`, `shared_at`
+9. `…08100000_auth_passkeys.sql` — private Better Auth WebAuthn credentials in `auth.passkeys`
+10. `…08110000_auth_username.sql` — username fields and normalized uniqueness for Better Auth users
+11. `…08120000_auth_username_plugin_column.sql` — add Better Auth username plugin's `"displayUsername"` column and backfill existing display values
+12. `…08130000_auth_admin_plugin.sql` — add Better Auth admin ban metadata and impersonation session field
 
 ## Planned (by phase)
 

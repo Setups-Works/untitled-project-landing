@@ -46,6 +46,8 @@ const NAV: { k: Tab; label: string; icon: IconDefinition }[] = [
 type Account = {
   name: string;
   email: string;
+  username: string | null;
+  displayUsername: string | null;
   hasPassword: boolean;
   providers: string[];
   createdAt: string;
@@ -94,6 +96,8 @@ export default function SettingsView({ account, prefs: initial }: { account: Acc
   const [nameMsg, setNameMsg] = useState<Msg>(null);
   const [email, setEmail] = useState(account.email);
   const [emailMsg, setEmailMsg] = useState<Msg>(null);
+  const [username, setUsername] = useState(account.displayUsername || account.username || "");
+  const [usernameMsg, setUsernameMsg] = useState<Msg>(null);
   const [prefs, setPrefs] = useState(initial);
   const [prefMsg, setPrefMsg] = useState<Msg>(null);
   const [oldPw, setOldPw] = useState("");
@@ -101,6 +105,9 @@ export default function SettingsView({ account, prefs: initial }: { account: Acc
   const [pw2, setPw2] = useState("");
   const [show, setShow] = useState(false);
   const [pwMsg, setPwMsg] = useState<Msg>(null);
+  const [passkeyName, setPasskeyName] = useState("");
+  const [passkeyMsg, setPasskeyMsg] = useState<Msg>(null);
+  const [passkeys, setPasskeys] = useState<{ id: string; name?: string; createdAt: Date | string }[]>([]);
   const [sessMsg, setSessMsg] = useState<Msg>(null);
   const [dataMsg, setDataMsg] = useState<Msg>(null);
   const [typed, setTyped] = useState("");
@@ -116,6 +123,19 @@ export default function SettingsView({ account, prefs: initial }: { account: Acc
   // Each section starts at the top, not wherever the previous one was scrolled to.
   useEffect(() => {
     main.current?.scrollTo({ top: 0 });
+  }, [tab]);
+
+  useEffect(() => {
+    if (tab !== "security") return;
+    let live = true;
+    void authClient.$fetch("/passkey/list-user-passkeys", { method: "GET" })
+      .then(({ data, error }) => {
+        if (live && !error && Array.isArray(data)) setPasskeys(data as typeof passkeys);
+      })
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
   }, [tab]);
 
   const avatarPath = (url: string | null) => (url ? (url.split("/avatars/")[1]?.split("?")[0] ?? null) : null);
@@ -248,6 +268,24 @@ export default function SettingsView({ account, prefs: initial }: { account: Acc
     });
   };
 
+  const saveUsername = (e: React.FormEvent) => {
+    e.preventDefault();
+    const v = username.trim();
+    if (!/^[A-Za-z0-9_.]{3,30}$/.test(v)) {
+      setUsernameMsg({ ok: false, text: "Use 3–30 letters, numbers, dots or underscores." });
+      return;
+    }
+    if (v.toLowerCase() === (account.username || "").toLowerCase() && v === (account.displayUsername || account.username)) {
+      setUsernameMsg({ ok: false, text: "That’s already your username." });
+      return;
+    }
+    run("username", async () => {
+      const { error } = await authClient.updateUser({ username: v, displayUsername: v });
+      setUsernameMsg(error ? { ok: false, text: friendly(error.message ?? "Couldn’t update your username.") } : { ok: true, text: "Username updated." });
+      if (!error) router.refresh();
+    });
+  };
+
   const changePref = async (patch: Partial<Prefs>) => {
     const next = { ...prefs, ...patch };
     setPrefs(next);
@@ -275,6 +313,26 @@ export default function SettingsView({ account, prefs: initial }: { account: Acc
       setPwMsg({ ok: true, text: "Password updated." });
     });
   };
+
+  const addPasskey = () =>
+    run("passkey", async () => {
+      setPasskeyMsg(null);
+      const { error } = await authClient.passkey.addPasskey({ name: passkeyName.trim() || undefined });
+      if (error) return setPasskeyMsg({ ok: false, text: friendly(error.message ?? "Couldn’t add a passkey.") });
+      setPasskeyName("");
+      setPasskeyMsg({ ok: true, text: "Passkey added to your account." });
+      const result = await authClient.$fetch("/passkey/list-user-passkeys", { method: "GET" });
+      if (!result.error && Array.isArray(result.data)) setPasskeys(result.data as typeof passkeys);
+    });
+
+  const removePasskey = (id: string) =>
+    run(`passkey-${id}`, async () => {
+      setPasskeyMsg(null);
+      const { error } = await authClient.$fetch("/passkey/delete-passkey", { method: "POST", body: { id } });
+      if (error) return setPasskeyMsg({ ok: false, text: friendly(error.message ?? "Couldn’t remove that passkey.") });
+      setPasskeys((current) => current.filter((passkey) => passkey.id !== id));
+      setPasskeyMsg({ ok: true, text: "Passkey removed." });
+    });
 
   const signOutOthers = () =>
     run("others", async () => {
@@ -436,6 +494,28 @@ export default function SettingsView({ account, prefs: initial }: { account: Acc
                 </button>
               </form>
               <Status m={nameMsg} />
+              <form className="st-row" onSubmit={saveUsername}>
+                <label>
+                  <span>Username</span>
+                  <input
+                    value={username}
+                    onChange={(event) => setUsername(event.target.value)}
+                    minLength={3}
+                    maxLength={30}
+                    pattern="[A-Za-z0-9_.]{3,30}"
+                    autoComplete="username"
+                    placeholder="ada.lovelace"
+                  />
+                  <small className="meta">Use 3–30 letters, numbers, dots or underscores. You can log in with this or your email.</small>
+                </label>
+                <button
+                  className="btn btn-primary btn-sm"
+                  disabled={busy === "username" || (username === (account.displayUsername || account.username || "") && !!account.username)}
+                >
+                  {spin("username", "Save username")}
+                </button>
+              </form>
+              <Status m={usernameMsg} />
               <form className="st-row" onSubmit={saveEmail}>
                 <label>
                   <span>Email</span>
@@ -600,6 +680,37 @@ export default function SettingsView({ account, prefs: initial }: { account: Acc
               ) : (
                 <p className="body">You sign in with {account.providers.join(", ")}, so there’s no password to manage here.</p>
               )}
+              <hr className="st-hr" />
+              <div className="st-stack">
+                <div>
+                  <b>Passkeys</b>
+                  <p className="meta">Use Face ID, Touch ID, Windows Hello or a security key to sign in.</p>
+                </div>
+                {passkeys.map((passkey) => (
+                  <div className="st-passkey-row" key={passkey.id}>
+                    <div className="st-passkey-info">
+                      <b className="st-passkey-name">{passkey.name || "Passkey"}</b>
+                      <small>Added {new Date(passkey.createdAt).toLocaleDateString()}</small>
+                    </div>
+                    <button
+                      className="btn btn-secondary st-passkey-remove"
+                      type="button"
+                      disabled={busy === `passkey-${passkey.id}`}
+                      onClick={() => removePasskey(passkey.id)}
+                    >
+                      {spin(`passkey-${passkey.id}`, "Remove")}
+                    </button>
+                  </div>
+                ))}
+                <label>
+                  <span>Passkey name (optional)</span>
+                  <input value={passkeyName} onChange={(event) => setPasskeyName(event.target.value)} maxLength={100} placeholder="e.g. My laptop" />
+                </label>
+                <button className="btn btn-primary btn-sm st-fit" type="button" disabled={busy === "passkey"} onClick={addPasskey}>
+                  {spin("passkey", "Add a passkey")}
+                </button>
+                <Status m={passkeyMsg} />
+              </div>
               <hr className="st-hr" />
               <dl className="st-facts">
                 <div>

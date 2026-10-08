@@ -16,6 +16,8 @@ export type AppUser = {
   role: "admin" | null;
   banned: boolean;
   createdAt: string;
+  username?: string | null;
+  displayUsername?: string | null;
 };
 
 /** A user row for the admin panel: AppUser plus activity and how they sign in. */
@@ -33,8 +35,16 @@ export const serverConfigured = () => {
 export async function currentUser(): Promise<AppUser | null> {
   const s = await auth.api.getSession({ headers: await headers() }).catch(() => null);
   if (!s?.user) return null;
-  const u = s.user as typeof s.user & { role?: string | null; banned?: boolean | null };
+  const u = s.user as typeof s.user & {
+    role?: string | null;
+    banned?: boolean | null;
+    username?: string | null;
+    displayUsername?: string | null;
+  };
   if (u.banned) return null;
+  if (adminEmails().includes(u.email.toLowerCase()) && u.role !== "admin") {
+    await pool().query("update auth.users set role = 'admin', updated_at = now() where id = $1", [u.id]);
+  }
   return {
     id: u.id,
     email: u.email,
@@ -44,6 +54,8 @@ export async function currentUser(): Promise<AppUser | null> {
     role: u.role === "admin" ? "admin" : null,
     banned: false,
     createdAt: new Date(u.createdAt).toISOString(),
+    username: u.username ?? null,
+    displayUsername: u.displayUsername ?? null,
   };
 }
 

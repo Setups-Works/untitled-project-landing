@@ -56,6 +56,8 @@ export default async function Layout({ children }: { children: ReactNode }) {
           account={{
             name: user.name,
             email: user.email,
+            username: user.username ?? null,
+            displayUsername: user.displayUsername ?? null,
             hasPassword: info.providers.includes("email"),
             providers: info.providers,
             createdAt: user.createdAt,

@@ -8,6 +8,8 @@ import SettingsView from "./SettingsView";
 type Account = {
   name: string;
   email: string;
+  username: string | null;
+  displayUsername: string | null;
   hasPassword: boolean;
   providers: string[];
   createdAt: string;
