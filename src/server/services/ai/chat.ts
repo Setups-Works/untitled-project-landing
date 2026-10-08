@@ -42,7 +42,9 @@ function handledAfter(rows: { role: "user" | "assistant"; body: string }[], from
 }
 
 function draftTitle(text: string, kind: CreateKind, request: string) {
+  // Headings inside code blocks (comments, markup) are part of the code, not a title for the whole answer.
   const headings = text
+    .replace(/```[\s\S]*?(?:```|$)/g, "")
     .split("\n")
     .map((line) => line.match(/^\s{0,3}#{1,3}\s+(.+?)\s*#*\s*$/)?.[1] ?? line.match(/^\s*\*\*(.+?)\*\*\s*$/)?.[1])
     .filter((line): line is string => Boolean(line));

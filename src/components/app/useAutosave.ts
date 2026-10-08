@@ -19,15 +19,25 @@ export function useAutosave<T>(value: T, save: (v: T) => Promise<unknown>, delay
       return;
     }
     setStatus("saving");
-    const t = setTimeout(async () => {
+    let live = true;
+    let retry: ReturnType<typeof setTimeout> | undefined;
+    // A failed save (a dropped connection, the server restarting) is retried a few times before the person is told.
+    const attempt = async (left: number) => {
       try {
         await saveRef.current(value);
-        setStatus("saved");
+        if (live) setStatus("saved");
       } catch {
-        setStatus("error");
+        if (!live) return;
+        if (left > 0) retry = setTimeout(() => void attempt(left - 1), 2000);
+        else setStatus("error");
       }
-    }, delay);
-    return () => clearTimeout(t);
+    };
+    const t = setTimeout(() => void attempt(3), delay);
+    return () => {
+      live = false;
+      clearTimeout(t);
+      clearTimeout(retry);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value, delay]);
 
