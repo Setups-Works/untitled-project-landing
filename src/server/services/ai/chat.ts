@@ -2,152 +2,68 @@ import "server-only";
 import { AiProviderError, getProvider, type AiChunk, type AiMessage } from "../../providers/ai";
 import { redis } from "../../redis";
 import { userDb } from "../../db/builders";
-import { parseChatAction, parseChatActions, type ChatAction } from "../../../lib/chat-actions";
+import { calendarFor } from "../../../lib/dates";
 import { CHAT_PROMPT } from "./prompts/chat";
 
 /** Limits live here (not in routes) so every caller gets the same behaviour. */
 const LIMITS = { historyMessages: 20, charsPerMessage: 6000, repliesPerMinute: 20, savedChars: 19000 } as const;
 
-type CreateKind = ChatAction["kind"];
-type CreateIntent = { kind: CreateKind; requestIndex: number };
-
-function requestedKind(text: string): CreateKind | null {
-  if (!/\b(create|make|save|add|write|draft|put)\b/i.test(text)) return null;
-  if (/\b(notes?|notebook)\b/i.test(text)) return "note";
-  if (/\b(journal|diary|journal entry)\b/i.test(text)) return "journal";
-  if (/\b(tasks?|to[ -]?dos?)\b/i.test(text)) return "task";
-  return null;
-}
-
-/** A short request that points back at earlier content ("add this in note", "save that as a to-do"). */
-function referencesEarlier(text: string) {
-  return text.trim().length <= 80 && /\b(this|that|it|above|these|those)\b/i.test(text);
-}
-
-function hasCreateOffer(text: string) {
-  return /\b(if you(?:'d| would) like|would you like|want me to|shall i|i can)\b[\s\S]{0,180}\b(create|make|save|add|write|note|journal|task|to[ -]?do)\b/i.test(
-    text,
-  );
-}
-
-function affirming(text: string) {
-  return /^\s*(yes|yeah|yep|sure|please|do that|go ahead|sounds good|okay|ok)[!.\s]*$/i.test(text);
-}
-
-function handledAfter(rows: { role: "user" | "assistant"; body: string }[], from: number) {
-  return rows.slice(from + 1).some((row) => {
-    if (row.role !== "assistant") return false;
-    return parseChatActions(row.body).proposals.length > 0 || /\[Open your (?:note|journal entry|to-do)\]\(https?:\/\//i.test(row.body);
-  });
-}
-
-function draftTitle(text: string, kind: CreateKind, request: string) {
-  // Headings inside code blocks (comments, markup) are part of the code, not a title for the whole answer.
-  const headings = text
-    .replace(/```[\s\S]*?(?:```|$)/g, "")
-    .split("\n")
-    .map((line) => line.match(/^\s{0,3}#{1,3}\s+(.+?)\s*#*\s*$/)?.[1] ?? line.match(/^\s*\*\*(.+?)\*\*\s*$/)?.[1])
-    .filter((line): line is string => Boolean(line));
-  const heading = headings.find((line) => /\b(note|journal|task|to-do|features|summary|plan)\b/i.test(line)) ?? headings[0];
-  const raw = (heading ?? request)
-    .replace(/^\s*(?:note|journal entry|journal|task|to-do)\s*[:–—-]\s*/i, "")
-    .replace(/\s+/g, " ")
-    .trim();
-  if (raw) return raw.slice(0, kind === "task" ? 300 : 200);
-  return kind === "note" ? "Chat note" : kind === "journal" ? "Journal entry" : "To-do";
-}
-
-function falseSavedClaims(text: string) {
-  return text
-    .replace(
-      /\b(?:the (?:note|journal entry|task|to-do) has been|i(?:'ve| have))\s+(?:created|saved|added)\b[^.!?]*(?:[.!?]|$)/gi,
-      "Here’s a draft for you to review.",
-    )
-    .replace(/\b(?:i created|i saved|i added)\b[^.!?]*(?:[.!?]|$)/gi, "Here’s a draft for you to review.");
-}
-
-function hasSavedClaim(text: string) {
-  return /\b(?:the (?:note|journal entry|task|to-do) has been|i(?:'ve| have)\s+(?:created|saved|added)|i (?:created|saved|added))\b/i.test(
-    text,
-  );
-}
-
 const DRAFT_BLOCK = /<create-item>([\s\S]*?)<\/create-item>/g;
 
 /**
- * Repairs the draft blocks of a finished reply. A block whose JSON is broken (code pasted into a JSON string almost always breaks it)
- * is dropped, so it can't show up as a second, empty draft. A note whose body is the placeholder `{{reply}}` gets the reply text itself,
- * so whatever the assistant wrote (code, a plan, a recipe) is saved exactly as shown, without being squeezed through JSON.
+ * Tidies the draft blocks of a finished reply, in a way that doesn't depend on the language or topic of the conversation:
+ * - a block whose JSON is broken (code pasted into a JSON string almost always breaks it) is dropped, so it can't surface as an empty draft;
+ * - a note whose body is the placeholder `{{reply}}` gets the reply text itself, so whatever the assistant wrote (code, a plan,
+ *   a recipe) is saved exactly as shown, without being squeezed through JSON.
  */
-function settleBlocks(full: string): string {
-  const prose = full
-    .replace(DRAFT_BLOCK, "")
-    .replace(/\n{3,}/g, "\n\n")
-    .trim()
-    .slice(0, 9_000);
-  return full.replace(DRAFT_BLOCK, (all, json: string) => {
+export function settleBlocks(full: string, previous: string): string {
+  const plain = (s: string) =>
+    s
+      .replace(DRAFT_BLOCK, "")
+      .replace(/<create-item>[\s\S]*$/, "") // a block that was never closed (the answer ran out of room)
+      .replace(/<created-item>[\s\S]*?<\/created-item>/g, "")
+      .replace(/\n{3,}/g, "\n\n")
+      .trim()
+      .slice(0, 9_000);
+  const now = plain(full);
+  const before = plain(previous);
+  // A one-line confirmation ("I've prepared a note for you") is not content. When that is all this reply says and the answer
+  // before it was much longer, the earlier answer is what the note should hold, whichever placeholder the model picked.
+  const confirmationOnly = now.length <= 240 && now.split("\n").filter(Boolean).length <= 2 && before.length > now.length * 2;
+  const body: Record<string, string> = {
+    "{{reply}}": confirmationOnly ? before : now,
+    "{{previous}}": before || now,
+  };
+  // A note block with broken JSON (typically the model copied code into the body) still tells us what it wanted: a note with this
+  // title. Its content is the reply or the earlier answer, exactly as for the placeholders, so the draft isn't lost.
+  const rescue = (raw: string) => {
+    if (!/"kind"\s*:\s*"note"/.test(raw)) return "";
+    let title = "Note";
+    const t = /"title"\s*:\s*"((?:[^"\\]|\\.){1,200})"/.exec(raw);
+    if (t) {
+      try {
+        title = JSON.parse(`"${t[1]}"`) as string;
+      } catch {
+        /* keep the default title */
+      }
+    }
+    const text = confirmationOnly || !now ? before : now;
+    return text ? `<create-item>${JSON.stringify({ kind: "note", title, body: text })}</create-item>` : "";
+  };
+  const tidy = full.replace(DRAFT_BLOCK, (all, json: string) => {
     let a: { kind?: string; body?: unknown };
     try {
       a = JSON.parse(json) as typeof a;
     } catch {
-      return "";
+      return rescue(json);
     }
-    if (a.kind === "note" && typeof a.body === "string" && a.body.trim() === "{{reply}}") {
-      return `<create-item>${JSON.stringify({ ...a, body: prose })}</create-item>`;
-    }
-    return all;
+    const text = a.kind === "note" && typeof a.body === "string" ? body[a.body.trim()] : undefined;
+    return text ? `<create-item>${JSON.stringify({ ...a, body: text })}</create-item>` : all;
   });
-}
-
-function prepareCreateProposal(
-  rows: { role: "user" | "assistant"; body: string }[],
-  assistantText: string,
-  localDate: string,
-): { text: string; appended: string } | null {
-  const requestIndex = rows.reduce((last, row, index) => (row.role === "user" && requestedKind(row.body) ? index : last), -1);
-  if (requestIndex < 0 || handledAfter(rows, requestIndex)) return null;
-  const request = rows[requestIndex].body;
-  const kind = requestedKind(request)!;
-  const latestUser = rows.at(-1);
-  const directRequest = latestUser?.role === "user" && requestedKind(latestUser.body) !== null;
-  // "add this in note" points at the answer just above, not at the model's reply to this very message.
-  const previousIndex = rows.length - 2;
-  const previous = rows[previousIndex];
-  const refersBack = directRequest && referencesEarlier(request) && previous?.role === "assistant" && !hasSavedClaim(previous.body);
-  // When the person points back at earlier content the draft is built from it, even if the model guessed a different draft.
-  if (!refersBack && parseChatAction(assistantText).action) return null;
-  if (!directRequest && (!latestUser || latestUser.role !== "user" || !affirming(latestUser.body))) return null;
-  if (!directRequest && !rows.slice(requestIndex + 1, -1).some((row) => row.role === "assistant" && hasCreateOffer(row.body))) return null;
-
-  const source = refersBack
-    ? previous.body
-    : directRequest
-      ? assistantText
-      : ([...rows.slice(requestIndex + 1, -1)]
-          .reverse()
-          .find((row) => row.role === "assistant" && !hasCreateOffer(row.body) && !hasSavedClaim(row.body))?.body ?? assistantText);
-  const cleanSource = falseSavedClaims(parseChatAction(source).body).trim().slice(0, 9_000);
-  // The title of a saved answer comes from what was asked for, e.g. "write login page html code", not from "add this in note".
-  const asked = refersBack
-    ? rows
-        .slice(0, previousIndex)
-        .reverse()
-        .find((r) => r.role === "user")?.body
-    : undefined;
-  const title = draftTitle(cleanSource, kind, asked ?? request);
-  let action: ChatAction;
-  if (kind === "note") action = { kind, title, body: cleanSource || request.slice(0, 9_000) };
-  else if (kind === "journal") action = { kind, body: cleanSource || request.slice(0, 9_000), entry_date: localDate };
-  else action = { kind, title: title.slice(0, 300), description: cleanSource || request.slice(0, 5_000), due_date: null };
-
-  // The model's own text may describe a different draft than the one built here, so it is replaced.
-  const safeReply = refersBack
-    ? `I’ve prepared a ${kind === "task" ? "to-do" : kind === "journal" ? "journal entry" : "note"} draft from my last answer.`
-    : falseSavedClaims(parseChatAction(assistantText).body).trim().slice(0, 4_000);
-  const intro = safeReply ? `${safeReply}\n\n` : "";
-  const note = "Review this draft below. It will only be saved when you choose Create.";
-  const block = `<create-item>${JSON.stringify(action)}</create-item>`;
-  return { text: `${intro}${note}\n\n${block}`, appended: `\n\n${note}\n\n${block}` };
+  const open = tidy.lastIndexOf("<create-item>");
+  return open < 0 || tidy.includes("</create-item>", open)
+    ? tidy
+    : `${tidy.slice(0, open).trimEnd()}\n${rescue(tidy.slice(open))}`.trimEnd();
 }
 
 export type ChatReply = { ok: true; stream: ReadableStream<Uint8Array> } | { ok: false; status: number; error: string };
@@ -195,8 +111,9 @@ export async function startChatReply(opts: {
   if (!rows.length) return { ok: false, status: 404, error: "Chat not found." };
   if (rows[rows.length - 1].role !== "user") return { ok: false, status: 400, error: "Nothing to reply to." };
 
+  // The model is bad at calendar arithmetic ("next Tuesday", "the 20th"), so it gets a ready list of the coming dates instead.
   const messages: AiMessage[] = [
-    { role: "system", content: `${CHAT_PROMPT.system} The user's local calendar date is ${opts.localDate}.` },
+    { role: "system", content: `${CHAT_PROMPT.system} ${calendarFor(opts.localDate)}` },
     ...rows.map((m) => ({ role: m.role, content: m.body.slice(0, LIMITS.charsPerMessage) })),
   ];
   const it = provider.stream({ messages, signal: opts.signal })[Symbol.asyncIterator]();
@@ -235,17 +152,11 @@ export async function startChatReply(opts: {
       } catch {
         // A broken stream still keeps whatever was already written.
       } finally {
+        // Never tidy an interrupted generation: an incomplete answer must not turn into a draft.
         if (completed && !cancelled) {
-          full = settleBlocks(full);
-          const prepared = prepareCreateProposal(rows, full, opts.localDate);
-          if (prepared) {
-            full = prepared.text;
-            try {
-              controller.enqueue(enc.encode(prepared.appended));
-            } catch {
-              /* the browser may have navigated away after generation finished */
-            }
-          }
+          // The assistant message just before the user's latest one, for "save that" follow-ups.
+          const before = rows.length >= 2 && rows[rows.length - 2].role === "assistant" ? rows[rows.length - 2].body : "";
+          full = settleBlocks(full, before);
         }
         await save().catch(() => undefined);
         try {
@@ -256,7 +167,6 @@ export async function startChatReply(opts: {
       }
     },
     cancel() {
-      // Keep an interrupted answer, but never turn an incomplete generation into a create proposal.
       cancelled = true;
       void it.return?.();
     },

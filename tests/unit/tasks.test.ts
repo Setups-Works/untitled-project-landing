@@ -51,6 +51,14 @@ describe("every n-th weekday of the month", () => {
     expect(draftDue("2026-11-11", "nth:2:wed", "2026-10-08")).toBe("2026-11-11"); // a later matching date is kept
     expect(draftDue("2026-10-12", "weekly", "2026-10-08")).toBe("2026-10-12");
   });
+  it("handles the last weekday of a month and every 2 weeks", () => {
+    expect(firstDue(null, "nth:last:fri", "2026-10-08")).toBe("2026-10-30");
+    expect(nextDue("2026-10-30", "nth:last:fri", "2026-10-30")).toBe("2026-11-27");
+    expect(nextDue("2027-01-29", "nth:last:fri", "2027-01-29")).toBe("2027-02-26"); // February is shorter
+    expect(nextDue("2026-10-13", "biweekly", "2026-10-13")).toBe("2026-10-27");
+    expect(upcomingDates("2026-10-13", "biweekly", "2026-11-30")).toEqual(["2026-10-27", "2026-11-10", "2026-11-24"]);
+    expect(recurrenceLabel("biweekly")).toBe("Every 2 weeks");
+  });
   it("repeats on the n-th weekday of each following month", () => {
     expect(nextDue("2026-10-14", "nth:2:wed", "2026-10-14")).toBe("2026-11-11");
     expect(nextDue("2026-11-11", "nth:2:wed", "2026-11-11")).toBe("2026-12-09");
@@ -64,7 +72,8 @@ describe("every n-th weekday of the month", () => {
   });
   it("derives the rule from a date and labels it", () => {
     expect(nthRuleFor("2026-10-14")).toBe("nth:2:wed");
-    expect(nthRuleFor("2026-10-29")).toBeNull(); // a 5th Thursday does not exist every month
+    expect(nthRuleFor("2026-10-29")).toBe("nth:last:thu"); // a 5th weekday means "the last one"
+    expect(recurrenceLabel("nth:last:fri")).toBe("Every month on the last Friday");
     expect(recurrenceLabel("nth:2:wed")).toBe("Every month on the 2nd Wednesday");
     expect(recurrenceLabel("weekly")).toBe("Every week");
     expect(recurrenceLabel(null)).toBe("Doesn’t repeat");

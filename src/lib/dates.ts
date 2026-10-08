@@ -7,6 +7,19 @@ export const addDays = (iso: string, n: number) => {
   return isoDate(new Date(y, m - 1, d + n));
 };
 
+/**
+ * A sentence for the assistant's prompt that says what today is and lists the next three weeks with their weekday names, so it
+ * can resolve "next Tuesday", "this Friday" or "in two weeks" by lookup instead of arithmetic (which language models get wrong).
+ */
+export function calendarFor(today: string) {
+  const name = (iso: string) => {
+    const [y, m, d] = iso.split("-").map(Number);
+    return new Date(y, m - 1, d).toLocaleDateString("en-US", { weekday: "long" });
+  };
+  const next = Array.from({ length: 21 }, (_, i) => addDays(today, i + 1)).map((iso) => `${name(iso)} ${iso}`);
+  return `Today is ${name(today)} ${today} (the user's local date). The coming days: ${next.join(", ")}. Always take dates from this list when the user names a weekday or a relative day.`;
+}
+
 export const greeting = (d = new Date()) => {
   const h = d.getHours();
   return h < 5 ? "Good night" : h < 12 ? "Good morning" : h < 18 ? "Good afternoon" : "Good evening";

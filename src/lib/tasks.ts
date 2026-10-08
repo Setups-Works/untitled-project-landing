@@ -13,6 +13,7 @@ export const RECURRENCES: [string, string][] = [
   ["daily", "Every day"],
   ["weekdays", "Every weekday"],
   ["weekly", "Every week"],
+  ["biweekly", "Every 2 weeks"],
   ["monthly", "Every month"],
   ["yearly", "Every year"],
 ];
@@ -144,20 +145,26 @@ function daysIn(y: number, m: number) {
 /* ---- "Every month on the 2nd Wednesday": rule `nth:<1-4>:<weekday>` ---- */
 const DOW = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
 const DOW_NAME = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
-const ORDINAL = ["", "1st", "2nd", "3rd", "4th"];
-export const NTH_RULE = /^nth:([1-4]):(sun|mon|tue|wed|thu|fri|sat)$/;
+const ORDINAL: Record<string, string> = { "1": "1st", "2": "2nd", "3": "3rd", "4": "4th", last: "last" };
+/** `nth:2:wed` = the 2nd Wednesday of every month; `nth:last:fri` = the last Friday. */
+export const NTH_RULE = /^nth:([1-4]|last):(sun|mon|tue|wed|thu|fri|sat)$/;
 
 const parts = (iso: string) => iso.split("-").map(Number) as [number, number, number];
+const nOf = (token: string): number | "last" => (token === "last" ? "last" : Number(token));
 
-/** The rule for "the same weekday of the month as this date" (the 2nd Wednesday, say); null for a 5th weekday, which not every month has. */
+/** The rule for "the same weekday of the month as this date" (the 2nd Wednesday, say); a 5th weekday means "the last one". */
 export function nthRuleFor(iso: string): string | null {
   const [y, m, d] = parts(iso);
   const n = Math.ceil(d / 7);
-  return n > 4 ? null : `nth:${n}:${DOW[new Date(y, m - 1, d).getDay()]}`;
+  return `nth:${n > 4 ? "last" : n}:${DOW[new Date(y, m - 1, d).getDay()]}`;
 }
 
-/** The date of the n-th weekday in a month (`month` is 0-based). */
-function nthWeekday(year: number, month: number, n: number, dow: number): string {
+/** The date of the n-th (or last) weekday in a month (`month` is 0-based). */
+function nthWeekday(year: number, month: number, n: number | "last", dow: number): string {
+  if (n === "last") {
+    const end = new Date(year, month + 1, 0);
+    return isoDate(new Date(year, month, end.getDate() - ((end.getDay() - dow + 7) % 7)));
+  }
   const first = new Date(year, month, 1).getDay();
   return isoDate(new Date(year, month, 1 + ((dow - first + 7) % 7) + (n - 1) * 7));
 }
@@ -166,7 +173,7 @@ function nthWeekday(year: number, month: number, n: number, dow: number): string
 function nextNth(iso: string, rule: string): string {
   const m = NTH_RULE.exec(rule);
   if (!m) return iso;
-  const [n, dow] = [Number(m[1]), DOW.indexOf(m[2] as (typeof DOW)[number])];
+  const [n, dow] = [nOf(m[1]), DOW.indexOf(m[2] as (typeof DOW)[number])];
   const [y, mo] = parts(iso);
   for (let i = 0; i < 3; i++) {
     const c = nthWeekday(y, mo - 1 + i, n, dow);
@@ -179,7 +186,7 @@ function nextNth(iso: string, rule: string): string {
 export function recurrenceLabel(rule: string | null): string {
   if (!rule) return "Doesn’t repeat";
   const m = NTH_RULE.exec(rule);
-  if (m) return `Every month on the ${ORDINAL[Number(m[1])]} ${DOW_NAME[DOW.indexOf(m[2] as (typeof DOW)[number])]}`;
+  if (m) return `Every month on the ${ORDINAL[m[1]]} ${DOW_NAME[DOW.indexOf(m[2] as (typeof DOW)[number])]}`;
   return RECURRENCES.find(([v]) => v === rule)?.[1] ?? rule;
 }
 
@@ -205,7 +212,7 @@ export function firstDue(due: string | null, rule: string | null, from = isoDate
   const [y, mo] = parts(start);
   const dow = DOW.indexOf(m[2] as (typeof DOW)[number]);
   for (let i = 0; i < 3; i++) {
-    const c = nthWeekday(y, mo - 1 + i, Number(m[1]), dow);
+    const c = nthWeekday(y, mo - 1 + i, nOf(m[1]), dow);
     if (c >= start) return c;
   }
   return start;
@@ -250,6 +257,7 @@ export function nextDue(due: string, rule: string, after = isoDate()): string {
       do dt.setDate(dt.getDate() + 1);
       while (dt.getDay() === 0 || dt.getDay() === 6);
     } else if (rule === "weekly") dt.setDate(dt.getDate() + 7);
+    else if (rule === "biweekly") dt.setDate(dt.getDate() + 14);
     else if (rule === "monthly") {
       const first = new Date(y, m, 1); // first day of next month
       dt.setTime(new Date(first.getFullYear(), first.getMonth(), Math.min(d, daysIn(first.getFullYear(), first.getMonth()))).getTime());

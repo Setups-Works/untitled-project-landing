@@ -56,19 +56,29 @@ export const groqProvider: AiProvider = {
     let res: Response;
     try {
       const modelId = req.model || (await resolveModel(key, req.signal));
-      res = await fetch(`${BASE}/chat/completions`, {
-        method: "POST",
-        headers: { authorization: `Bearer ${key}`, "content-type": "application/json" },
-        body: JSON.stringify({
-          model: modelId,
-          messages: req.messages,
-          temperature: req.temperature ?? 0.6,
-          // Reasoning models spend part of this budget thinking before they write the answer, so keep it generous.
-          max_tokens: req.maxTokens ?? 2048,
-          stream: true,
-        }),
-        signal: req.signal,
-      });
+      const send = () =>
+        fetch(`${BASE}/chat/completions`, {
+          method: "POST",
+          headers: { authorization: `Bearer ${key}`, "content-type": "application/json" },
+          body: JSON.stringify({
+            model: modelId,
+            messages: req.messages,
+            temperature: req.temperature ?? 0.6,
+            // Reasoning models spend part of this budget thinking before they write the answer, so keep it generous.
+            max_tokens: req.maxTokens ?? 2048,
+            stream: true,
+          }),
+          signal: req.signal,
+        });
+      res = await send();
+      // Groq's per-minute limits clear quickly: when it says to wait only a few seconds, wait and try again (twice at most)
+      // instead of showing an error for something that fixes itself.
+      for (let tries = 0; res.status === 429 && tries < 2; tries++) {
+        const wait = Number(res.headers.get("retry-after"));
+        if (!Number.isFinite(wait) || wait > 8) break;
+        await new Promise((r) => setTimeout(r, Math.max(wait, 1) * 1000));
+        res = await send();
+      }
     } catch (e) {
       if ((e as Error).name === "AbortError") return;
       if (e instanceof AiProviderError) throw e;
