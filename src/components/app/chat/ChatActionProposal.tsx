@@ -80,19 +80,19 @@ export default function ChatActionProposal({
             {a.kind !== "journal" && <p className="mt-2 font-semibold">{a.title}</p>}
             {preview && <p className="mt-1 line-clamp-6 whitespace-pre-wrap break-words text-sm text-fg-muted">{preview}</p>}
             {a.kind === "task" && (
-              <p className="mt-2 inline-block rounded-full bg-white/65 px-2.5 py-0.5 text-xs text-(--abf)">
+              <p className="mt-2 block w-fit rounded-full bg-white/65 px-2.5 py-0.5 text-xs text-(--abf)">
                 {a.due_date ? `Due ${dateLabel(a.due_date)}` : "No due date"}
               </p>
             )}
             {a.kind === "journal" && (
-              <p className="mt-2 inline-block rounded-full bg-white/65 px-2.5 py-0.5 text-xs text-(--abf)">For {dateLabel(a.entry_date)}</p>
+              <p className="mt-2 block w-fit rounded-full bg-white/65 px-2.5 py-0.5 text-xs text-(--abf)">For {dateLabel(a.entry_date)}</p>
             )}
             {p.created ? (
-              <a className="btn btn-secondary btn-sm mt-3 inline-flex" href={p.created.path}>
+              <a className="btn btn-secondary btn-sm mt-3 inline-flex h-9 px-4 text-[13px]" href={p.created.path}>
                 Open {LABEL[a.kind]}
               </a>
             ) : (
-              <button className="btn btn-primary btn-sm mt-3" disabled={busy !== null} onClick={() => create(p.index)}>
+              <button className="btn btn-primary btn-sm mt-3 h-9 px-4 text-[13px]" disabled={busy !== null} onClick={() => create(p.index)}>
                 {busy === p.index ? "Creating…" : `Create ${LABEL[a.kind]}`}
               </button>
             )}
