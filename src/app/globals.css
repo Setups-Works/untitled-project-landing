@@ -8524,8 +8524,8 @@
     display: grid;
     place-items: center;
     padding: 16px;
-    background: #1b1c1473;
-    backdrop-filter: blur(4px);
+    background: #f5f4ebb3;
+    backdrop-filter: blur(10px) saturate(1.2);
     animation: cdFade 0.16s ease-out;
   }
   .cd {
@@ -10838,8 +10838,9 @@
     display: grid;
     place-items: center;
     padding: 20px;
-    background: #1b1c1473;
-    backdrop-filter: blur(4px);
+    /* A light, milky veil (not a dark one) so the frosted glass dialog on top stays bright. */
+    background: #f5f4ebb3;
+    backdrop-filter: blur(10px) saturate(1.2);
     animation: cdFade 0.16s ease-out;
     overflow: auto;
   }
@@ -10851,7 +10852,7 @@
     width: min(620px, 100%);
     border-radius: var(--r4);
     /* Dialogs and menus are the thick, frosted version of the glass so text stays easy to read. */
-    background: linear-gradient(to bottom, #ffffffe0, #ffffffa8);
+    background: linear-gradient(to bottom, #fffffff2, #ffffffd9);
     backdrop-filter: blur(40px) saturate(2);
     box-shadow:
       inset 0 1px 0 #fff,
@@ -12002,8 +12003,8 @@
     display: grid;
     place-items: center;
     padding: 20px;
-    background: #1b1c1473;
-    backdrop-filter: blur(4px);
+    background: #f5f4ebb3;
+    backdrop-filter: blur(10px) saturate(1.2);
     animation: cdFade 0.16s ease-out;
   }
   .sm {

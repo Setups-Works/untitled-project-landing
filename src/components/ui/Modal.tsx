@@ -35,7 +35,7 @@ export default function Modal({
     >
       <Dialog.Portal>
         <Dialog.Overlay
-          className={`tm-back ${glass ? "animate-glass-fade bg-[#1b1c14]/20 backdrop-blur-[6px] motion-reduce:animate-none [html[data-motion=reduce]_&]:animate-none" : ""}`}
+          className={`tm-back ${glass ? "animate-glass-fade bg-[#f5f4eb]/60 backdrop-blur-[10px] motion-reduce:animate-none [html[data-motion=reduce]_&]:animate-none" : ""}`}
           data-top={top}
         >
           <Dialog.Content
