@@ -5,6 +5,7 @@ import "../styles/tailwind.css";
 import "./globals.css";
 import { SiteHeader, SiteFooter } from "../components/SiteChrome";
 import HideInApp from "../components/HideInApp";
+import ContextMenu from "../components/app/ContextMenu";
 
 config.autoAddCss = false;
 
@@ -36,6 +37,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <SiteHeader />
         </HideInApp>
         {children}
+        <ContextMenu />
         <HideInApp>
           <SiteFooter />
         </HideInApp>
