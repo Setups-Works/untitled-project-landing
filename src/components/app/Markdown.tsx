@@ -1,23 +1,65 @@
+import Link from "next/link";
 import type { ReactNode } from "react";
+
+// A link to one of the user's own to-dos, notes or journal days: `[words](/dashboard/todo?task=<id> "To-do · Buy a rose · due 7 Aug 2026")`.
+// Only these in-app paths are accepted (never an arbitrary relative URL), and the optional title becomes the hover card.
+const ITEM_PATH = "\\/dashboard\\/(?:todo\\?task|notes\\?note|journal\\?d)=[A-Za-z0-9%._-]{1,64}";
+const ITEM_LINK = new RegExp(`\\[([^\\]]+)\\]\\((${ITEM_PATH})(?: "([^"]{0,200})")?\\)`);
+const ITEM_LINK_SPLIT = `\\[[^\\]]+\\]\\(${ITEM_PATH}(?: "[^"]{0,200}")?\\)`;
+
+/** A link into the app with a small card on hover or keyboard focus that says what it points to. */
+function ItemLink({ href, text, tip }: { href: string; text: string; tip?: string }) {
+  const [kind, title, ...rest] = (tip ?? "").split(" · ");
+  return (
+    <span className="group/item relative inline-block">
+      <Link
+        href={href}
+        className="rounded-sm font-medium text-green-fg underline decoration-green-fg/50 decoration-dotted decoration-2 underline-offset-4 transition-colors hover:decoration-solid focus-visible:outline-2 focus-visible:outline-violet-fg"
+        aria-label={tip ? `${text} — ${tip}` : undefined}
+      >
+        {text}
+      </Link>
+      {tip && (
+        <span
+          role="tooltip"
+          className="pointer-events-none invisible absolute top-full left-0 z-30 mt-2 w-max max-w-[min(280px,70vw)] translate-y-1 rounded-r2 bg-white/95 p-3 text-left text-[13px] leading-snug font-normal text-fg opacity-0 shadow-[0_14px_34px_-14px_rgba(27,28,20,0.45),inset_0_0_0_1px_rgba(27,28,20,0.08)] backdrop-blur-md transition-[opacity,transform] duration-200 group-focus-within/item:visible group-focus-within/item:translate-y-0 group-focus-within/item:opacity-100 group-hover/item:visible group-hover/item:translate-y-0 group-hover/item:opacity-100"
+        >
+          <span className="block text-[11px] font-semibold tracking-wide text-fg-muted uppercase">{kind}</span>
+          {title && <span className="mt-0.5 block font-semibold">{title}</span>}
+          {rest.length > 0 && <span className="mt-0.5 block text-fg-muted">{rest.join(" · ")}</span>}
+        </span>
+      )}
+    </span>
+  );
+}
 
 /** Tiny, safe markdown renderer (headings, lists, checklists, quotes, code, bold, links). Never uses innerHTML. */
 function inline(text: string): ReactNode[] {
-  return text.split(/(\*\*[^*]+\*\*|`[^`]+`|\[[^\]]+\]\(https?:\/\/[^)\s]+\))/g).map((p, i) => {
-    if (/^\*\*[^*]+\*\*$/.test(p)) return <strong key={i}>{p.slice(2, -2)}</strong>;
-    if (/^`[^`]+`$/.test(p)) return <code key={i}>{p.slice(1, -1)}</code>;
-    const a = /^\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)$/.exec(p);
-    if (a)
-      return (
-        <a key={i} href={a[2]} target="_blank" rel="noopener noreferrer">
-          {a[1]}
-        </a>
-      );
-    return p;
-  });
+  return text
+    .split(new RegExp(`(\\*\\*[^*]+\\*\\*|\`[^\`]+\`|\\[[^\\]]+\\]\\(https?:\\/\\/[^)\\s]+\\)|${ITEM_LINK_SPLIT})`, "g"))
+    .map((p, i) => {
+      if (/^\*\*[^*]+\*\*$/.test(p)) return <strong key={i}>{p.slice(2, -2)}</strong>;
+      if (/^`[^`]+`$/.test(p)) return <code key={i}>{p.slice(1, -1)}</code>;
+      const item = ITEM_LINK.exec(p);
+      if (item && item.index === 0 && item[0] === p) return <ItemLink key={i} text={item[1]} href={item[2]} tip={item[3]} />;
+      const a = /^\[([^\]]+)\]\((https?:\/\/[^)\s]+)\)$/.exec(p);
+      if (a)
+        return (
+          <a key={i} href={a[2]} target="_blank" rel="noopener noreferrer">
+            {a[1]}
+          </a>
+        );
+      return p;
+    });
 }
 
 function tableCells(line: string) {
-  return line.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map((cell) => cell.trim());
+  return line
+    .trim()
+    .replace(/^\|/, "")
+    .replace(/\|$/, "")
+    .split("|")
+    .map((cell) => cell.trim());
 }
 
 function isTableSeparator(line: string) {

@@ -1,22 +1,65 @@
 import { z } from "zod";
 
 const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
+/** A short label a journal draft uses to point at a to-do or note draft from the same reply (see `[[text|ref]]` below). */
+const ref = z
+  .string()
+  .regex(/^[a-z0-9]{1,12}$/)
+  .optional();
 
 export const chatActionSchema = z.discriminatedUnion("kind", [
-  z.object({ kind: z.literal("note"), title: z.string().trim().min(1).max(200), body: z.string().max(10_000) }),
+  z.object({ kind: z.literal("note"), title: z.string().trim().min(1).max(200), body: z.string().max(10_000), ref }),
   z.object({ kind: z.literal("journal"), body: z.string().min(1).max(10_000), entry_date: date }),
   z.object({
     kind: z.literal("task"),
     title: z.string().trim().min(1).max(300),
     description: z.string().max(5000),
     due_date: date.nullable(),
+    ref,
   }),
 ]);
 
 export type ChatAction = z.infer<typeof chatActionSchema>;
 
 /** What a draft turned into once the user confirmed it. */
-export type CreatedItem = { kind: ChatAction["kind"]; path: string };
+export type CreatedItem = { kind: ChatAction["kind"]; path: string; id?: string };
+
+/* ---------- links from a journal entry to the to-dos and notes made from the same message ---------- */
+
+// In a journal draft the assistant marks the words that belong to another draft as `[[words|ref]]`.
+const REF_MARK = /\[\[([^\]|\n]{1,200})\|([a-z0-9]{1,12})\]\]/g;
+
+/** The journal text with the markers removed (what a draft card shows before anything is saved). */
+export const stripRefs = (body: string) => body.replace(REF_MARK, "$1");
+
+/** One line for a hover card: what the linked to-do or note is. No quotes or brackets, so it is safe inside a Markdown link title. */
+export function describeItem(a: ChatAction): string {
+  const clean = (s: string, max: number) =>
+    s
+      .replace(/[\r\n]+/g, " ")
+      .replace(/["[\]()]/g, "")
+      .trim()
+      .slice(0, max);
+  if (a.kind === "task") {
+    const due = a.due_date
+      ? ` · due ${new Date(`${a.due_date}T00:00:00Z`).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" })}`
+      : "";
+    return `To-do · ${clean(a.title, 120)}${due}`;
+  }
+  if (a.kind === "note") return `Note · ${clean(a.title, 80)}${a.body.trim() ? ` · ${clean(a.body, 100)}` : ""}`;
+  return "Journal entry";
+}
+
+/**
+ * Turns the markers into real links to the items that exist now (`[words](/dashboard/todo?task=… "hover text")`).
+ * A marker whose item has not been created yet becomes plain words, and is linked later if the item is created afterwards.
+ */
+export function resolveRefs(body: string, items: Map<string, { path: string; tip: string }>): string {
+  return body.replace(REF_MARK, (_all, text: string, r: string) => {
+    const it = items.get(r);
+    return it ? `[${text.replace(/[[\]]/g, "")}](${it.path} "${it.tip}")` : text;
+  });
+}
 
 /** One draft proposed by the assistant, in order, and whether it has been created yet. */
 export type ChatProposal = { index: number; action: ChatAction; created: CreatedItem | null };
@@ -25,7 +68,12 @@ const MAX_PROPOSALS = 6;
 // A draft is `<create-item>{…}</create-item>`; after the user confirms it, the block becomes `<created-item>{kind,path,action}</created-item>`.
 const BLOCK = /<(create-item|created-item)>\s*([\s\S]*?)\s*<\/\1>/g;
 
-const createdSchema = z.object({ kind: z.enum(["note", "journal", "task"]), path: z.string().max(500), action: chatActionSchema });
+const createdSchema = z.object({
+  kind: z.enum(["note", "journal", "task"]),
+  path: z.string().max(500),
+  id: z.string().max(60).optional(),
+  action: chatActionSchema,
+});
 
 function readBlock(tag: string, json: string): { action: ChatAction; created: CreatedItem | null } | null {
   try {
@@ -35,7 +83,7 @@ function readBlock(tag: string, json: string): { action: ChatAction; created: Cr
       return r.success ? { action: r.data, created: null } : null;
     }
     const r = createdSchema.safeParse(raw);
-    return r.success ? { action: r.data.action, created: { kind: r.data.kind, path: r.data.path } } : null;
+    return r.success ? { action: r.data.action, created: { kind: r.data.kind, path: r.data.path, id: r.data.id } } : null;
   } catch {
     return null; // invalid model output stays inert
   }

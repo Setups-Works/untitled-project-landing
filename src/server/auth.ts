@@ -175,7 +175,11 @@ function create() {
         storeOTP: "hashed",
         rateLimit: { window: 60, max: 3 },
         sendVerificationOTP: async ({ email, otp }) => {
-          await sendMail(email, "Your password reset code", `Your password reset code is ${otp}. It expires in 5 minutes. If you didn’t request this, you can ignore this email.`);
+          await sendMail(
+            email,
+            "Your password reset code",
+            `Your password reset code is ${otp}. It expires in 5 minutes. If you didn’t request this, you can ignore this email.`,
+          );
         },
       }),
       passkey({

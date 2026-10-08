@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import type { ChatAction, ChatProposal } from "../../../lib/chat-actions";
+import { stripRefs, type ChatAction, type ChatProposal } from "../../../lib/chat-actions";
 import { qk } from "../../../lib/query/keys";
 
 const LABEL: Record<ChatAction["kind"], string> = { task: "to-do", journal: "journal entry", note: "note" };
@@ -58,7 +58,7 @@ export default function ChatActionProposal({
     <div className="mt-3 flex flex-col gap-2" role="group" aria-label="Drafts to review">
       {proposals.map((p) => {
         const a = p.action;
-        const preview = a.kind === "task" ? a.description : a.body;
+        const preview = a.kind === "task" ? a.description : a.kind === "journal" ? stripRefs(a.body) : a.body;
         return (
           <section
             key={p.index}
