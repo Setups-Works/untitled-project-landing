@@ -423,19 +423,41 @@ export function UpcomingView({ tasks, ctx, today }: { tasks: Task[]; ctx: VCtx; 
   const [days, setDays] = useState(14);
   const open = tasks.filter(isOpen);
   const overdue = open.filter((t) => isOverdue(t, today));
-  const counts = useMemo(() => {
-    const c: Record<string, number> = {};
-    open.forEach((t) => {
-      if (t.due_date) c[t.due_date] = (c[t.due_date] || 0) + 1;
-    });
-    return c;
-  }, [open]);
 
   const [y, m, d] = sel.split("-").map(Number);
   const weekStart = addDays(sel, -weekdayIndex(new Date(y, m - 1, d)));
   const week = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
   const label = new Date(y, m - 1, d).toLocaleDateString(undefined, { month: "long", year: "numeric" });
   const list = Array.from({ length: days }, (_, i) => addDays(sel, i));
+  const lastShown = addDays(sel, Math.max(days, 7) + 7);
+
+  // Repeating to-dos also show on each later day they come back on. Those rows are copies that act on the real task.
+  const { byDay, realOf } = useMemo(() => {
+    const byDay = new Map<string, Task[]>();
+    const realOf = new Map<Task, Task>();
+    const add = (iso: string, t: Task) => byDay.set(iso, [...(byDay.get(iso) ?? []), t]);
+    open.forEach((t) => {
+      if (!t.due_date) return;
+      add(t.due_date, t);
+      if (!t.recurrence) return;
+      for (const iso of upcomingDates(t.due_date, t.recurrence, lastShown)) {
+        const copy = { ...t, due_date: iso };
+        realOf.set(copy, t);
+        add(iso, copy);
+      }
+    });
+    return { byDay, realOf };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- `open` is derived from `tasks`
+  }, [tasks, lastShown]);
+  const counts = useMemo(() => Object.fromEntries([...byDay].map(([iso, list]) => [iso, list.length])), [byDay]);
+  const real = (t: Task) => realOf.get(t) ?? t;
+  const rowCtx: VCtx = {
+    ...ctx,
+    onOpen: (t) => ctx.onOpen(real(t)),
+    onToggle: (t) => ctx.onToggle(real(t)),
+    onDelete: (t) => ctx.onDelete(real(t)),
+    onSelect: (t) => ctx.onSelect(real(t)),
+  };
 
   return (
     <>
@@ -482,8 +504,8 @@ export function UpcomingView({ tasks, ctx, today }: { tasks: Task[]; ctx: VCtx; 
           key={iso}
           title={dayHead(iso, today)}
           tone={TONES[(i + 3) % TONES.length]}
-          tasks={open.filter((t) => t.due_date === iso)}
-          ctx={ctx}
+          tasks={byDay.get(iso) ?? []}
+          ctx={rowCtx}
           defaults={{ due_date: iso }}
           collapsible={false}
         />

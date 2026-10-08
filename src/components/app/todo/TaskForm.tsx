@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { readText, writeText } from "../../../lib/drafts";
 import { FontAwesomeIcon as FA } from "@fortawesome/react-fontawesome";
 import { faCalendarDay, faFlag, faRotate, faXmark, faHashtag } from "@fortawesome/free-solid-svg-icons";
-import { PRIORITIES, recurrenceChoices, type Draft } from "../../../lib/tasks";
+import { PRIORITIES, firstDue, recurrenceChoices, type Draft } from "../../../lib/tasks";
 import { addDays, dayLabel, isoDate } from "../../../lib/dates";
 import JournalCalendar from "../JournalCalendar";
 import type { TaskList } from "../../../lib/workspace";
@@ -59,7 +59,12 @@ export default function TaskForm({
     e.preventDefault();
     if (!d.title.trim() || busy) return;
     setBusy(true);
-    await onSubmit({ ...d, title: d.title.trim(), description: d.description.trim() });
+    await onSubmit({
+      ...d,
+      title: d.title.trim(),
+      description: d.description.trim(),
+      due_date: d.recurrence ? firstDue(d.due_date, d.recurrence, today) : d.due_date,
+    });
     if (draftKey) {
       sent.current = true;
       writeText(draftKey, "");
@@ -144,7 +149,17 @@ export default function TaskForm({
         </label>
         <label className="tf-pill" data-set={!!d.recurrence}>
           <FA icon={faRotate} />
-          <select value={d.recurrence ?? ""} onChange={(e) => set("recurrence", e.target.value || null)} aria-label="Repeat">
+          <select
+            value={d.recurrence ?? ""}
+            // A repeating to-do needs a first day, so choosing a repeat without a date starts it today (or on the next matching day).
+            onChange={(e) =>
+              setD((x) => {
+                const recurrence = e.target.value || null;
+                return { ...x, recurrence, due_date: x.due_date ?? firstDue(null, recurrence, today) };
+              })
+            }
+            aria-label="Repeat"
+          >
             {recurrenceChoices(d.due_date, d.recurrence).map(([v, l]) => (
               <option key={v} value={v}>
                 {l}
