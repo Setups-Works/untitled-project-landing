@@ -29,6 +29,13 @@
     --violet-fg: #5f4a7a;
     --sand-bg: #f0eadd;
     --sand-fg: #7a6a3c;
+    /* Liquid glass: the material of the section switcher and round search button, shared by every card and button. */
+    --glass: #ffffff99;
+    --glass-hi: #ffffffcc;
+    --glass-blur: blur(20px) saturate(1.5);
+    --glass-ring: inset 0 0 0 1px #ffffffd9, inset 0 1px 3px #1b1c140f;
+    --glass-ring-hi: inset 0 1px 0 #fff, inset 0 0 0 1px #fffffff2;
+    --spring: cubic-bezier(0.34, 1.45, 0.5, 1);
     --e1: 0 1px 2px #28230a0d;
     --e2: 0 12px 28px -20px #28230a73;
     --e3: 0 30px 60px -38px #28230a8c;
@@ -190,12 +197,24 @@
     opacity: 0.9;
     transform: translateY(-1px);
   }
+  .btn {
+    transition:
+      opacity 0.16s,
+      background-color 0.3s,
+      box-shadow 0.3s,
+      transform 0.3s var(--spring);
+  }
+  .btn:active {
+    transform: scale(0.96);
+  }
   .btn-secondary {
-    background: var(--surface);
-    box-shadow: inset 0 0 0 1px var(--line);
+    background: var(--glass);
+    backdrop-filter: var(--glass-blur);
+    box-shadow: var(--glass-ring);
   }
   .btn-secondary:hover {
-    box-shadow: inset 0 0 0 1px var(--line-strong);
+    background: var(--glass-hi);
+    box-shadow: var(--glass-ring-hi);
   }
   .btn-sm {
     height: 44px;
@@ -209,12 +228,20 @@
     padding: 8px 15px;
     border-radius: var(--pill);
     font-size: 13.5px;
-    background: var(--surface);
-    box-shadow: inset 0 0 0 1px var(--line);
-    transition: box-shadow 0.16s;
+    background: var(--glass);
+    backdrop-filter: var(--glass-blur);
+    box-shadow: var(--glass-ring);
+    transition:
+      box-shadow 0.3s,
+      background-color 0.3s,
+      transform 0.3s var(--spring);
   }
   .chip:hover {
-    box-shadow: inset 0 0 0 1px var(--line-strong);
+    background: var(--glass-hi);
+    box-shadow: var(--glass-ring-hi);
+  }
+  .chip:active {
+    transform: scale(0.96);
   }
   .tab {
     padding: 9px 16px;
@@ -222,13 +249,22 @@
     font-size: 13.5px;
     font-weight: 500;
     color: var(--fg-muted);
-    background: var(--surface);
-    box-shadow: inset 0 0 0 1px var(--line);
-    transition: all 0.16s;
+    background: var(--glass);
+    backdrop-filter: var(--glass-blur);
+    box-shadow: var(--glass-ring);
+    transition:
+      color 0.3s,
+      background-color 0.3s,
+      box-shadow 0.3s,
+      transform 0.3s var(--spring);
   }
   .tab:hover {
     color: var(--fg);
-    box-shadow: inset 0 0 0 1px var(--line-strong);
+    background: var(--glass-hi);
+    box-shadow: var(--glass-ring-hi);
+  }
+  .tab:active {
+    transform: scale(0.96);
   }
   .tab[aria-selected="true"] {
     background: var(--green-fg);
@@ -304,20 +340,21 @@
   .card {
     border-radius: var(--r3);
     padding: 22px;
-    background: var(--surface);
-    box-shadow: inset 0 0 0 1px var(--line);
+    background: var(--glass);
+    backdrop-filter: var(--glass-blur);
+    box-shadow: var(--glass-ring);
     display: flex;
     flex-direction: column;
     gap: 10px;
     height: 100%;
     transition:
-      box-shadow 0.24s,
-      transform 0.24s var(--ease);
+      box-shadow 0.3s,
+      background-color 0.3s,
+      transform 0.3s var(--spring);
   }
   .card[data-interactive]:hover {
-    box-shadow:
-      inset 0 0 0 1px var(--line-strong),
-      var(--e2);
+    background: var(--glass-hi);
+    box-shadow: var(--glass-ring-hi), var(--e2);
     transform: translateY(-2px);
   }
   .card[data-emphasis] {
@@ -6912,17 +6949,24 @@
     height: 38px;
     padding: 0 16px;
     border-radius: 99px;
-    background: var(--surface);
-    box-shadow: inset 0 0 0 1px var(--line);
+    background: var(--glass);
+    backdrop-filter: var(--glass-blur);
+    box-shadow: var(--glass-ring);
     font-size: 13.5px;
     color: var(--fg-muted);
     transition:
-      box-shadow 0.16s,
-      color 0.16s;
+      box-shadow 0.3s,
+      background-color 0.3s,
+      color 0.3s,
+      transform 0.3s var(--spring);
   }
   .ap-quick a:hover {
     color: var(--fg);
-    box-shadow: inset 0 0 0 1px var(--line-strong);
+    background: var(--glass-hi);
+    box-shadow: var(--glass-ring-hi);
+  }
+  .ap-quick a:active {
+    transform: scale(0.96);
   }
   .ap-grid {
     display: grid;
@@ -6943,8 +6987,9 @@
   }
   .ap-card {
     border-radius: var(--r3);
-    background: var(--surface);
-    box-shadow: inset 0 0 0 1px var(--line);
+    background: var(--glass);
+    backdrop-filter: var(--glass-blur);
+    box-shadow: var(--glass-ring);
     overflow: hidden;
   }
   .ap-card-h {
@@ -7014,8 +7059,9 @@
     padding: 0 16px;
     height: 48px;
     border-radius: 99px;
-    background: var(--surface);
-    box-shadow: inset 0 0 0 1px var(--line);
+    background: var(--glass);
+    backdrop-filter: var(--glass-blur);
+    box-shadow: var(--glass-ring);
     color: var(--fg-subtle);
     transition: box-shadow 0.16s;
   }
@@ -7875,10 +7921,9 @@
     height: 60px;
     padding: 0 12px 0 24px;
     border-radius: 99px;
-    background: var(--surface);
-    box-shadow:
-      inset 0 0 0 1px var(--line),
-      var(--e3);
+    background: var(--glass);
+    backdrop-filter: var(--glass-blur);
+    box-shadow: var(--glass-ring), var(--e3);
   }
   .nt-cap input[type="text"],
   .nt-cap input:not([type]) {
@@ -9063,8 +9108,9 @@
     gap: 6px;
     padding: 12px 16px;
     border-radius: var(--r3);
-    background: var(--surface);
-    box-shadow: inset 0 0 0 1px var(--line);
+    background: var(--glass);
+    backdrop-filter: var(--glass-blur);
+    box-shadow: var(--glass-ring);
     overflow-wrap: anywhere;
   }
   .cx-msg[data-role="user"] .cx-bubble {
@@ -9121,10 +9167,9 @@
     gap: 6px;
     padding: 14px 16px 10px;
     border-radius: var(--r4);
-    background: var(--surface);
-    box-shadow:
-      inset 0 0 0 1px var(--line),
-      var(--e3);
+    background: var(--glass);
+    backdrop-filter: var(--glass-blur);
+    box-shadow: var(--glass-ring), var(--e3);
     transition: box-shadow 0.16s;
   }
   .cx-composer:focus-within {
@@ -9424,8 +9469,9 @@
     height: 38px;
     padding: 0 16px;
     border-radius: 99px;
-    background: var(--surface);
-    box-shadow: inset 0 0 0 1px var(--line);
+    background: var(--glass);
+    backdrop-filter: var(--glass-blur);
+    box-shadow: var(--glass-ring);
     font-size: 13.5px;
     color: var(--fg-muted);
     transition:
@@ -9857,8 +9903,9 @@
     height: 40px;
     padding: 0 10px 0 14px;
     border-radius: 99px;
-    background: var(--surface);
-    box-shadow: inset 0 0 0 1px var(--line);
+    background: var(--glass);
+    backdrop-filter: var(--glass-blur);
+    box-shadow: var(--glass-ring);
     font-size: 14px;
     color: var(--fg-subtle);
     transition:
@@ -10899,8 +10946,9 @@
     height: 40px;
     padding: 0 14px;
     border-radius: var(--r1);
-    background: var(--surface);
-    box-shadow: inset 0 0 0 1px var(--line);
+    background: var(--glass);
+    backdrop-filter: var(--glass-blur);
+    box-shadow: var(--glass-ring);
   }
   .tv-select select {
     border: 0;
@@ -12807,5 +12855,43 @@
   [data-motion="reduce"] .ob-body,
   [data-motion="reduce"] .ob-back {
     animation: none;
+  }
+
+  /* Tinted cards (home, journal, to-do, notes, chat sidebar…) share the liquid-glass material: the tint stays, but as a
+     translucent frosted layer with the soft white ring and a springy hover, like the section switcher and search button. */
+  .ap-card[class*="at-"],
+  .dash-card[class*="at-"],
+  .nt-card[class*="at-"],
+  .cx-side[class*="at-"],
+  .tsb[class*="at-"] {
+    background: color-mix(in srgb, var(--ab) 72%, transparent);
+    backdrop-filter: var(--glass-blur);
+    box-shadow:
+      inset 0 0 0 1px #ffffffb3,
+      inset 0 1px 0 #ffffffe6,
+      var(--e1);
+    transition:
+      box-shadow 0.3s,
+      background-color 0.3s,
+      transform 0.3s var(--spring);
+  }
+  .nt-card[class*="at-"]:hover,
+  .nt-card[class*="at-"]:focus-visible {
+    background: color-mix(in srgb, var(--ab) 86%, transparent);
+    box-shadow:
+      inset 0 0 0 1px #fffffff2,
+      inset 0 1px 0 #fff,
+      var(--e2);
+    transform: translateY(-2px);
+  }
+  .nt-card[class*="at-"][data-on="true"] {
+    box-shadow:
+      inset 0 0 0 2px var(--violet-fg),
+      var(--e1);
+  }
+  .nt-card[class*="at-"][data-over="true"] {
+    box-shadow:
+      inset 0 3px 0 0 var(--violet-fg),
+      inset 0 0 0 1px #ffffffb3;
   }
 } /* end @layer legacy */
