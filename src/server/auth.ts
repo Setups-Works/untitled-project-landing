@@ -2,7 +2,7 @@ import "server-only";
 import { betterAuth } from "better-auth";
 import { nextCookies } from "better-auth/next-js";
 import { APIError } from "better-auth/api";
-import { admin, emailOTP, lastLoginMethod, oneTap, username } from "better-auth/plugins";
+import { admin, emailOTP, lastLoginMethod, oneTap, openAPI, username } from "better-auth/plugins";
 import { passkey } from "@better-auth/passkey";
 import pg from "pg";
 import { serverEnv } from "../config/env";
@@ -151,6 +151,8 @@ function create() {
     plugins: [
       // Verify One Tap ID tokens against the same public client ID used by the Google provider.
       oneTap({ clientId: env.google.clientId }),
+      // Generates the description of every auth endpoint for /api/v1/openapi.json; our Swagger UI is the viewer, so no built-in page.
+      openAPI({ disableDefaultReference: true }),
       admin({
         defaultRole: "user",
         adminRoles: ["admin"],
