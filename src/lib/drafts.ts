@@ -68,6 +68,12 @@ export async function writeFiles(key: string, files: File[]) {
   }
 }
 
+/** Forgets one draft (text and files) right away, even if the input that owned it has already been replaced on screen. */
+export async function clearDraft(key: string) {
+  writeText(key, "");
+  await writeFiles(key, []);
+}
+
 /** Removes every draft (text and files). Called when someone signs out. */
 export async function clearDrafts() {
   try {

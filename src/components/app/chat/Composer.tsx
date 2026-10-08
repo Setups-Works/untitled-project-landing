@@ -8,6 +8,7 @@ import FilePreviewList from "../../ui/FilePreviewList";
 import RecordButton from "../../ui/RecordButton";
 import { useRecorder } from "../useRecorder";
 import { useDraftFiles, useDraftText } from "../../../hooks/useDraft";
+import { clearDraft } from "../../../lib/drafts";
 
 const MAX_BYTES = 10 * 1024 * 1024;
 
@@ -27,7 +28,8 @@ export default function Composer({
   /** Id of the selected provider. */
   provider: string;
   onProvider: (id: string) => void;
-  onSend: (text: string, files: File[]) => Promise<boolean>;
+  /** Send the message. Call `saved()` as soon as it is stored so the input can be emptied; resolve false if sending failed. */
+  onSend: (text: string, files: File[], saved: () => void) => Promise<boolean>;
   onError: (m: string) => void;
   autoFocus?: boolean;
   /** Where the unsent message, attachments and voice recordings are kept so a refresh doesn't lose them (one per chat). */
@@ -51,14 +53,22 @@ export default function Composer({
   };
 
   const canSend = (text.trim() || files.length) && !busy;
+  /**
+   * Called by the chat as soon as the message is saved. The input is emptied then (not after the AI has answered), and the
+   * saved draft is erased explicitly: sending the first message of a new chat swaps this input for a new one, so a draft
+   * left behind would reappear in the next new chat.
+   */
+  function sent() {
+    void clearDraft(draftKey);
+    setText("");
+    setFiles([]);
+    if (ta.current) ta.current.style.height = "";
+  }
+
   async function submit() {
     if (!canSend) return;
-    const done = await onSend(text.trim(), files);
-    if (done) {
-      setText("");
-      setFiles([]);
-      if (ta.current) ta.current.style.height = "";
-    }
+    const done = await onSend(text.trim(), files, sent);
+    if (done) sent();
   }
 
   return (

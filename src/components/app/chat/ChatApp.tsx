@@ -232,7 +232,7 @@ export default function ChatApp({ name }: { name: string }) {
     }
   }
 
-  async function send(text: string, files: File[]): Promise<boolean> {
+  async function send(text: string, files: File[], saved: () => void): Promise<boolean> {
     setBusy(true);
     setErr("");
     try {
@@ -266,6 +266,7 @@ export default function ChatApp({ name }: { name: string }) {
         setErr("Couldn’t send that message.");
         return false;
       }
+      saved(); // the message is stored: empty the input now, not after the AI has answered
       const now = new Date().toISOString();
       await sb.from("chats").update({ updated_at: now, last_read_at: now }).eq("id", id);
       if (!activeId) router.replace(`/dashboard/chat?c=${id}`, { scroll: false });
