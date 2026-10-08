@@ -14,13 +14,18 @@ import {
 import {
   deleteUser,
   getUserDetail,
+  getUserSessions,
   inviteUser,
+  renameUser,
   resendConfirmation,
+  revokeAllSessions,
+  revokeSession,
   sendPasswordReset,
   setAdminRole,
   setBanned,
   setPlan,
   type Detail,
+  type SessionInfo,
 } from "../../app/admin/actions";
 import { useConfirm } from "../ui/Confirm";
 import Modal from "../ui/Modal";
@@ -53,6 +58,39 @@ const csv = (v: unknown) => {
   if (/^[=+\-@]/.test(s)) s = "'" + s;
   return `"${s.replace(/"/g, '""')}"`;
 };
+
+/** "Chrome on macOS" style label from a user-agent string; falls back to the raw start of it. */
+function device(agent: string | null) {
+  if (!agent) return "Unknown device";
+  const browser = /Edg\//.test(agent)
+    ? "Edge"
+    : /Chrome\//.test(agent)
+      ? "Chrome"
+      : /Firefox\//.test(agent)
+        ? "Firefox"
+        : /Safari\//.test(agent)
+          ? "Safari"
+          : null;
+  const os = /Windows/.test(agent)
+    ? "Windows"
+    : /iPhone|iPad/.test(agent)
+      ? "iOS"
+      : /Android/.test(agent)
+        ? "Android"
+        : /Mac OS X/.test(agent)
+          ? "macOS"
+          : /Linux/.test(agent)
+            ? "Linux"
+            : null;
+  return browser && os ? `${browser} on ${os}` : browser || os || agent.slice(0, 40);
+}
+
+const BAN_LENGTHS: [string, number][] = [
+  ["Until I unban", 0],
+  ["1 day", 1],
+  ["7 days", 7],
+  ["30 days", 30],
+];
 
 function Pills({ r }: { r: Row }) {
   return (
@@ -87,6 +125,12 @@ function UserDrawer({ row, onClose }: { row: Row; onClose: () => void }) {
   const [pending, start] = useTransition();
   const [detail, setDetail] = useState<Detail | null>(null);
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
+  const [sessions, setSessions] = useState<SessionInfo[] | null>(null);
+  const [name, setName] = useState(row.name);
+  const [reason, setReason] = useState("");
+  const [days, setDays] = useState(0);
+
+  const loadSessions = () => getUserSessions(row.id).then((r) => setSessions(r.ok ? r.sessions : []));
 
   useEffect(() => {
     let live = true;
@@ -95,6 +139,9 @@ function UserDrawer({ row, onClose }: { row: Row; onClose: () => void }) {
         if (r.ok) setDetail(r.detail);
         else setMsg({ ok: false, text: r.error });
       }
+    });
+    getUserSessions(row.id).then((r) => {
+      if (live) setSessions(r.ok ? r.sessions : []);
     });
     return () => {
       live = false;
@@ -108,6 +155,7 @@ function UserDrawer({ row, onClose }: { row: Row; onClose: () => void }) {
       const r = await fn();
       setMsg(r.ok ? { ok: true, text: r.message ?? "Done." } : { ok: false, text: r.error ?? "Something went wrong." });
       if (r.ok && r.message === undefined && confirm?.confirmLabel === "Delete user") onClose();
+      else if (r.ok) await loadSessions();
     });
   };
 
@@ -187,7 +235,65 @@ function UserDrawer({ row, onClose }: { row: Row; onClose: () => void }) {
           ))}
         </div>
 
+        <h3 className="ud-h">Sign-ins</h3>
+        {sessions === null ? (
+          <p className="meta">Loading…</p>
+        ) : sessions.length === 0 ? (
+          <p className="meta">Not signed in anywhere right now.</p>
+        ) : (
+          <>
+            <ul className="ud-sessions">
+              {sessions.map((s) => (
+                <li key={s.token}>
+                  <span>
+                    <b>{device(s.agent)}</b>
+                    <small className="meta">
+                      {s.ip ?? "unknown address"} · signed in {fmt(s.createdAt)}
+                    </small>
+                  </span>
+                  <button className="btn btn-secondary btn-sm" disabled={pending} onClick={() => act(() => revokeSession(row.id, s.token))}>
+                    Sign out
+                  </button>
+                </li>
+              ))}
+            </ul>
+            <div className="ud-acts">
+              <button
+                className="btn btn-secondary btn-sm"
+                disabled={pending}
+                onClick={() =>
+                  act(() => revokeAllSessions(row.id), {
+                    title: "Sign out everywhere?",
+                    body: <>{row.email} will be signed out of every device and must sign in again.</>,
+                    confirmLabel: "Sign out everywhere",
+                  })
+                }
+              >
+                Sign out everywhere
+              </button>
+            </div>
+          </>
+        )}
+
         <h3 className="ud-h">Account</h3>
+        <form
+          className="ud-acts"
+          onSubmit={(e) => {
+            e.preventDefault();
+            if (name.trim() && name.trim() !== row.name) act(() => renameUser(row.id, name));
+          }}
+        >
+          <input
+            className="tf-title adm-in"
+            value={name}
+            maxLength={80}
+            onChange={(e) => setName(e.target.value)}
+            aria-label="Display name"
+          />
+          <button className="btn btn-secondary btn-sm" disabled={pending || !name.trim() || name.trim() === row.name}>
+            Rename
+          </button>
+        </form>
         <div className="ud-acts">
           <button className="btn btn-secondary btn-sm" disabled={pending} onClick={() => act(() => sendPasswordReset(row.id))}>
             <FA icon={faKey} /> Send password reset
@@ -205,63 +311,91 @@ function UserDrawer({ row, onClose }: { row: Row; onClose: () => void }) {
             This is your own account or a protected admin from <code>ADMIN_EMAILS</code>, so it can’t be demoted, banned or deleted here.
           </p>
         ) : (
-          <div className="ud-acts">
-            <button
-              className="btn btn-secondary btn-sm"
-              disabled={pending}
-              onClick={() =>
-                act(
-                  () => setAdminRole(row.id, !row.admin),
-                  row.admin
-                    ? {
-                        title: "Remove admin access?",
-                        body: <>{row.email} will no longer be able to open the admin panel.</>,
-                        confirmLabel: "Remove admin",
-                      }
-                    : {
-                        title: "Make this user an admin?",
-                        body: <>{row.email} will get full access to the admin panel, including deleting users.</>,
-                        confirmLabel: "Make admin",
-                      },
-                )
-              }
-            >
-              {row.admin ? "Remove admin" : "Make admin"}
-            </button>
-            <button
-              className="btn btn-secondary btn-sm"
-              disabled={pending}
-              onClick={() =>
-                act(
-                  () => setBanned(row.id, !row.banned),
-                  row.banned
-                    ? undefined
-                    : {
-                        title: "Ban this user?",
-                        body: <>{row.email} won’t be able to sign in until you unban them.</>,
-                        confirmLabel: "Ban user",
-                        danger: true,
-                      },
-                )
-              }
-            >
-              {row.banned ? "Unban" : "Ban"}
-            </button>
-            <button
-              className="btn btn-secondary btn-sm td-del"
-              disabled={pending}
-              onClick={() =>
-                act(() => deleteUser(row.id), {
-                  title: "Delete this user?",
-                  body: <>{row.email} and all their data will be permanently deleted. This can’t be undone.</>,
-                  confirmLabel: "Delete user",
-                  danger: true,
-                })
-              }
-            >
-              Delete user
-            </button>
-          </div>
+          <>
+            {!row.banned && (
+              <div className="ud-acts">
+                <input
+                  className="tf-title adm-in"
+                  value={reason}
+                  maxLength={300}
+                  onChange={(e) => setReason(e.target.value)}
+                  placeholder="Ban reason (optional)"
+                  aria-label="Ban reason"
+                />
+                <label className="tv-select">
+                  <select value={days} onChange={(e) => setDays(Number(e.target.value))} aria-label="Ban length">
+                    {BAN_LENGTHS.map(([l, d]) => (
+                      <option key={d} value={d}>
+                        {l}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            )}
+            <div className="ud-acts">
+              <button
+                className="btn btn-secondary btn-sm"
+                disabled={pending}
+                onClick={() =>
+                  act(
+                    () => setAdminRole(row.id, !row.admin),
+                    row.admin
+                      ? {
+                          title: "Remove admin access?",
+                          body: <>{row.email} will no longer be able to open the admin panel.</>,
+                          confirmLabel: "Remove admin",
+                        }
+                      : {
+                          title: "Make this user an admin?",
+                          body: <>{row.email} will get full access to the admin panel, including deleting users.</>,
+                          confirmLabel: "Make admin",
+                        },
+                  )
+                }
+              >
+                {row.admin ? "Remove admin" : "Make admin"}
+              </button>
+              <button
+                className="btn btn-secondary btn-sm"
+                disabled={pending}
+                onClick={() =>
+                  act(
+                    () => setBanned(row.id, !row.banned, { reason, days }),
+                    row.banned
+                      ? undefined
+                      : {
+                          title: "Ban this user?",
+                          body: (
+                            <>
+                              {row.email} will be signed out and can’t sign in{" "}
+                              {days ? `for ${days} ${days === 1 ? "day" : "days"}` : "until you unban them"}.
+                            </>
+                          ),
+                          confirmLabel: "Ban user",
+                          danger: true,
+                        },
+                  )
+                }
+              >
+                {row.banned ? "Unban" : "Ban"}
+              </button>
+              <button
+                className="btn btn-secondary btn-sm td-del"
+                disabled={pending}
+                onClick={() =>
+                  act(() => deleteUser(row.id), {
+                    title: "Delete this user?",
+                    body: <>{row.email} and all their data will be permanently deleted. This can’t be undone.</>,
+                    confirmLabel: "Delete user",
+                    danger: true,
+                  })
+                }
+              >
+                Delete user
+              </button>
+            </div>
+          </>
         )}
         {msg && (
           <p className={msg.ok ? "st-ok" : "form-err"} role={msg.ok ? "status" : "alert"}>

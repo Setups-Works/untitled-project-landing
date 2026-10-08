@@ -55,11 +55,99 @@ export async function setAdminRole(id: string, makeAdmin: boolean) {
   });
 }
 
-export async function setBanned(id: string, banned: boolean) {
-  return run(id, banned ? "user.ban" : "user.unban", async (i) => {
-    if (banned) await auth.api.banUser({ body: { userId: i }, headers: await headers() });
-    else await auth.api.unbanUser({ body: { userId: i }, headers: await headers() });
-  });
+/** Ban with an optional reason and length (days); no length means until an admin unbans. Banning also ends their sessions. */
+export async function setBanned(id: string, banned: boolean, opts: { reason?: string; days?: number } = {}) {
+  const reason = (opts.reason ?? "").trim().slice(0, 300);
+  const days = Number.isFinite(opts.days) && opts.days && opts.days > 0 ? Math.min(Math.floor(opts.days), 3650) : undefined;
+  return run(
+    id,
+    banned ? "user.ban" : "user.unban",
+    async (i) => {
+      if (banned)
+        await auth.api.banUser({
+          body: { userId: i, ...(reason ? { banReason: reason } : {}), ...(days ? { banExpiresIn: days * 86_400 } : {}) },
+          headers: await headers(),
+        });
+      else await auth.api.unbanUser({ body: { userId: i }, headers: await headers() });
+    },
+    { meta: banned ? { reason: reason || null, days: days ?? null } : undefined, message: banned ? "User banned." : "User unbanned." },
+  );
+}
+
+export type SessionInfo = { token: string; ip: string | null; agent: string | null; createdAt: string; expiresAt: string };
+
+/** The user's active sign-ins (device and address, never any content). */
+export async function getUserSessions(id: string): Promise<{ ok: true; sessions: SessionInfo[] } | { ok: false; error: string }> {
+  try {
+    await assertAdmin();
+    if (!UUID.test(id)) return { ok: false, error: "Bad user id." };
+    const r = (await auth.api.listUserSessions({ body: { userId: id }, headers: await headers() })) as {
+      sessions?: {
+        token: string;
+        ipAddress?: string | null;
+        userAgent?: string | null;
+        createdAt: string | Date;
+        expiresAt: string | Date;
+      }[];
+    };
+    const now = Date.now();
+    return {
+      ok: true,
+      sessions: (r.sessions ?? [])
+        .filter((s) => new Date(s.expiresAt).getTime() > now)
+        .map((s) => ({
+          token: s.token,
+          ip: s.ipAddress ?? null,
+          agent: s.userAgent ?? null,
+          createdAt: new Date(s.createdAt).toISOString(),
+          expiresAt: new Date(s.expiresAt).toISOString(),
+        })),
+    };
+  } catch {
+    return { ok: false, error: "Not allowed." };
+  }
+}
+
+/** Ends one sign-in. The token must belong to that user, so a token for someone else can't be revoked through this path. */
+export async function revokeSession(id: string, token: string) {
+  return run(
+    id,
+    "user.revoke_session",
+    async (i) => {
+      const r = await getUserSessions(i);
+      if (!r.ok || !r.sessions.some((s) => s.token === token)) return { error: { message: "That session isn’t theirs." } };
+      await auth.api.revokeUserSession({ body: { sessionToken: token }, headers: await headers() });
+    },
+    { protect: false, message: "Signed out of that device." },
+  );
+}
+
+/** Signs the user out everywhere. */
+export async function revokeAllSessions(id: string) {
+  return run(
+    id,
+    "user.revoke_sessions",
+    async (i) => {
+      await auth.api.revokeUserSessions({ body: { userId: i }, headers: await headers() });
+    },
+    { protect: false, message: "Signed out everywhere." },
+  );
+}
+
+/** Changes the display name (for example to fix a typo or remove something inappropriate). */
+export async function renameUser(id: string, name: string) {
+  const n = String(name ?? "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (!n || n.length > 80) return { ok: false, error: "Enter a name up to 80 characters." } as Result;
+  return run(
+    id,
+    "user.rename",
+    async (i) => {
+      await pool().query("update auth.users set name = $2, updated_at = now() where id = $1", [i, n]);
+    },
+    { protect: false, meta: { name: n }, message: "Name updated." },
+  );
 }
 
 export async function deleteUser(id: string) {
