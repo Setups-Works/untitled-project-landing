@@ -3,7 +3,7 @@ import { useEffect, useRef, useState } from "react";
 import { readText, writeText } from "../../../lib/drafts";
 import { FontAwesomeIcon as FA } from "@fortawesome/react-fontawesome";
 import { faCalendarDay, faFlag, faRotate, faXmark, faHashtag } from "@fortawesome/free-solid-svg-icons";
-import { PRIORITIES, RECURRENCES, type Draft } from "../../../lib/tasks";
+import { PRIORITIES, recurrenceChoices, type Draft } from "../../../lib/tasks";
 import { addDays, isoDate } from "../../../lib/dates";
 import type { TaskList } from "../../../lib/workspace";
 
@@ -133,7 +133,7 @@ export default function TaskForm({
         <label className="tf-pill" data-set={!!d.recurrence}>
           <FA icon={faRotate} />
           <select value={d.recurrence ?? ""} onChange={(e) => set("recurrence", e.target.value || null)} aria-label="Repeat">
-            {RECURRENCES.map(([v, l]) => (
+            {recurrenceChoices(d.due_date, d.recurrence).map(([v, l]) => (
               <option key={v} value={v}>
                 {l}
               </option>

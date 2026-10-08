@@ -9,6 +9,7 @@ import {
   type ChatProposal,
   type CreatedItem,
 } from "../../../lib/chat-actions";
+import { firstDue } from "../../../lib/tasks";
 import { userDb } from "../../db/builders";
 import { getMessageBody, replaceMessageBody } from "../../repositories/chat-messages.repository";
 import { createJournalEntry, setJournalBody } from "../../repositories/journal.repository";
@@ -38,7 +39,14 @@ async function create(db: Db, action: ChatAction, links: Links): Promise<Created
     const j = await createJournalEntry(db, { body: resolveRefs(action.body, links), entry_date: action.entry_date });
     return { kind: "journal", id: j.id, path: itemPath("journal", j.id, j.entry_date) };
   }
-  const t = await createTask(db, { title: action.title, description: action.description, due_date: action.due_date });
+  // A repeating to-do needs a first date that fits its rule ("every 2nd Wednesday" starts on the next 2nd Wednesday).
+  const recurrence = action.recurrence ?? null;
+  const t = await createTask(db, {
+    title: action.title,
+    description: action.description,
+    due_date: firstDue(action.due_date, recurrence),
+    recurrence,
+  });
   return { kind: "task", id: t.id, path: itemPath("task", t.id) };
 }
 

@@ -15,6 +15,11 @@ export const chatActionSchema = z.discriminatedUnion("kind", [
     title: z.string().trim().min(1).max(300),
     description: z.string().max(5000),
     due_date: date.nullable(),
+    /** How a repeating to-do repeats ("monthly", or "nth:2:wed" for the 2nd Wednesday of every month); absent for a one-off. */
+    recurrence: z
+      .string()
+      .regex(/^(daily|weekdays|weekly|monthly|yearly|nth:[1-4]:(sun|mon|tue|wed|thu|fri|sat))$/)
+      .nullish(),
     ref,
   }),
 ]);

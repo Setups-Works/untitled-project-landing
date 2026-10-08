@@ -6,6 +6,7 @@ import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import { faBookOpen, faListCheck, faPenToSquare } from "@fortawesome/free-solid-svg-icons";
 import { stripRefs, type ChatAction, type ChatProposal } from "../../../lib/chat-actions";
 import { qk } from "../../../lib/query/keys";
+import { firstDue, recurrenceLabel } from "../../../lib/tasks";
 
 const TONE: Record<ChatAction["kind"], string> = { journal: "violet", task: "amber", note: "blue" };
 const ICON: Record<ChatAction["kind"], IconDefinition> = { journal: faBookOpen, task: faListCheck, note: faPenToSquare };
@@ -80,9 +81,19 @@ export default function ChatActionProposal({
             {a.kind !== "journal" && <p className="mt-2 font-semibold">{a.title}</p>}
             {preview && <p className="mt-1 line-clamp-6 whitespace-pre-wrap break-words text-sm text-fg-muted">{preview}</p>}
             {a.kind === "task" && (
-              <p className="mt-2 block w-fit rounded-full bg-white/65 px-2.5 py-0.5 text-xs text-(--abf)">
-                {a.due_date ? `Due ${dateLabel(a.due_date)}` : "No due date"}
-              </p>
+              <>
+                <p className="mt-2 block w-fit rounded-full bg-white/65 px-2.5 py-0.5 text-xs text-(--abf)">
+                  {(() => {
+                    const due = firstDue(a.due_date, a.recurrence ?? null);
+                    return due ? `${a.recurrence ? "Starts" : "Due"} ${dateLabel(due)}` : "No due date";
+                  })()}
+                </p>
+                {a.recurrence && (
+                  <p className="mt-1.5 block w-fit rounded-full bg-white/65 px-2.5 py-0.5 text-xs text-(--abf)">
+                    ↻ {recurrenceLabel(a.recurrence)}
+                  </p>
+                )}
+              </>
             )}
             {a.kind === "journal" && (
               <p className="mt-2 block w-fit rounded-full bg-white/65 px-2.5 py-0.5 text-xs text-(--abf)">For {dateLabel(a.entry_date)}</p>

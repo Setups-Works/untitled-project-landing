@@ -4,6 +4,7 @@ import { faCalendarDay, faCheck, faInbox, faPen, faRotate, faTrash, faHashtag } 
 import type { Task, TaskList } from "../../../lib/workspace";
 import { dayLabel } from "../../../lib/dates";
 import { ctxProps } from "../../../lib/context-actions";
+import { recurrenceLabel } from "../../../lib/tasks";
 
 export type RowCtx = {
   today: string;
@@ -67,7 +68,7 @@ export default function TaskItem({ task: t, ctx, showList = true }: { task: Task
             )}
             {t.recurrence && (
               <span title="Repeats">
-                <FA icon={faRotate} /> {t.recurrence}
+                <FA icon={faRotate} /> {recurrenceLabel(t.recurrence)}
               </span>
             )}
           </span>

@@ -1,5 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { applyOpts, DEFAULT_OPTS, groupTasks, inView, isOpen, isOverdue, isView, nextDue } from "../../src/lib/tasks";
+import {
+  applyOpts,
+  DEFAULT_OPTS,
+  firstDue,
+  groupTasks,
+  inView,
+  isOpen,
+  isOverdue,
+  isView,
+  nextDue,
+  nthRuleFor,
+  recurrenceLabel,
+} from "../../src/lib/tasks";
 import type { Task, TaskList } from "../../src/lib/workspace";
 
 const TODAY = "2026-10-07";
@@ -18,6 +30,31 @@ const task = (over: Partial<Task> = {}): Task => ({
   recurrence: null,
   created_at: `2026-10-0${(n % 9) + 1}T10:00:00Z`,
   ...over,
+});
+
+describe("every n-th weekday of the month", () => {
+  it("finds the first matching date on or after a start date", () => {
+    expect(firstDue(null, "nth:2:wed", "2026-10-08")).toBe("2026-10-14"); // 2nd Wednesday of October 2026
+    expect(firstDue(null, "nth:2:wed", "2026-10-14")).toBe("2026-10-14"); // today counts
+    expect(firstDue(null, "nth:2:wed", "2026-10-15")).toBe("2026-11-11"); // otherwise next month
+    expect(firstDue("2026-10-09", "nth:2:wed", "2026-10-08")).toBe("2026-10-14"); // a wrong date is corrected
+    expect(firstDue("2026-12-09", "monthly", "2026-10-08")).toBe("2026-12-09"); // simple rules keep the date
+    expect(firstDue(null, "weekly", "2026-10-08")).toBe("2026-10-08");
+    expect(firstDue("2026-10-08", null, "2026-10-08")).toBe("2026-10-08");
+  });
+  it("repeats on the n-th weekday of each following month", () => {
+    expect(nextDue("2026-10-14", "nth:2:wed", "2026-10-14")).toBe("2026-11-11");
+    expect(nextDue("2026-11-11", "nth:2:wed", "2026-11-11")).toBe("2026-12-09");
+    expect(nextDue("2026-12-09", "nth:2:wed", "2026-12-09")).toBe("2027-01-13");
+    expect(nextDue("2026-01-07", "nth:2:wed", "2026-10-08")).toBe("2026-10-14"); // catches up
+  });
+  it("derives the rule from a date and labels it", () => {
+    expect(nthRuleFor("2026-10-14")).toBe("nth:2:wed");
+    expect(nthRuleFor("2026-10-29")).toBeNull(); // a 5th Thursday does not exist every month
+    expect(recurrenceLabel("nth:2:wed")).toBe("Every month on the 2nd Wednesday");
+    expect(recurrenceLabel("weekly")).toBe("Every week");
+    expect(recurrenceLabel(null)).toBe("Doesn’t repeat");
+  });
 });
 
 describe("nextDue (repeating tasks)", () => {

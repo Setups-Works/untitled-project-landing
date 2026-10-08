@@ -141,10 +141,85 @@ function daysIn(y: number, m: number) {
   return new Date(y, m + 1, 0).getDate();
 }
 
+/* ---- "Every month on the 2nd Wednesday": rule `nth:<1-4>:<weekday>` ---- */
+const DOW = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
+const DOW_NAME = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const ORDINAL = ["", "1st", "2nd", "3rd", "4th"];
+export const NTH_RULE = /^nth:([1-4]):(sun|mon|tue|wed|thu|fri|sat)$/;
+
+const parts = (iso: string) => iso.split("-").map(Number) as [number, number, number];
+
+/** The rule for "the same weekday of the month as this date" (the 2nd Wednesday, say); null for a 5th weekday, which not every month has. */
+export function nthRuleFor(iso: string): string | null {
+  const [y, m, d] = parts(iso);
+  const n = Math.ceil(d / 7);
+  return n > 4 ? null : `nth:${n}:${DOW[new Date(y, m - 1, d).getDay()]}`;
+}
+
+/** The date of the n-th weekday in a month (`month` is 0-based). */
+function nthWeekday(year: number, month: number, n: number, dow: number): string {
+  const first = new Date(year, month, 1).getDay();
+  return isoDate(new Date(year, month, 1 + ((dow - first + 7) % 7) + (n - 1) * 7));
+}
+
+/** The first date strictly after `iso` that the rule lands on. */
+function nextNth(iso: string, rule: string): string {
+  const m = NTH_RULE.exec(rule);
+  if (!m) return iso;
+  const [n, dow] = [Number(m[1]), DOW.indexOf(m[2] as (typeof DOW)[number])];
+  const [y, mo] = parts(iso);
+  for (let i = 0; i < 3; i++) {
+    const c = nthWeekday(y, mo - 1 + i, n, dow);
+    if (c > iso) return c;
+  }
+  return iso;
+}
+
+/** "Every month on the 2nd Wednesday", or the plain label for the simple rules. */
+export function recurrenceLabel(rule: string | null): string {
+  if (!rule) return "Doesn’t repeat";
+  const m = NTH_RULE.exec(rule);
+  if (m) return `Every month on the ${ORDINAL[Number(m[1])]} ${DOW_NAME[DOW.indexOf(m[2] as (typeof DOW)[number])]}`;
+  return RECURRENCES.find(([v]) => v === rule)?.[1] ?? rule;
+}
+
+/** The repeat choices for a form: the simple ones, "every month on the 2nd Wednesday" (from the due date), and the current rule if it is another one. */
+export function recurrenceChoices(due: string | null, current: string | null): [string, string][] {
+  const list = [...RECURRENCES];
+  const nth = due ? nthRuleFor(due) : null;
+  if (nth) list.push([nth, recurrenceLabel(nth)]);
+  if (current && !list.some(([v]) => v === current)) list.push([current, recurrenceLabel(current)]);
+  return list;
+}
+
+/**
+ * The due date a repeating to-do should start on. Without a repeat it is the date given. With one, it is that date when it fits
+ * the rule (or the first day on or after today when no date was given), otherwise the first date on or after `from` that does.
+ * This is how "every second Wednesday" gets a real first date even when it was only described in words.
+ */
+export function firstDue(due: string | null, rule: string | null, from = isoDate()): string | null {
+  if (!rule) return due;
+  const start = due ?? from;
+  if (!NTH_RULE.test(rule)) return due ?? from;
+  const m = NTH_RULE.exec(rule)!;
+  const [y, mo] = parts(start);
+  const dow = DOW.indexOf(m[2] as (typeof DOW)[number]);
+  for (let i = 0; i < 3; i++) {
+    const c = nthWeekday(y, mo - 1 + i, Number(m[1]), dow);
+    if (c >= start) return c;
+  }
+  return start;
+}
+
 /** The next occurrence of a recurring task, strictly after `after` (default today). */
 export function nextDue(due: string, rule: string, after = isoDate()): string {
   let cur = due;
   for (let i = 0; i < 800; i++) {
+    if (NTH_RULE.test(rule)) {
+      cur = nextNth(cur, rule);
+      if (cur > after) return cur;
+      continue;
+    }
     const [y, m, d] = cur.split("-").map(Number);
     const dt = new Date(y, m - 1, d);
     if (rule === "daily") dt.setDate(dt.getDate() + 1);
