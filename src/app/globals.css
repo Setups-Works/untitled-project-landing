@@ -8675,6 +8675,62 @@
   .cx[data-side="false"] .cx-sidewrap {
     display: none;
   }
+  .cx > .cx-rail {
+    display: none;
+  }
+  /* Closed on desktop: a slim rail of icons and the latest chats as round initials. */
+  @media (min-width: 901px) {
+    .cx[data-side="false"] {
+      grid-template-columns: 76px minmax(0, 1fr);
+    }
+    .cx[data-side="false"] .cx-rail {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 8px;
+      overflow: auto;
+    }
+    .cx-rail-btn {
+      flex: none;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-size: 16px;
+      color: var(--fg-muted);
+      background: var(--glass);
+      backdrop-filter: var(--glass-blur);
+      box-shadow: var(--glass-ring);
+      transition:
+        transform 0.3s var(--spring),
+        background-color 0.3s,
+        color 0.3s;
+    }
+    .cx-rail-btn:hover {
+      background: var(--glass-hi);
+      color: var(--fg);
+    }
+    .cx-rail-btn:active {
+      transform: scale(0.94);
+    }
+    .cx-rail-chat {
+      font-size: 15px;
+      font-weight: 600;
+    }
+    .cx-rail-chat[data-on="true"] {
+      background: #fff;
+      color: var(--fg);
+      box-shadow: inset 0 0 0 1.5px var(--abf);
+    }
+    .cx-rail-sep {
+      width: 28px;
+      margin: 4px 0;
+      border: 0;
+      border-top: 1px solid var(--abl);
+    }
+  }
   .cx-sidewrap {
     width: 100%;
     min-width: 0;
@@ -9049,6 +9105,12 @@
   }
   .cx-menu[data-show="true"] {
     display: grid;
+  }
+  @media (min-width: 901px) {
+    /* The icon rail is the desktop way back to the full list. */
+    .cx-menu[data-show="true"] {
+      display: none;
+    }
   }
   .cx-err {
     margin: 0 0 8px;
@@ -11573,6 +11635,50 @@
     font-style: normal;
     font-size: 12.5px;
     color: var(--fg-subtle);
+  }
+  .jr-toggle {
+    display: none;
+  }
+  .jr-num {
+    display: none;
+    font-style: normal;
+    font-weight: 600;
+    font-size: 15px;
+  }
+  /* Closed on desktop: a rail of round day numbers (each keeps its colour). */
+  @media (min-width: 901px) {
+    .jr-toggle {
+      display: grid;
+      align-self: flex-end;
+      margin-bottom: 6px;
+    }
+    .jr[data-side="false"] {
+      grid-template-columns: 76px minmax(0, 1fr);
+    }
+    .jr[data-side="false"] .jr-side.ap-card {
+      align-items: center;
+      padding: 12px 8px;
+    }
+    .jr[data-side="false"] .jr-toggle {
+      align-self: center;
+    }
+    .jr[data-side="false"] .jr-nav {
+      display: none;
+    }
+    .jr[data-side="false"] .jr-days button {
+      width: 48px;
+      height: 48px;
+      padding: 0;
+      border-radius: 50%;
+      justify-content: center;
+    }
+    .jr[data-side="false"] .jr-days span,
+    .jr[data-side="false"] .jr-days em {
+      display: none;
+    }
+    .jr[data-side="false"] .jr-num {
+      display: block;
+    }
   }
   .jr-main.ap-card {
     display: flex;

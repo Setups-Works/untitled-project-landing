@@ -32,6 +32,7 @@ import Markdown from "../Markdown";
 import { useAiProviders } from "../../../features/ai/useAiProviders";
 import { openSearch } from "../UniversalSearch";
 import ChatSidebar, { type Tab } from "./ChatSidebar";
+import ChatRail from "./ChatRail";
 import Composer from "./Composer";
 import ShareDialog from "./ShareDialog";
 import ChatActionProposal from "./ChatActionProposal";
@@ -467,6 +468,15 @@ export default function ChatApp({ name }: { name: string }) {
           onClear={clearChat}
         />
       </div>
+      <ChatRail
+        chats={chats}
+        activeId={activeId}
+        onOpen={open}
+        onNew={fresh}
+        onSearch={openSearch}
+        onAddFolder={addFolder}
+        onExpand={toggleSide}
+      />
 
       <section className="cx-main">
         <header className="cx-head">

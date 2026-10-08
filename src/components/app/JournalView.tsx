@@ -2,7 +2,7 @@
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FontAwesomeIcon as FA } from "@fortawesome/react-fontawesome";
-import { faArrowUp, faChevronLeft, faChevronRight, faPaperclip, faPen, faTrash } from "@fortawesome/free-solid-svg-icons";
+import { faArrowUp, faChevronLeft, faChevronRight, faPaperclip, faPen, faTableColumns, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../lib/api/client";
 import { qk } from "../../lib/query/keys";
@@ -45,6 +45,23 @@ export default function JournalView() {
   }, [dParam, today]);
   const qc = useQueryClient();
   const [err, setErr] = useState("");
+  // Desktop: the day list can close to a rail of day numbers (remembered in this browser).
+  const [side, setSide] = useState(true);
+  useEffect(() => {
+    try {
+      setSide(window.localStorage.getItem("up_journal_sidebar") !== "false");
+    } catch {
+      /* storage unavailable: stay open */
+    }
+  }, []);
+  const toggleSide = () => {
+    setSide(!side);
+    try {
+      window.localStorage.setItem("up_journal_sidebar", String(!side));
+    } catch {
+      /* ignore */
+    }
+  };
   // Unsent text, attachments and voice recordings are kept per day, so a refresh doesn't lose them.
   const [text, setText] = useDraftText(`journal:${date}`);
   const [files, setFiles] = useDraftFiles(`journal:${date}`);
@@ -199,9 +216,17 @@ export default function JournalView() {
   const canSend = (text.trim() || files.length) && !busy;
 
   return (
-    <div className="jr">
+    <div className="jr" data-side={side}>
       {dialog}
       <aside className="jr-side ap-card at-sand" aria-label="Journal days">
+        <button
+          className="ne-btn jr-toggle"
+          aria-label={side ? "Hide sidebar" : "Show sidebar"}
+          title={side ? "Hide sidebar" : "Show sidebar"}
+          onClick={toggleSide}
+        >
+          <FA icon={faTableColumns} />
+        </button>
         <div className="jr-nav">
           <button className="jc-btn" aria-label="Previous day" onClick={() => setDate(addDays(date, -1))}>
             <FA icon={faChevronLeft} />
@@ -219,10 +244,15 @@ export default function JournalView() {
                 <button
                   data-on={iso === date}
                   aria-current={iso === date ? "date" : undefined}
+                  aria-label={dd.toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" })}
+                  title={dd.toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" })}
                   onClick={() => setDate(iso)}
                   // Each date has its own colour (same tints as the notes cards); the chosen day gets a stronger ring.
                   className={`at-${dayTone(iso)} bg-(--ab) shadow-[inset_0_0_0_1px_var(--abl)] hover:brightness-[0.97] data-[on=true]:shadow-[inset_0_0_0_2px_var(--abf)] [&_small]:text-(--abf)`}
                 >
+                  <i className="jr-num" aria-hidden>
+                    {dd.getDate()}
+                  </i>
                   <span>
                     <small>{dd.toLocaleDateString(undefined, { weekday: "short" })}</small>
                     <b>{dd.toLocaleDateString(undefined, { day: "numeric", month: "long" })}</b>
