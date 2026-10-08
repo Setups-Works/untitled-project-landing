@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { RESOURCES } from "./resources";
 
 /**
  * OpenAPI 3.1 description of the app's HTTP API, served at /api/v1/openapi.json and browsable at /api/v1/docs.
@@ -98,6 +99,91 @@ export function buildOpenApi() {
     void _ignored;
     components[name] = js;
   }
+  // Notes, to-dos and journal entries: list, create, read, change, delete, from the shared resource definitions.
+  const resourcePaths: Record<string, unknown> = {};
+  const names: Record<string, string> = { notes: "Note", tasks: "Task", journal: "JournalEntry" };
+  const toJs = (s: z.ZodType, io: "input" | "output") => {
+    const { $schema: _s, ...js } = z.toJSONSchema(s, { io, unrepresentable: "any" }) as Record<string, unknown>;
+    void _s;
+    return js;
+  };
+  const idParam = { name: "id", in: "path", required: true, schema: { type: "string", format: "uuid" } };
+  for (const r of RESOURCES) {
+    const n = names[r.key];
+    components[n] = toJs(r.row, "output");
+    components[`${n}Input`] = toJs(r.create, "input");
+    components[`${n}Update`] = toJs(r.update, "input");
+    const r$ = (s: string) => ({ $ref: `#/components/schemas/${s}` });
+    const one = (description: string) => ({
+      description,
+      content: { "application/json": { schema: { type: "object", properties: { data: r$(n) } } } },
+    });
+    const filterParams = Object.entries(r.filters).map(([name, kind]) => ({
+      name,
+      in: "query",
+      required: false,
+      schema: kind === "boolean" ? { type: "boolean" } : kind === "date" ? { type: "string", format: "date" } : { type: "string" },
+    }));
+    resourcePaths[r.path] = {
+      get: {
+        tags: [r.tag],
+        summary: `List your ${r.singular}s`,
+        security: secured,
+        parameters: [
+          { name: "limit", in: "query", schema: { type: "integer", minimum: 1, maximum: 500, default: 100 } },
+          { name: "offset", in: "query", schema: { type: "integer", minimum: 0, default: 0 } },
+          ...filterParams,
+        ],
+        responses: {
+          "200": {
+            description: "The list",
+            content: {
+              "application/json": {
+                schema: {
+                  type: "object",
+                  properties: { data: { type: "array", items: r$(n) }, limit: { type: "integer" }, offset: { type: "integer" } },
+                },
+              },
+            },
+          },
+          "400": err("Bad filter."),
+          "401": common["401"],
+        },
+      },
+      post: {
+        tags: [r.tag],
+        summary: `Create a ${r.singular}`,
+        security: secured,
+        requestBody: { required: true, content: { "application/json": { schema: r$(`${n}Input`) } } },
+        responses: { "201": one("Created"), "400": err("Invalid input."), ...common },
+      },
+    };
+    resourcePaths[`${r.path}/{id}`] = {
+      parameters: [idParam],
+      get: {
+        tags: [r.tag],
+        summary: `Read one ${r.singular}`,
+        security: secured,
+        responses: { "200": one("The item"), "401": common["401"], "404": err("Not found.") },
+      },
+      patch: {
+        tags: [r.tag],
+        summary: `Change a ${r.singular}`,
+        description: "Send only the fields to change.",
+        security: secured,
+        requestBody: { required: true, content: { "application/json": { schema: r$(`${n}Update`) } } },
+        responses: { "200": one("Updated"), "400": err("Invalid input."), ...common, "404": err("Not found.") },
+      },
+      delete: {
+        tags: [r.tag],
+        summary: `Delete a ${r.singular}`,
+        description: r.key === "tasks" ? undefined : "Files attached to it are deleted too.",
+        security: secured,
+        responses: { "200": { description: "Deleted", content: json("Ok") }, ...common, "404": err("Not found.") },
+      },
+    };
+  }
+
   return {
     openapi: "3.1.0",
     info: {
@@ -108,6 +194,9 @@ export function buildOpenApi() {
     },
     servers: [{ url: "/" }],
     tags: [
+      { name: "To-do", description: "To-dos, including repeating ones" },
+      { name: "Notes", description: "Notes (Markdown) with colours, pins and files" },
+      { name: "Journal", description: "Journal entries by day" },
       { name: "AI", description: "Assistant replies and confirmed drafts" },
       { name: "Data", description: "Row-level-security protected data door used by the web app" },
       { name: "Realtime", description: "Server-sent events" },
@@ -116,6 +205,7 @@ export function buildOpenApi() {
       { name: "Auth", description: "Provided by Better Auth (see its documentation for every endpoint)" },
     ],
     paths: {
+      ...resourcePaths,
       "/api/v1/auth-config": {
         get: {
           tags: ["Config"],
