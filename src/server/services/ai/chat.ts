@@ -19,6 +19,11 @@ function requestedKind(text: string): CreateKind | null {
   return null;
 }
 
+/** A short request that points back at earlier content ("add this in note", "save that as a to-do"). */
+function referencesEarlier(text: string) {
+  return text.trim().length <= 80 && /\b(this|that|it|above|these|those)\b/i.test(text);
+}
+
 function hasCreateOffer(text: string) {
   return /\b(if you(?:'d| would) like|would you like|want me to|shall i|i can)\b[\s\S]{0,180}\b(create|make|save|add|write|note|journal|task|to[ -]?do)\b/i.test(
     text,
@@ -72,27 +77,44 @@ function prepareCreateProposal(
 ): { text: string; appended: string } | null {
   const requestIndex = rows.reduce((last, row, index) => (row.role === "user" && requestedKind(row.body) ? index : last), -1);
   if (requestIndex < 0 || handledAfter(rows, requestIndex)) return null;
-  if (parseChatAction(assistantText).action) return null;
   const request = rows[requestIndex].body;
   const kind = requestedKind(request)!;
   const latestUser = rows.at(-1);
   const directRequest = latestUser?.role === "user" && requestedKind(latestUser.body) !== null;
+  // "add this in note" points at the answer just above, not at the model's reply to this very message.
+  const previousIndex = rows.length - 2;
+  const previous = rows[previousIndex];
+  const refersBack = directRequest && referencesEarlier(request) && previous?.role === "assistant" && !hasSavedClaim(previous.body);
+  // When the person points back at earlier content the draft is built from it, even if the model guessed a different draft.
+  if (!refersBack && parseChatAction(assistantText).action) return null;
   if (!directRequest && (!latestUser || latestUser.role !== "user" || !affirming(latestUser.body))) return null;
   if (!directRequest && !rows.slice(requestIndex + 1, -1).some((row) => row.role === "assistant" && hasCreateOffer(row.body))) return null;
 
-  const source = directRequest
-    ? assistantText
-    : ([...rows.slice(requestIndex + 1, -1)]
-        .reverse()
-        .find((row) => row.role === "assistant" && !hasCreateOffer(row.body) && !hasSavedClaim(row.body))?.body ?? assistantText);
+  const source = refersBack
+    ? previous.body
+    : directRequest
+      ? assistantText
+      : ([...rows.slice(requestIndex + 1, -1)]
+          .reverse()
+          .find((row) => row.role === "assistant" && !hasCreateOffer(row.body) && !hasSavedClaim(row.body))?.body ?? assistantText);
   const cleanSource = falseSavedClaims(parseChatAction(source).body).trim().slice(0, 9_000);
-  const title = draftTitle(cleanSource, kind, request);
+  // The title of a saved answer comes from what was asked for, e.g. "write login page html code", not from "add this in note".
+  const asked = refersBack
+    ? rows
+        .slice(0, previousIndex)
+        .reverse()
+        .find((r) => r.role === "user")?.body
+    : undefined;
+  const title = draftTitle(cleanSource, kind, asked ?? request);
   let action: ChatAction;
   if (kind === "note") action = { kind, title, body: cleanSource || request.slice(0, 9_000) };
   else if (kind === "journal") action = { kind, body: cleanSource || request.slice(0, 9_000), entry_date: localDate };
   else action = { kind, title: title.slice(0, 300), description: cleanSource || request.slice(0, 5_000), due_date: null };
 
-  const safeReply = falseSavedClaims(parseChatAction(assistantText).body).trim().slice(0, 4_000);
+  // The model's own text may describe a different draft than the one built here, so it is replaced.
+  const safeReply = refersBack
+    ? `I’ve prepared a ${kind === "task" ? "to-do" : kind === "journal" ? "journal entry" : "note"} draft from my last answer.`
+    : falseSavedClaims(parseChatAction(assistantText).body).trim().slice(0, 4_000);
   const intro = safeReply ? `${safeReply}\n\n` : "";
   const note = "Review this draft below. It will only be saved when you choose Create.";
   const block = `<create-item>${JSON.stringify(action)}</create-item>`;
