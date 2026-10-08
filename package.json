@@ -9,6 +9,10 @@
     "db:migrate": "node scripts/db/migrate.mjs",
     "docker:up": "docker compose --env-file .env.selfhost up -d",
     "docker:down": "docker compose --env-file .env.selfhost down",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:db": "RUN_DB_TESTS=1 vitest run",
+    "test:e2e": "playwright test",
     "format": "prettier --write .",
     "format:check": "prettier --check ."
   },
@@ -34,6 +38,7 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@playwright/test": "^1.64.0",
     "@tailwindcss/postcss": "^4.3.3",
     "@tanstack/react-query-devtools": "^5.104.1",
     "@types/node": "^26.6.4",
@@ -44,6 +49,7 @@
     "postcss": "^8.5.29",
     "prettier": "^3.9.9",
     "tailwindcss": "^4.3.3",
-    "typescript": "^5.9.3"
+    "typescript": "^5.9.3",
+    "vitest": "^5.0.3"
   }
 }

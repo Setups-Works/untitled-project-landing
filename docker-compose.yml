@@ -15,6 +15,7 @@ x-app-env: &app-env
   S3_SECRET_KEY: ${S3_SECRET_KEY}
   SMTP_URL: ${SMTP_URL:-smtp://mailpit:1025}
   MAIL_FROM: ${MAIL_FROM:-}
+  AUTH_REQUIRE_EMAIL_VERIFICATION: ${AUTH_REQUIRE_EMAIL_VERIFICATION:-true}
   GROQ_API_KEY: ${GROQ_API_KEY:-}
   GROQ_MODEL: ${GROQ_MODEL:-}
   BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
@@ -96,7 +97,8 @@ services:
   # Applies db/migrations, then exits. The app container waits for it.
   migrate:
     profiles: ["app"]
-    build: { context: ., target: tools }
+    image: untitled-app:latest # the same image `web` builds — nothing extra to build or store
+    pull_policy: never
     command: ["node", "scripts/db/migrate.mjs"]
     environment: *app-env
     depends_on:
@@ -104,6 +106,7 @@ services:
 
   web:
     profiles: ["app"]
+    image: untitled-app:latest
     build: { context: ., target: runner }
     restart: unless-stopped
     environment: *app-env

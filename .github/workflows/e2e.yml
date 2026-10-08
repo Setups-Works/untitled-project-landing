@@ -1,0 +1,68 @@
+name: E2E
+
+# Heavier checks that need the whole stack: database tests (row-level security) and the Playwright journey.
+# Run it by hand from the Actions tab (UNT-33). It is not required for merging.
+on:
+  workflow_dispatch:
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e:
+    name: Database tests and browser journey
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Create throwaway secrets for this run
+        run: |
+          {
+            echo "POSTGRES_PASSWORD=$(openssl rand -hex 16)"
+            echo "REDIS_PASSWORD=$(openssl rand -hex 16)"
+            echo "S3_SECRET_KEY=$(openssl rand -hex 16)"
+            echo "BETTER_AUTH_SECRET=$(openssl rand -hex 32)"
+            echo "BETTER_AUTH_URL=http://localhost:3000"
+            echo "AUTH_REQUIRE_EMAIL_VERIFICATION=false"
+          } > .env.selfhost
+
+      - name: Start the stack (database, Redis, storage, mail, app)
+        run: docker compose --env-file .env.selfhost --profile app up -d --build --wait
+
+      - name: Database tests
+        run: |
+          set -a; . ./.env.selfhost; set +a
+          export DATABASE_URL="postgres://app:${POSTGRES_PASSWORD}@127.0.0.1:5432/untitled"
+          npm run test:db
+
+      - name: Install the browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Browser tests
+        run: npm run test:e2e
+        env:
+          E2E_SIGNUP: "1"
+
+      - name: Upload the report if something failed
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: |
+            playwright-report
+            test-results
+          retention-days: 7
+
+      - name: Show the app's logs if something failed
+        if: failure()
+        run: docker compose --env-file .env.selfhost --profile app logs --tail 200 web

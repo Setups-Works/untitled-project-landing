@@ -53,10 +53,16 @@ Small rules that keep a three-developer codebase readable. When in doubt, match 
 
 ## Testing (UNT-33)
 
-- Pure logic (`dates`, `tasks` recurrence/grouping, `insights`, `prefs`, sanitisers): Vitest, table-driven.
-- Services: test against the Docker Postgres with a throwaway user.
-- E2E: Playwright for sign-up → note → task → sign-out; add one test per major feature.
-- A bug fix includes a test that fails without the fix when practical.
+| Command            | What it runs                                                                                                                                                              | Needs                                                   |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- |
+| `npm test`         | Unit tests (`tests/unit/*.test.ts`): dates, tasks, notes/chat helpers, prefs, onboarding, query builder, storage keys and signed links, insights. Runs in CI on every PR. | nothing                                                 |
+| `npm run test:db`  | Database tests (`tests/db/*.test.ts`): the API query layer against real Postgres with row-level security (two throwaway users, cleaned up).                               | `docker compose up -d` + `npm run db:migrate`           |
+| `npm run test:e2e` | Playwright (`e2e/*.spec.ts`): smoke checks, plus the sign-up → task → note → sign-out journey with `E2E_SIGNUP=1`.                                                        | the app running; once `npx playwright install chromium` |
+
+- Pure logic: Vitest, table-driven, no mocks of our own code. Dates are pinned to UTC in `vitest.config.mts`.
+- Anything that talks to the database or depends on RLS goes in `tests/db`, never mocked.
+- The journey test creates a throwaway account, so the app must run with `AUTH_REQUIRE_EMAIL_VERIFICATION=false`. The manual "E2E" workflow in GitHub Actions starts the whole stack that way.
+- Add one Playwright test per major feature. A bug fix includes a test that fails without the fix when practical.
 
 ## Git hygiene
 

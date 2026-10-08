@@ -8,3 +8,7 @@ tsconfig.tsbuildinfo
 npm-debug.log*
 !.env.example
 !.env.selfhost.example
+
+# test output
+playwright-report
+test-results
