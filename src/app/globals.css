@@ -7558,13 +7558,19 @@
     height: 44px;
     padding: 0 14px 0 18px;
     border-radius: 99px;
-    background: var(--surface);
-    box-shadow: inset 0 0 0 1px var(--line);
+    background: #ffffff99;
+    backdrop-filter: blur(20px) saturate(1.5);
+    box-shadow:
+      inset 0 0 0 1px #ffffffd9,
+      inset 0 1px 3px #1b1c140f;
     color: var(--fg-subtle);
     min-width: min(300px, 100%);
-    transition: box-shadow 0.16s;
+    transition:
+      background-color 0.3s,
+      box-shadow 0.3s;
   }
   .nt-search:focus-within {
+    background: #ffffffe6;
     box-shadow: inset 0 0 0 2px var(--violet-fg);
   }
   .nt-search input {
@@ -7596,25 +7602,42 @@
     height: 44px;
     padding: 0 18px;
     border-radius: 99px;
-    background: var(--surface);
-    box-shadow: inset 0 0 0 1px var(--line);
+    /* Liquid glass, the same material as the section switcher and the round search button. */
+    background: #ffffff99;
+    backdrop-filter: blur(20px) saturate(1.5);
+    box-shadow:
+      inset 0 0 0 1px #ffffffd9,
+      inset 0 1px 3px #1b1c140f;
     font-size: 14px;
     color: var(--fg-muted);
     display: inline-flex;
     align-items: center;
     gap: 8px;
     transition:
-      box-shadow 0.16s,
-      color 0.16s;
+      transform 0.3s cubic-bezier(0.34, 1.45, 0.5, 1),
+      background-color 0.3s,
+      box-shadow 0.3s,
+      color 0.3s;
   }
   .nt-pills > button:hover,
   .nt-pill-menu .ap-pop-btn:hover,
   .nt-dots .ap-pop-btn:hover {
-    box-shadow: inset 0 0 0 1px var(--line-strong);
+    background: #ffffffcc;
+    box-shadow:
+      inset 0 1px 0 #fff,
+      inset 0 0 0 1px #fffffff2;
     color: var(--fg);
   }
+  .nt-pills > button:active,
+  .nt-pill-menu .ap-pop-btn:active,
+  .nt-dots .ap-pop-btn:active {
+    transform: scale(0.95);
+  }
   .nt-pills > button[data-on="true"] {
-    box-shadow: inset 0 0 0 1.5px var(--fg);
+    background: #ffffffe6;
+    box-shadow:
+      inset 0 0 0 1.5px var(--fg),
+      0 8px 18px -12px #1b1c1480;
     color: var(--fg);
   }
   .nt-dots .ap-pop-btn {
@@ -8354,6 +8377,26 @@
   }
   .nt-head .btn {
     margin-left: auto;
+  }
+  .nt-head .btn-secondary {
+    background: #ffffff99;
+    backdrop-filter: blur(20px) saturate(1.5);
+    box-shadow:
+      inset 0 0 0 1px #ffffffd9,
+      inset 0 1px 3px #1b1c140f;
+    transition:
+      transform 0.3s cubic-bezier(0.34, 1.45, 0.5, 1),
+      background-color 0.3s,
+      box-shadow 0.3s;
+  }
+  .nt-head .btn-secondary:hover {
+    background: #ffffffcc;
+    box-shadow:
+      inset 0 1px 0 #fff,
+      inset 0 0 0 1px #fffffff2;
+  }
+  .nt-head .btn-secondary:active {
+    transform: scale(0.96);
   }
   .nt-cards {
     padding: 20px !important;
