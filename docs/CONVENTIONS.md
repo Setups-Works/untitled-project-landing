@@ -59,6 +59,7 @@ Small rules that keep a three-developer codebase readable. When in doubt, match 
 | `npm run test:db`  | Database tests (`tests/db/*.test.ts`): the API query layer against real Postgres with row-level security (two throwaway users, cleaned up).                               | `docker compose up -d` + `npm run db:migrate`           |
 | `npm run test:e2e` | Playwright (`e2e/*.spec.ts`): smoke checks, plus the sign-up → task → note → sign-out journey with `E2E_SIGNUP=1`.                                                        | the app running; once `npx playwright install chromium` |
 
+- No spare disk for Playwright's own browser (~150 MB)? Point it at one you already have: `E2E_BROWSER_PATH="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" npm run test:e2e` (Brave and Edge work too). Set `DATABASE_URL` as well and the journey's throwaway account is deleted after the run.
 - Pure logic: Vitest, table-driven, no mocks of our own code. Dates are pinned to UTC in `vitest.config.mts`.
 - Anything that talks to the database or depends on RLS goes in `tests/db`, never mocked.
 - The journey test creates a throwaway account, so the app must run with `AUTH_REQUIRE_EMAIL_VERIFICATION=false`. The manual "E2E" workflow in GitHub Actions starts the whole stack that way.

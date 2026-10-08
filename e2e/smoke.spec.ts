@@ -49,6 +49,7 @@ test.describe("journey: sign up → note → task → sign out", () => {
 
     await page.goto("/signup");
     await page.getByPlaceholder("Ada Lovelace").fill("E2E Tester");
+    await page.getByPlaceholder("ada.lovelace").fill(`e2e_${stamp}`);
     await page.getByPlaceholder("you@example.com").fill(email);
     await page.getByPlaceholder("At least 8 characters").fill(`Pw-${stamp}-12345`);
     await page.getByRole("button", { name: /create account/i }).click();

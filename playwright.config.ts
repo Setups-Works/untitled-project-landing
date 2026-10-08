@@ -10,6 +10,7 @@ import { defineConfig, devices } from "@playwright/test";
  */
 export default defineConfig({
   testDir: "./e2e",
+  globalTeardown: "./e2e/global-teardown.ts",
   timeout: 45_000,
   expect: { timeout: 10_000 },
   fullyParallel: false,
@@ -20,5 +21,14 @@ export default defineConfig({
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
   },
-  projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
+  projects: [
+    {
+      name: "chromium",
+      use: {
+        ...devices["Desktop Chrome"],
+        // Optional: use a Chromium-based browser you already have (Chrome, Brave, Edge) instead of downloading Playwright's own.
+        ...(process.env.E2E_BROWSER_PATH ? { launchOptions: { executablePath: process.env.E2E_BROWSER_PATH } } : {}),
+      },
+    },
+  ],
 });
