@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import HtmlPreview, { looksLikeHtml } from "../ui/HtmlPreview";
 
 // A link to one of the user's own to-dos, notes or journal days: `[words](/dashboard/todo?task=<id> "To-do · Buy a rose · due 7 Aug 2026")`.
 // Only these in-app paths are accepted (never an arbitrary relative URL), and the optional title becomes the hover card.
@@ -97,12 +98,19 @@ export default function Markdown({ text }: { text: string }) {
     let m: RegExpExecArray | null;
     if (l.startsWith("```")) {
       flush(i);
+      const lang = l.slice(3).trim();
       const code: string[] = [];
       while (++i < lines.length && !lines[i].startsWith("```")) code.push(lines[i]);
+      const source = code.join("\n");
+      // A web page in a code block can be switched between its code and a live preview.
       out.push(
-        <pre key={i}>
-          <code>{code.join("\n")}</code>
-        </pre>,
+        looksLikeHtml(lang, source) ? (
+          <HtmlPreview key={i} code={source} />
+        ) : (
+          <pre key={i}>
+            <code>{source}</code>
+          </pre>
+        ),
       );
     } else if (i + 1 < lines.length && l.includes("|") && isTableSeparator(lines[i + 1])) {
       flush(i);
