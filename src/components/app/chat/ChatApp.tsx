@@ -34,6 +34,9 @@ import { openSearch } from "../UniversalSearch";
 import ChatSidebar, { type Tab } from "./ChatSidebar";
 import Composer from "./Composer";
 import ShareDialog from "./ShareDialog";
+import ChatActionProposal from "./ChatActionProposal";
+import { parseChatAction } from "../../../lib/chat-actions";
+import { isoDate } from "../../../lib/dates";
 
 // Stable empty values so a loading query doesn't create a new array each render.
 const EMPTY_CHATS: Chat[] = [];
@@ -205,7 +208,7 @@ export default function ChatApp({ name }: { name: string }) {
       const res = await fetch("/api/v1/ai/chat", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ chatId: id, provider }),
+        body: JSON.stringify({ chatId: id, provider, localDate: isoDate() }),
       });
       if (!res.ok || !res.body) {
         const j = (await res.json().catch(() => ({}))) as { error?: string };
@@ -569,36 +572,46 @@ export default function ChatApp({ name }: { name: string }) {
           ) : (
             <div className="cx-msgs" aria-live="polite">
               {msgs.length === 0 && ready && <p className="ap-none">Say something to start this chat.</p>}
-              {msgs.map((m) => (
-                <div key={m.id} className="cx-msg" data-role={m.role}>
-                  <div className="cx-bubble">
-                    {m.body && (m.role === "assistant" ? <Markdown text={m.body} /> : <p>{m.body}</p>)}
-                    {m.attachments.map((a) => {
-                      const u = urls[a.path];
-                      return (
-                        <div key={a.path} className="cx-att">
-                          {u && a.type.startsWith("image/") && <AttachmentImage src={u} name={a.name} />}
-                          {u && a.type.startsWith("audio/") && <AudioWave src={u} label={a.name} />}
-                          {!a.type.startsWith("image/") &&
-                            !a.type.startsWith("audio/") &&
-                            (u ? (
-                              <a href={u} target="_blank" rel="noopener noreferrer">
-                                <FA icon={faPaperclip} /> {a.name}
-                              </a>
-                            ) : (
-                              <span>{a.name}</span>
-                            ))}
-                        </div>
-                      );
-                    })}
-                    <small>{fmtTime(m.created_at)}</small>
+              {msgs.map((m) => {
+                const parsed = m.role === "assistant" ? parseChatAction(m.body) : null;
+                return (
+                  <div key={m.id} className="cx-msg" data-role={m.role}>
+                    <div className="cx-bubble">
+                      {parsed ? (
+                        <>
+                          {parsed.body && <Markdown text={parsed.body} />}
+                          {parsed.action && <ChatActionProposal action={parsed.action} messageId={m.id} chatId={activeId!} />}
+                        </>
+                      ) : (
+                        m.body && <p>{m.body}</p>
+                      )}
+                      {m.attachments.map((a) => {
+                        const u = urls[a.path];
+                        return (
+                          <div key={a.path} className="cx-att">
+                            {u && a.type.startsWith("image/") && <AttachmentImage src={u} name={a.name} />}
+                            {u && a.type.startsWith("audio/") && <AudioWave src={u} label={a.name} />}
+                            {!a.type.startsWith("image/") &&
+                              !a.type.startsWith("audio/") &&
+                              (u ? (
+                                <a href={u} target="_blank" rel="noopener noreferrer">
+                                  <FA icon={faPaperclip} /> {a.name}
+                                </a>
+                              ) : (
+                                <span>{a.name}</span>
+                              ))}
+                          </div>
+                        );
+                      })}
+                      <small>{fmtTime(m.created_at)}</small>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
               {streaming && streaming.chatId === activeId && (
                 <div className="cx-msg" data-role="assistant" aria-busy="true">
                   <div className="cx-bubble">
-                    {streaming.text ? <Markdown text={streaming.text} /> : <p className="ap-none">Thinking…</p>}
+                    {streaming.text ? <Markdown text={parseChatAction(streaming.text).body} /> : <p className="ap-none">Thinking…</p>}
                   </div>
                 </div>
               )}

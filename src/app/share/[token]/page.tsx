@@ -9,6 +9,8 @@ import type { Attachment } from "../../../lib/workspace";
 import AuthLink from "../../../components/auth/AuthLink";
 import AttachmentImage from "../../../components/ui/AttachmentImage";
 import AudioWave from "../../../components/ui/AudioWave";
+import Markdown from "../../../components/app/Markdown";
+import { parseChatAction } from "../../../lib/chat-actions";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
@@ -66,7 +68,7 @@ export default async function Page({ params }: { params: Promise<{ token: string
           {msgs.map((m) => (
             <div key={m.id} className="cx-msg" data-role={m.role}>
               <div className="cx-bubble">
-                {m.body && <p>{m.body}</p>}
+                {m.body && (m.role === "assistant" ? <Markdown text={parseChatAction(m.body).body} /> : <p>{m.body}</p>)}
                 {m.attachments.map((a) => {
                   const u = urls.get(a.path);
                   return (

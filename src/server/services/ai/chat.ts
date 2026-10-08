@@ -2,10 +2,95 @@ import "server-only";
 import { AiProviderError, getProvider, type AiChunk, type AiMessage } from "../../providers/ai";
 import { redis } from "../../redis";
 import { userDb } from "../../db/builders";
+import { parseChatAction, type ChatAction } from "../../../lib/chat-actions";
 import { CHAT_PROMPT } from "./prompts/chat";
 
 /** Limits live here (not in routes) so every caller gets the same behaviour. */
 const LIMITS = { historyMessages: 20, charsPerMessage: 6000, repliesPerMinute: 20, savedChars: 19000 } as const;
+
+type CreateKind = ChatAction["kind"];
+type CreateIntent = { kind: CreateKind; requestIndex: number };
+
+function requestedKind(text: string): CreateKind | null {
+  if (!/\b(create|make|save|add|write|draft|put)\b/i.test(text)) return null;
+  if (/\b(notes?|notebook)\b/i.test(text)) return "note";
+  if (/\b(journal|diary|journal entry)\b/i.test(text)) return "journal";
+  if (/\b(tasks?|to[ -]?dos?)\b/i.test(text)) return "task";
+  return null;
+}
+
+function hasCreateOffer(text: string) {
+  return /\b(if you(?:'d| would) like|would you like|want me to|shall i|i can)\b[\s\S]{0,180}\b(create|make|save|add|write|note|journal|task|to[ -]?do)\b/i.test(text);
+}
+
+function affirming(text: string) {
+  return /^\s*(yes|yeah|yep|sure|please|do that|go ahead|sounds good|okay|ok)[!.\s]*$/i.test(text);
+}
+
+function handledAfter(rows: { role: "user" | "assistant"; body: string }[], from: number) {
+  return rows.slice(from + 1).some((row) => {
+    if (row.role !== "assistant") return false;
+    return Boolean(parseChatAction(row.body).action) || /\[Open your (?:note|journal entry|to-do)\]\(https?:\/\//i.test(row.body);
+  });
+}
+
+function draftTitle(text: string, kind: CreateKind, request: string) {
+  const headings = text
+    .split("\n")
+    .map((line) => line.match(/^\s{0,3}#{1,3}\s+(.+?)\s*#*\s*$/)?.[1] ?? line.match(/^\s*\*\*(.+?)\*\*\s*$/)?.[1])
+    .filter((line): line is string => Boolean(line));
+  const heading = headings.find((line) => /\b(note|journal|task|to-do|features|summary|plan)\b/i.test(line)) ?? headings[0];
+  const raw = (heading ?? request)
+    .replace(/^\s*(?:note|journal entry|journal|task|to-do)\s*[:–—-]\s*/i, "")
+    .replace(/\s+/g, " ")
+    .trim();
+  if (raw) return raw.slice(0, kind === "task" ? 300 : 200);
+  return kind === "note" ? "Chat note" : kind === "journal" ? "Journal entry" : "To-do";
+}
+
+function falseSavedClaims(text: string) {
+  return text
+    .replace(/\b(?:the (?:note|journal entry|task|to-do) has been|i(?:'ve| have))\s+(?:created|saved|added)\b[^.!?]*(?:[.!?]|$)/gi, "Here’s a draft for you to review.")
+    .replace(/\b(?:i created|i saved|i added)\b[^.!?]*(?:[.!?]|$)/gi, "Here’s a draft for you to review.");
+}
+
+function hasSavedClaim(text: string) {
+  return /\b(?:the (?:note|journal entry|task|to-do) has been|i(?:'ve| have)\s+(?:created|saved|added)|i (?:created|saved|added))\b/i.test(text);
+}
+
+function prepareCreateProposal(
+  rows: { role: "user" | "assistant"; body: string }[],
+  assistantText: string,
+  localDate: string,
+): { text: string; appended: string } | null {
+  const requestIndex = rows.reduce((last, row, index) => (row.role === "user" && requestedKind(row.body) ? index : last), -1);
+  if (requestIndex < 0 || handledAfter(rows, requestIndex)) return null;
+  if (parseChatAction(assistantText).action) return null;
+  const request = rows[requestIndex].body;
+  const kind = requestedKind(request)!;
+  const latestUser = rows.at(-1);
+  const directRequest = latestUser?.role === "user" && requestedKind(latestUser.body) !== null;
+  if (!directRequest && (!latestUser || latestUser.role !== "user" || !affirming(latestUser.body))) return null;
+  if (!directRequest && !rows.slice(requestIndex + 1, -1).some((row) => row.role === "assistant" && hasCreateOffer(row.body))) return null;
+
+  const source = directRequest
+    ? assistantText
+    : [...rows.slice(requestIndex + 1, -1)]
+        .reverse()
+        .find((row) => row.role === "assistant" && !hasCreateOffer(row.body) && !hasSavedClaim(row.body))?.body ?? assistantText;
+  const cleanSource = falseSavedClaims(parseChatAction(source).body).trim().slice(0, 9_000);
+  const title = draftTitle(cleanSource, kind, request);
+  let action: ChatAction;
+  if (kind === "note") action = { kind, title, body: cleanSource || request.slice(0, 9_000) };
+  else if (kind === "journal") action = { kind, body: cleanSource || request.slice(0, 9_000), entry_date: localDate };
+  else action = { kind, title: title.slice(0, 300), description: cleanSource || request.slice(0, 5_000), due_date: null };
+
+  const safeReply = falseSavedClaims(parseChatAction(assistantText).body).trim().slice(0, 4_000);
+  const intro = safeReply ? `${safeReply}\n\n` : "";
+  const note = "Review this draft below. It will only be saved when you choose Create.";
+  const block = `<create-item>${JSON.stringify(action)}</create-item>`;
+  return { text: `${intro}${note}\n\n${block}`, appended: `\n\n${note}\n\n${block}` };
+}
 
 export type ChatReply = { ok: true; stream: ReadableStream<Uint8Array> } | { ok: false; status: number; error: string };
 
@@ -32,6 +117,7 @@ export async function startChatReply(opts: {
   userId: string;
   chatId: string;
   providerId: string;
+  localDate: string;
   signal?: AbortSignal;
 }): Promise<ChatReply> {
   const provider = getProvider(opts.providerId);
@@ -52,7 +138,7 @@ export async function startChatReply(opts: {
   if (rows[rows.length - 1].role !== "user") return { ok: false, status: 400, error: "Nothing to reply to." };
 
   const messages: AiMessage[] = [
-    { role: "system", content: CHAT_PROMPT.system },
+    { role: "system", content: `${CHAT_PROMPT.system} The user's local calendar date is ${opts.localDate}.` },
     ...rows.map((m) => ({ role: m.role, content: m.body.slice(0, LIMITS.charsPerMessage) })),
   ];
   const it = provider.stream({ messages, signal: opts.signal })[Symbol.asyncIterator]();
@@ -75,8 +161,10 @@ export async function startChatReply(opts: {
     await db.from("chats").update({ updated_at: new Date().toISOString() }).eq("id", opts.chatId);
   };
 
+  let cancelled = false;
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
+      let completed = false;
       try {
         while (!step.done) {
           if (step.value.type === "text") {
@@ -85,9 +173,21 @@ export async function startChatReply(opts: {
           }
           step = await it.next();
         }
+        completed = step.done;
       } catch {
         // A broken stream still keeps whatever was already written.
       } finally {
+        if (completed && !cancelled) {
+          const prepared = prepareCreateProposal(rows, full, opts.localDate);
+          if (prepared) {
+            full = prepared.text;
+            try {
+              controller.enqueue(enc.encode(prepared.appended));
+            } catch {
+              /* the browser may have navigated away after generation finished */
+            }
+          }
+        }
         await save().catch(() => undefined);
         try {
           controller.close();
@@ -97,6 +197,8 @@ export async function startChatReply(opts: {
       }
     },
     cancel() {
+      // Keep an interrupted answer, but never turn an incomplete generation into a create proposal.
+      cancelled = true;
       void it.return?.();
     },
   });

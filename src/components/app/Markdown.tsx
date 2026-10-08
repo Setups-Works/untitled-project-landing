@@ -16,6 +16,21 @@ function inline(text: string): ReactNode[] {
   });
 }
 
+function tableCells(line: string) {
+  return line.trim().replace(/^\|/, "").replace(/\|$/, "").split("|").map((cell) => cell.trim());
+}
+
+function isTableSeparator(line: string) {
+  const cells = tableCells(line);
+  return cells.length > 1 && cells.every((cell) => /^:?-{3,}:?$/.test(cell));
+}
+
+function cellAlign(separator: string): "left" | "center" | "right" {
+  const left = separator.startsWith(":");
+  const right = separator.endsWith(":");
+  return left && right ? "center" : right ? "right" : "left";
+}
+
 export default function Markdown({ text }: { text: string }) {
   const out: ReactNode[] = [];
   const lines = text.split("\n");
@@ -46,6 +61,41 @@ export default function Markdown({ text }: { text: string }) {
         <pre key={i}>
           <code>{code.join("\n")}</code>
         </pre>,
+      );
+    } else if (i + 1 < lines.length && l.includes("|") && isTableSeparator(lines[i + 1])) {
+      flush(i);
+      const headers = tableCells(l);
+      const separators = tableCells(lines[++i]);
+      const rows: string[][] = [];
+      while (i + 1 < lines.length && lines[i + 1].includes("|") && lines[i + 1].trim()) {
+        const cells = tableCells(lines[++i]);
+        rows.push(headers.map((_, column) => cells[column] ?? ""));
+      }
+      out.push(
+        <div className="md-table-wrap" key={`table${i}`} role="region" aria-label="Table" tabIndex={0}>
+          <table>
+            <thead>
+              <tr>
+                {headers.map((header, column) => (
+                  <th key={column} scope="col" style={{ textAlign: cellAlign(separators[column] ?? "") }}>
+                    {inline(header)}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((row, rowIndex) => (
+                <tr key={rowIndex}>
+                  {row.map((value, column) => (
+                    <td key={column} style={{ textAlign: cellAlign(separators[column] ?? "") }}>
+                      {inline(value)}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>,
       );
     } else if ((m = /^\s*[-*] \[( |x)\] (.*)$/i.exec(l))) {
       if (!check) flush(i);
