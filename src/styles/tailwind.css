@@ -61,4 +61,28 @@
   --font-mono: var(--mono);
 
   --ease-site: var(--ease);
+
+  /* Liquid-glass dialogs: the panel blooms in from slightly smaller and blurred, with a springy overshoot. */
+  --animate-glass-in: glass-in 0.55s cubic-bezier(0.34, 1.4, 0.5, 1) both;
+  --animate-glass-fade: glass-fade 0.28s ease-out both;
+  @keyframes glass-in {
+    from {
+      opacity: 0;
+      transform: translateY(-16px) scale(0.93);
+      filter: blur(10px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+      filter: blur(0);
+    }
+  }
+  @keyframes glass-fade {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
 }
