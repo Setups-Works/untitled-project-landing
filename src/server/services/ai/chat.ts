@@ -2,7 +2,7 @@ import "server-only";
 import { AiProviderError, getProvider, type AiChunk, type AiMessage } from "../../providers/ai";
 import { redis } from "../../redis";
 import { userDb } from "../../db/builders";
-import { parseChatAction, type ChatAction } from "../../../lib/chat-actions";
+import { parseChatAction, parseChatActions, type ChatAction } from "../../../lib/chat-actions";
 import { CHAT_PROMPT } from "./prompts/chat";
 
 /** Limits live here (not in routes) so every caller gets the same behaviour. */
@@ -20,7 +20,9 @@ function requestedKind(text: string): CreateKind | null {
 }
 
 function hasCreateOffer(text: string) {
-  return /\b(if you(?:'d| would) like|would you like|want me to|shall i|i can)\b[\s\S]{0,180}\b(create|make|save|add|write|note|journal|task|to[ -]?do)\b/i.test(text);
+  return /\b(if you(?:'d| would) like|would you like|want me to|shall i|i can)\b[\s\S]{0,180}\b(create|make|save|add|write|note|journal|task|to[ -]?do)\b/i.test(
+    text,
+  );
 }
 
 function affirming(text: string) {
@@ -30,7 +32,7 @@ function affirming(text: string) {
 function handledAfter(rows: { role: "user" | "assistant"; body: string }[], from: number) {
   return rows.slice(from + 1).some((row) => {
     if (row.role !== "assistant") return false;
-    return Boolean(parseChatAction(row.body).action) || /\[Open your (?:note|journal entry|to-do)\]\(https?:\/\//i.test(row.body);
+    return parseChatActions(row.body).proposals.length > 0 || /\[Open your (?:note|journal entry|to-do)\]\(https?:\/\//i.test(row.body);
   });
 }
 
@@ -50,12 +52,17 @@ function draftTitle(text: string, kind: CreateKind, request: string) {
 
 function falseSavedClaims(text: string) {
   return text
-    .replace(/\b(?:the (?:note|journal entry|task|to-do) has been|i(?:'ve| have))\s+(?:created|saved|added)\b[^.!?]*(?:[.!?]|$)/gi, "Here’s a draft for you to review.")
+    .replace(
+      /\b(?:the (?:note|journal entry|task|to-do) has been|i(?:'ve| have))\s+(?:created|saved|added)\b[^.!?]*(?:[.!?]|$)/gi,
+      "Here’s a draft for you to review.",
+    )
     .replace(/\b(?:i created|i saved|i added)\b[^.!?]*(?:[.!?]|$)/gi, "Here’s a draft for you to review.");
 }
 
 function hasSavedClaim(text: string) {
-  return /\b(?:the (?:note|journal entry|task|to-do) has been|i(?:'ve| have)\s+(?:created|saved|added)|i (?:created|saved|added))\b/i.test(text);
+  return /\b(?:the (?:note|journal entry|task|to-do) has been|i(?:'ve| have)\s+(?:created|saved|added)|i (?:created|saved|added))\b/i.test(
+    text,
+  );
 }
 
 function prepareCreateProposal(
@@ -75,9 +82,9 @@ function prepareCreateProposal(
 
   const source = directRequest
     ? assistantText
-    : [...rows.slice(requestIndex + 1, -1)]
+    : ([...rows.slice(requestIndex + 1, -1)]
         .reverse()
-        .find((row) => row.role === "assistant" && !hasCreateOffer(row.body) && !hasSavedClaim(row.body))?.body ?? assistantText;
+        .find((row) => row.role === "assistant" && !hasCreateOffer(row.body) && !hasSavedClaim(row.body))?.body ?? assistantText);
   const cleanSource = falseSavedClaims(parseChatAction(source).body).trim().slice(0, 9_000);
   const title = draftTitle(cleanSource, kind, request);
   let action: ChatAction;

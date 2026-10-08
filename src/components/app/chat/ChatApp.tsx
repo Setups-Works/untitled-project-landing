@@ -35,7 +35,7 @@ import ChatSidebar, { type Tab } from "./ChatSidebar";
 import Composer from "./Composer";
 import ShareDialog from "./ShareDialog";
 import ChatActionProposal from "./ChatActionProposal";
-import { parseChatAction } from "../../../lib/chat-actions";
+import { parseChatAction, parseChatActions } from "../../../lib/chat-actions";
 import { isoDate } from "../../../lib/dates";
 
 // Stable empty values so a loading query doesn't create a new array each render.
@@ -573,14 +573,16 @@ export default function ChatApp({ name }: { name: string }) {
             <div className="cx-msgs" aria-live="polite">
               {msgs.length === 0 && ready && <p className="ap-none">Say something to start this chat.</p>}
               {msgs.map((m) => {
-                const parsed = m.role === "assistant" ? parseChatAction(m.body) : null;
+                const parsed = m.role === "assistant" ? parseChatActions(m.body) : null;
                 return (
                   <div key={m.id} className="cx-msg" data-role={m.role}>
                     <div className="cx-bubble">
                       {parsed ? (
                         <>
                           {parsed.body && <Markdown text={parsed.body} />}
-                          {parsed.action && <ChatActionProposal action={parsed.action} messageId={m.id} chatId={activeId!} />}
+                          {parsed.proposals.length > 0 && (
+                            <ChatActionProposal proposals={parsed.proposals} messageId={m.id} chatId={activeId!} />
+                          )}
                         </>
                       ) : (
                         m.body && <p>{m.body}</p>
