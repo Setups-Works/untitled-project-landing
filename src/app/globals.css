@@ -6806,20 +6806,6 @@
     justify-content: center;
     align-items: center;
     padding: 14px clamp(16px, 3vw, 32px);
-    /* No background at the top of the page, but a soft frosted one fades in once the page scrolls under it. */
-    animation: bar-frost linear both;
-    animation-timeline: scroll(root);
-    animation-range: 0 60px;
-  }
-  @keyframes bar-frost {
-    from {
-      background-color: #f5f4eb00;
-      backdrop-filter: blur(0);
-    }
-    to {
-      background-color: #f5f4ebd9;
-      backdrop-filter: blur(14px);
-    }
   }
   .ap-logo {
     position: absolute;
