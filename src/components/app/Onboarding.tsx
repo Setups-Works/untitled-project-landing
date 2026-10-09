@@ -9,6 +9,7 @@ import {
   faArrowRight,
   faBookOpen,
   faCheck,
+  faDownload,
   faComments,
   faListCheck,
   faMagnifyingGlass,
@@ -22,6 +23,7 @@ import { isoDate } from "../../lib/dates";
 import { CATEGORIES } from "../../lib/notes";
 import { ONBOARDING_STEPS, type Onboarding } from "../../lib/onboarding";
 import type { Prefs } from "../../lib/prefs";
+import GiftCard, { saveGiftCard } from "./GiftCard";
 
 export const OPEN_ONBOARDING_EVENT = "up:open-onboarding";
 
@@ -55,6 +57,8 @@ export default function Onboarding({
   const [draft, setDraft] = useState({ task: "", journal: "", note: "" });
   const [busy, setBusy] = useState<keyof Made | "save" | null>(null);
   const [err, setErr] = useState("");
+  // After the walkthrough is completed, a welcome gift card is shown before the dashboard.
+  const [gift, setGift] = useState(false);
 
   // Reopened from the account menu ("Getting started").
   useEffect(() => {
@@ -100,6 +104,11 @@ export default function Onboarding({
     setBusy("save");
     await persist({ completed: true, step: ONBOARDING_STEPS - 1 });
     setBusy(null);
+    setGift(true);
+  };
+
+  const closeGift = () => {
+    setGift(false);
     setOpen(false);
     router.refresh();
   };
@@ -160,6 +169,35 @@ export default function Onboarding({
   ];
 
   if (!open) return null;
+
+  if (gift)
+    return (
+      <Dialog.Root open>
+        <Dialog.Portal>
+          <Dialog.Overlay className="ob-back">
+            <Dialog.Content
+              className="ob"
+              aria-describedby={undefined}
+              style={{ display: "grid", justifyItems: "center", gap: 20, padding: "32px 24px", textAlign: "center", maxWidth: 460 }}
+              onEscapeKeyDown={(e) => e.preventDefault()}
+              onInteractOutside={(e) => e.preventDefault()}
+            >
+              <Dialog.Title className="ob-title">A little gift for you, {first}</Dialog.Title>
+              <GiftCard name={display.trim() || "Welcome"} />
+              <p className="ob-lead">Your card is ready. Tilt it around, it catches the light.</p>
+              <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 10 }}>
+                <button className="btn btn-secondary" onClick={() => void saveGiftCard(display.trim() || "Welcome")}>
+                  <FA icon={faDownload} /> Download card
+                </button>
+                <button className="btn btn-primary" onClick={closeGift} autoFocus>
+                  Open my dashboard <FA icon={faArrowRight} />
+                </button>
+              </div>
+            </Dialog.Content>
+          </Dialog.Overlay>
+        </Dialog.Portal>
+      </Dialog.Root>
+    );
 
   return (
     <Dialog.Root open>

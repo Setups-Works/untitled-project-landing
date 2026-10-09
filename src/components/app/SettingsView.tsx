@@ -31,6 +31,7 @@ import { CATEGORIES } from "../../lib/notes";
 import { writePrefs, type Prefs } from "../../lib/prefs";
 import { deleteMyAccount } from "../../app/dashboard/settings/actions";
 import { useConfirm } from "../ui/Confirm";
+import GiftCard, { saveGiftCard } from "./GiftCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/Tabs";
 
 type Tab = "profile" | "prefs" | "appearance" | "security" | "data" | "danger";
@@ -536,6 +537,14 @@ export default function SettingsView({ account, prefs: initial }: { account: Acc
                 Sign-in method:{" "}
                 {account.providers.map((p) => (p === "email" ? "Email & password" : p[0].toUpperCase() + p.slice(1))).join(", ")}
               </p>
+              <div className="st-gift" style={{ display: "grid", justifyItems: "start", gap: 12, paddingTop: 18, borderTop: "1px solid var(--line)" }}>
+                <b id="st-gift">Welcome gift card</b>
+                <p className="meta">Your card, with your name engraved on it. Download it any time.</p>
+                <GiftCard name={account.name || account.email} />
+                <button type="button" className="btn btn-secondary btn-sm" onClick={() => void saveGiftCard(account.name || account.email)}>
+                  <FA icon={faDownload} /> Download card
+                </button>
+              </div>
             </div>
           </section>
         </TabsContent>

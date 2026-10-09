@@ -1,0 +1,237 @@
+/* Iridescent foil technique adapted from dqnamo.com/experiments/iridescent-foil (light theme only). */
+.card {
+  --pointer-x: 50%;
+  --pointer-y: 50%;
+  --foil-shift: 0%;
+  --foil-y-shift: 0%;
+  --glare-x: 50%;
+  --glare-y: 50%;
+  --shine-angle: 135deg;
+  --shine-opacity: 0.62;
+  --tilt-x: 0deg;
+  --tilt-y: 0deg;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  width: min(100%, 380px);
+  aspect-ratio: 1.586;
+  border-radius: 18px;
+  background: #dcdcdc;
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.5),
+    0 1px 2px rgba(27, 28, 20, 0.12),
+    0 18px 40px -12px rgba(27, 28, 20, 0.35);
+  transform: perspective(900px) rotateX(var(--tilt-x)) rotateY(var(--tilt-y));
+  transition: transform 0.25s ease-out;
+  contain: layout paint style;
+}
+.foil,
+.film,
+.pearl,
+.shine,
+.glare,
+.content {
+  position: absolute;
+  pointer-events: none;
+  background-repeat: no-repeat;
+}
+.foil,
+.film,
+.pearl,
+.shine {
+  inset: -48%;
+}
+.glare,
+.content {
+  inset: 0;
+}
+.foil {
+  z-index: 0;
+  background:
+    linear-gradient(
+      112deg,
+      transparent 0%,
+      transparent 28%,
+      rgba(0, 220, 255, 0.08) 32%,
+      rgba(80, 255, 190, 0.07) 36%,
+      rgba(190, 255, 80, 0.05) 40%,
+      transparent 46%,
+      rgba(255, 230, 70, 0.04) 50%,
+      rgba(255, 70, 180, 0.07) 56%,
+      rgba(150, 90, 255, 0.07) 64%,
+      rgba(60, 120, 255, 0.06) 70%,
+      transparent 75%
+    ),
+    linear-gradient(135deg, #eeeeee 0%, #dcdcdc 40%, #c9c9c9 72%, #e8e8e8 100%);
+  background-position:
+    var(--foil-shift) center,
+    center;
+  background-size:
+    320% 100%,
+    100% 100%;
+  filter: saturate(1.18) contrast(1.22);
+}
+.film {
+  z-index: 1;
+  background:
+    radial-gradient(ellipse at 16% 28%, rgba(255, 70, 180, 0.1) 0%, rgba(255, 70, 180, 0.04) 18%, transparent 48%),
+    radial-gradient(ellipse at 66% 18%, rgba(0, 220, 255, 0.1) 0%, rgba(0, 220, 255, 0.04) 20%, transparent 52%),
+    radial-gradient(ellipse at 78% 70%, rgba(80, 255, 190, 0.1) 0%, rgba(80, 255, 190, 0.04) 22%, transparent 56%),
+    radial-gradient(ellipse at 38% 82%, rgba(150, 90, 255, 0.1) 0%, rgba(150, 90, 255, 0.04) 18%, transparent 52%);
+  background-position:
+    calc(var(--foil-shift) * -0.2) calc(var(--foil-y-shift) * 0.3),
+    calc(var(--foil-shift) * 0.5) calc(var(--foil-y-shift) * -0.2),
+    calc(var(--foil-shift) * -0.4) calc(var(--foil-y-shift) * 0.5),
+    calc(var(--foil-shift) * 0.35) calc(var(--foil-y-shift) * 0.25);
+  background-size:
+    150% 150%,
+    160% 160%,
+    145% 145%,
+    155% 155%;
+  filter: blur(0.4px) saturate(1.35);
+  mix-blend-mode: screen;
+  opacity: 0.34;
+}
+.pearl {
+  z-index: 2;
+  background:
+    radial-gradient(
+      ellipse at calc(var(--glare-x) * 0.9) calc(var(--glare-y) * 0.85),
+      rgba(224, 233, 240, 0.48) 0%,
+      rgba(205, 217, 226, 0.18) 22%,
+      transparent 54%
+    ),
+    linear-gradient(
+      112deg,
+      rgba(220, 230, 238, 0.32) 0%,
+      rgba(220, 230, 238, 0) 28%,
+      rgba(84, 108, 128, 0.2) 48%,
+      rgba(215, 226, 235, 0.3) 72%,
+      rgba(215, 226, 235, 0.04) 100%
+    ),
+    linear-gradient(28deg, rgba(188, 218, 255, 0.12) 0%, transparent 34%, rgba(255, 223, 244, 0.12) 58%, transparent 100%);
+  background-position:
+    center,
+    var(--foil-shift) center,
+    var(--foil-shift) center;
+  background-size:
+    100% 100%,
+    180% 100%,
+    160% 100%;
+  mix-blend-mode: soft-light;
+  opacity: 0.98;
+}
+.content {
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 7% 8%;
+  color: #1b1c14;
+}
+.shine {
+  z-index: 4;
+  background:
+    linear-gradient(
+      var(--shine-angle),
+      transparent 0%,
+      rgba(220, 230, 238, 0.04) 12%,
+      rgba(226, 235, 242, 0.48) 31%,
+      rgba(37, 52, 66, 0.24) 52%,
+      rgba(0, 124, 255, 0.08) 64%,
+      rgba(255, 0, 147, 0.08) 74%,
+      rgba(223, 232, 239, 0.28) 88%,
+      transparent 100%
+    ),
+    linear-gradient(
+      112deg,
+      transparent 0%,
+      transparent 30%,
+      rgba(0, 220, 255, 0.04) 34%,
+      rgba(80, 255, 190, 0.04) 38%,
+      rgba(190, 255, 80, 0.03) 42%,
+      transparent 45%,
+      rgba(255, 230, 70, 0.03) 52%,
+      rgba(255, 70, 180, 0.05) 59%,
+      transparent 66%,
+      rgba(150, 90, 255, 0.05) 73%,
+      rgba(60, 120, 255, 0.04) 78%,
+      transparent 84%
+    );
+  background-position: calc(50% + (var(--pointer-x) - 50%) * 0.35) calc(50% + (var(--pointer-y) - 50%) * 0.24);
+  background-size: 220% 100%;
+  filter: blur(0.25px);
+  mix-blend-mode: screen;
+  opacity: var(--shine-opacity);
+}
+.glare {
+  z-index: 5;
+  background: radial-gradient(
+    circle at var(--glare-x) var(--glare-y),
+    rgba(226, 235, 242, 0.34) 0%,
+    rgba(205, 218, 228, 0.14) 9%,
+    rgba(226, 237, 246, 0.08) 22%,
+    transparent 36%
+  );
+  mix-blend-mode: screen;
+  opacity: 0.38;
+}
+
+/* Card face */
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--serif);
+  font-size: clamp(16px, 5vw, 20px);
+  letter-spacing: -0.01em;
+  /* Stamped into the foil, like the name below. */
+  color: rgba(27, 28, 20, 0.78);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #1f6b4a;
+  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.3), 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+.tag {
+  margin-left: auto;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(27, 28, 20, 0.45);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+/* Engraved: dark core with a light lower edge and a dark upper edge makes the letters look cut into the surface. */
+.name {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: clamp(22px, 7.4vw, 30px);
+  font-weight: 400;
+  line-height: 1.1;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+  color: rgba(36, 46, 58, 0.62);
+  text-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.85),
+    0 -1px 0 rgba(0, 0, 0, 0.28),
+    0 0 1px rgba(0, 0, 0, 0.2);
+}
+.foot {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(27, 28, 20, 0.45);
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.6);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card {
+    transition: none;
+  }
+}
