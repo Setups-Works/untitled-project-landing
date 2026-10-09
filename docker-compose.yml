@@ -135,7 +135,7 @@ services:
       <<: *app-env
       NEXT_TELEMETRY_DISABLED: "1"
       WATCHPACK_POLLING: "true" # file events don't cross the Docker Desktop mount, so poll for changes
-    ports: ["127.0.0.1:3000:3000"]
+    ports: ["127.0.0.1:${WEB_PORT:-3000}:3000"]
     volumes:
       - .:/app
       - devmodules:/app/node_modules

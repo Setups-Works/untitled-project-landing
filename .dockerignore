@@ -8,3 +8,11 @@ docs
 *.md
 tsconfig.tsbuildinfo
 npm-debug.log*
+.claude
+.DS_Store
+test-results
+playwright-report
+coverage
+Dockerfile
+docker-compose*.yml
+.dockerignore
