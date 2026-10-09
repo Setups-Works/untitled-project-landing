@@ -2,7 +2,8 @@
 #
 #   cp .env.selfhost.example .env.selfhost       # then change the passwords
 #   docker compose --env-file .env.selfhost up -d                 # data services only; run the app with `npm run dev`
-#   docker compose --env-file .env.selfhost --profile app up -d --build   # data services + the Next.js app in Docker
+#   docker compose --env-file .env.selfhost --profile dev up -d           # data services + the app with live reload (edit and save)
+#   docker compose --env-file .env.selfhost --profile app up -d --build   # data services + the production image (rebuild to update)
 #
 # Data services bind to 127.0.0.1 only. Never expose them publicly. See docs/SELF_HOSTING.md.
 name: untitled
@@ -116,7 +117,37 @@ services:
       redis: { condition: service_healthy }
       storage: { condition: service_healthy }
 
+  # Live development: your source folder is mounted into the container and `next dev` hot-reloads on every save — no image to
+  # rebuild. Use it INSTEAD of `web` (both use port 3000):  docker compose --env-file .env.selfhost --profile dev up -d
+  # node_modules lives in a named volume (the Mac copy has the wrong native binaries); first start installs it, later starts reuse it.
+  web-dev:
+    profiles: ["dev"]
+    image: node:24-alpine
+    working_dir: /app
+    restart: unless-stopped
+    command:
+      - sh
+      - -c
+      - |
+        [ node_modules/.package-lock.json -nt package-lock.json ] || npm ci --no-audit --no-fund
+        node scripts/db/migrate.mjs && exec npm run dev -- --hostname 0.0.0.0
+    environment:
+      <<: *app-env
+      NEXT_TELEMETRY_DISABLED: "1"
+      WATCHPACK_POLLING: "true" # file events don't cross the Docker Desktop mount, so poll for changes
+    ports: ["127.0.0.1:3000:3000"]
+    volumes:
+      - .:/app
+      - devmodules:/app/node_modules
+      - devnext:/app/.next
+    depends_on:
+      postgres: { condition: service_healthy }
+      redis: { condition: service_healthy }
+      storage: { condition: service_healthy }
+
 volumes:
   pgdata:
   redisdata:
   storagedata:
+  devmodules:
+  devnext:

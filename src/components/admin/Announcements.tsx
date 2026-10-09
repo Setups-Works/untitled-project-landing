@@ -76,7 +76,8 @@ export default function Announcements({ items }: { items: Announcement[] }) {
           <article key={a.id} className="ann" data-tone={a.tone} data-active={a.active}>
             <div>
               <p>{a.message}</p>
-              <small>
+              {/* The server formats in its own time zone and the browser in the admin's, so the text differs by design. */}
+              <small suppressHydrationWarning>
                 {new Date(a.created_at).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })} ·{" "}
                 {a.active ? "Showing to users" : "Hidden"}
               </small>
@@ -96,22 +97,16 @@ export default function Announcements({ items }: { items: Announcement[] }) {
                 disabled={pending}
                 aria-label="Delete announcement"
                 title="Delete"
-                onClick={() =>
-                  start(async () => {
-                    if (
-                      await ask({
-                        title: "Delete this announcement?",
-                        body: "It will disappear for everyone.",
-                        confirmLabel: "Delete",
-                        danger: true,
-                      })
-                    ) {
-                      setErr("");
-                      const r = await deleteAnnouncement(a.id);
-                      if (!r.ok) setErr(r.error);
-                    }
-                  })
-                }
+                onClick={async () => {
+                  // Ask outside the transition: state set inside one isn't shown until it ends, and it would be waiting for this answer.
+                  const yes = await ask({
+                    title: "Delete this announcement?",
+                    body: "It will disappear for everyone.",
+                    confirmLabel: "Delete",
+                    danger: true,
+                  });
+                  if (yes) run(() => deleteAnnouncement(a.id));
+                }}
               >
                 <FA icon={faTrash} />
               </button>

@@ -149,14 +149,17 @@ function UserDrawer({ row, onClose }: { row: Row; onClose: () => void }) {
   }, [row.id]);
 
   const act = (fn: () => Promise<{ ok: boolean; error?: string; message?: string }>, confirm?: Parameters<typeof ask>[0]) => {
-    start(async () => {
+    // Ask first, outside the transition: a dialog opened inside one isn't rendered until the transition ends (which waits for the answer).
+    void (async () => {
       if (confirm && !(await ask(confirm))) return;
-      setMsg(null);
-      const r = await fn();
-      setMsg(r.ok ? { ok: true, text: r.message ?? "Done." } : { ok: false, text: r.error ?? "Something went wrong." });
-      if (r.ok && r.message === undefined && confirm?.confirmLabel === "Delete user") onClose();
-      else if (r.ok) await loadSessions();
-    });
+      start(async () => {
+        setMsg(null);
+        const r = await fn();
+        setMsg(r.ok ? { ok: true, text: r.message ?? "Done." } : { ok: false, text: r.error ?? "Something went wrong." });
+        if (r.ok && r.message === undefined && confirm?.confirmLabel === "Delete user") onClose();
+        else if (r.ok) await loadSessions();
+      });
+    })();
   };
 
   const stats: [string, number | undefined][] = [
@@ -586,8 +589,8 @@ export default function UsersTable({ rows }: { rows: Row[] }) {
                 <td>
                   <Pills r={r} />
                 </td>
-                <td>{fmt(r.createdAt)}</td>
-                <td>{fmt(r.lastSignIn)}</td>
+                <td suppressHydrationWarning>{fmt(r.createdAt)}</td>
+                <td suppressHydrationWarning>{fmt(r.lastSignIn)}</td>
               </tr>
             ))}
             {shown.length === 0 && (
