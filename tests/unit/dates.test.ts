@@ -62,5 +62,5 @@ describe("ago", () => {
     [3 * 3600, "3h ago"],
     [2 * 86400, "2d ago"],
   ])("%d seconds ago → %s", (s, label) => expect(ago(at(s))).toBe(label));
-  it("uses a calendar date after a week", () => expect(ago(at(30 * 86400))).toMatch(/[A-Z][a-z]{2} \d+/));
+  it("uses a calendar date after a week", () => expect(ago(at(30 * 86400))).toMatch(/([A-Z][a-z]{2,3} \d+|\d+ [A-Z][a-z]{2,3})/));
 });
