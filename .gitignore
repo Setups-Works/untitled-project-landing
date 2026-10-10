@@ -12,3 +12,4 @@ npm-debug.log*
 # test output
 playwright-report
 test-results
+powershell.cmd
