@@ -49,3 +49,17 @@ export type Chat = {
 export type ChatFolder = { id: string; name: string };
 export type Message = { id: string; role: "user" | "assistant"; body: string; created_at: string; attachments: Attachment[] };
 export type Profile = { plan: string };
+export type CalendarEvent = {
+  id: string;
+  external_id: string | null;
+  calendar_id: string;
+  title: string;
+  description: string;
+  location: string;
+  start_at: string;
+  end_at: string;
+  all_day: boolean;
+  color: string;
+  created_at: string;
+  updated_at: string;
+};
