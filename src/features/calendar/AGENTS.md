@@ -2,18 +2,17 @@
 
 **Does:** Month, week, day, and agenda views of calendar events plus task due dates as a toggleable overlay; create, edit, and delete events. **Track B (UI) + C (service). Phase 3.**
 
-**Components:**
+**Design:** follows `docs/DESIGN_LANGUAGE.md` (glass cards, serif title, `at-<tint>` + `tint` chips, pill buttons). Read it before changing any UI here.
 
-- `CalendarApp.tsx`: Main coordinating container with keyboard shortcuts and responsive view switching.
-- `CalendarHeader.tsx`: Date navigator, view switcher pills, task overlay toggle, and "+ New event" action.
-- `MonthView.tsx`: 7-column month grid respecting `weekStart` ('mon' or 'sun'), showing event badges and task pills.
-- `WeekView.tsx`: 7-column hourly time-grid with all-day row and current-time line.
-- `DayView.tsx`: Single-day 24-hour detailed schedule view with all-day banner and location/notes.
-- `AgendaView.tsx`: Chronological card list of upcoming events and tasks, optimized for mobile (375px width).
-- `EventDialog.tsx`: Accessible Radix modal dialog for creating and editing events with color tints and all-day option.
-- `ConnectCalendarBanner.tsx`: Connect prompt for Google Calendar integration via Composio.
+**Files:**
 
-**Backed by:** `calendar_events` table with Row-Level Security (`user_id = auth.uid()`), queried via `/api/v1/db`.
+- `components/CalendarApp.tsx`: container; keyboard shortcuts (`t m w d a c/n ← →`), delete confirmation (`useConfirm`), view switching.
+- `components/CalendarHeader.tsx`: serif title, prev/today/next, view `Tabs`, Tasks toggle, "New event".
+- `components/MonthView.tsx`, `TimeGrid.tsx` (Week = 7 days, Day = 1 day), `AgendaView.tsx`: the views. `Chips.tsx`: event and task chips.
+- `components/EventDialog.tsx`: `Modal` + the to-do form's `tf-*` look; dates via `JournalCalendar`, times via `tf-pill` selects. Mounted only while open.
+- `components/ConnectCalendarBanner.tsx`: Google connect prompt (dismissal remembered in localStorage).
+- `queries.ts`: TanStack Query hooks (`useCalendarEvents`, `useCalendarActions`), optimistic with rollback. `useCalendar.ts`: view state + realtime on top of them. Tasks come from `useTasks()`.
+- `utils.ts`: pure helpers (day grouping, overlap layout, draft ⇄ row, titles) — unit-tested in `tests/unit/calendar-utils.test.ts`.
 
 **Rules**
 

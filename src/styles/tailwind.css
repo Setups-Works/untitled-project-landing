@@ -86,3 +86,24 @@
     }
   }
 }
+
+/*
+ * Material utilities for converted screens. They bundle the app's liquid-glass surface and the `at-<tint>` colouring so a screen
+ * doesn't repeat the same five declarations everywhere. `tint` reads --ab / --abl / --abf, which `.at-<tint>` defines.
+ */
+@utility glass {
+  background: var(--glass);
+  backdrop-filter: var(--glass-blur);
+  box-shadow: var(--glass-ring);
+}
+@utility glass-hover {
+  &:hover {
+    background: var(--glass-hi);
+    box-shadow: var(--glass-ring-hi);
+  }
+}
+@utility tint {
+  background: var(--ab);
+  color: var(--abf);
+  box-shadow: inset 0 0 0 1px var(--abl);
+}

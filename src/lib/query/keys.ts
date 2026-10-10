@@ -25,6 +25,7 @@ export const qk = {
     folders: ["chats", "folders"] as const,
     messages: (chatId: string) => ["chats", "messages", chatId] as const,
   },
+  calendar: { all: ["calendar"] as const, events: ["calendar", "events"] as const },
   profile: ["profile"] as const,
   aiProviders: ["ai", "providers"] as const,
 } as const;

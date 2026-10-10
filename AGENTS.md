@@ -58,7 +58,7 @@ docs/                  Architecture, phases, workflow, data model, security, Jir
 - Client components start with `"use client"` and keep data-fetching out of render; server components fetch on the server where possible.
 - Dates: store UTC (`timestamptz`) or plain `date` for calendar days; format in the browser. Pages that print dates/greetings wrap in `ClientOnly` to avoid hydration mismatches.
 - Accessibility is required: real `<button>`/`<a>`, labels, focus states, `aria-*` for dialogs/menus (reuse `Modal`, `Menu`, `Confirm`). Respect `prefers-reduced-motion` and the in-app "Reduce motion" setting.
-- UI: reuse the design tokens and existing classes (`at-<tint>` colour tints, `ap-card`, `btn btn-primary`). Mobile first: every screen must work at 375 px. No native `alert/confirm/prompt` — use `useConfirm()` / `usePrompt()`.
+- UI: **read `docs/DESIGN_LANGUAGE.md` first** — it is the contract for fonts, colour, glass surfaces, buttons and tints. Reuse the design tokens and existing classes (`at-<tint>` colour tints, `ap-card`, `btn btn-primary`). Mobile first: every screen must work at 375 px. No native `alert/confirm/prompt` — use `useConfirm()` / `usePrompt()`.
 - Comments explain _why_, not _what_. Keep functions small. Match the style of the surrounding file.
 - Never log secrets or message/note content. Errors shown to users are friendly; details go to logs/Sentry.
 
@@ -108,6 +108,7 @@ Acceptance criteria met · typecheck and build pass · works on mobile · access
 | `docs/DATA_MODEL.md`        | You touch the database                                                                                                                                                          |
 | `docs/SELF_HOSTING.md`      | You run, deploy or back up the stack (Docker, env, storage, auth, Supabase data import)                                                                                         |
 | `docs/SECURITY.md`          | You touch auth, uploads, sharing, admin, AI tools or secrets                                                                                                                    |
+| `docs/DESIGN_LANGUAGE.md`   | **You build or change any UI** — fonts, colours, glass, buttons, tints, reference screens, mistakes to avoid                                                                    |
 | `docs/CONVENTIONS.md`       | Naming, UI patterns, error handling, testing                                                                                                                                    |
 | `docs/AI_WORKFLOW.md`       | **You are an AI agent taking a Jira task** — the exact loop, the Jira helper (`node scripts/jira/jira.mjs`) and what you must not do (never merge; never handle tokens in chat) |
 | `docs/JIRA_GUIDE.md`        | You write or refine tasks                                                                                                                                                       |

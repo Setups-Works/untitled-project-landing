@@ -2,6 +2,13 @@ import type { Task } from "../../lib/workspace";
 
 export type CalendarViewMode = "month" | "week" | "day" | "agenda";
 
+export const CALENDAR_VIEWS: { id: CalendarViewMode; label: string }[] = [
+  { id: "month", label: "Month" },
+  { id: "week", label: "Week" },
+  { id: "day", label: "Day" },
+  { id: "agenda", label: "Agenda" },
+];
+
 export type CalendarTone = "violet" | "blue" | "green" | "amber" | "clay" | "mint" | "gold" | "sand";
 
 export const CALENDAR_TONES: CalendarTone[] = ["blue", "violet", "green", "amber", "clay", "mint", "gold", "sand"];

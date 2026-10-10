@@ -34,6 +34,8 @@ Small rules that keep a three-developer codebase readable. When in doubt, match 
 
 ## UI language
 
+The full contract (fonts, tokens, glass surfaces, buttons, reference screens, common mistakes) is in `docs/DESIGN_LANGUAGE.md` — read it before touching UI. Summary:
+
 - Hand-written CSS with tokens in `src/app/globals.css`: cream canvas, ink text, forest-green accent; tints `violet blue green amber clay sand mint gold` applied with `at-<tint>` classes (cards take `--ab`, `--abl`, `--abf`).
 - Type: Instrument Serif for display headings, Geist for UI, Geist Mono for counters.
 - Shape: pill buttons, generous radii, hairline inset rings instead of borders.

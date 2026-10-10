@@ -1,48 +1,56 @@
 "use client";
 
-import { useState } from "react";
 import Link from "next/link";
+import { useState } from "react";
 import { FontAwesomeIcon as FA } from "@fortawesome/react-fontawesome";
-import { faCalendarDays, faArrowRight, faXmark } from "@fortawesome/free-solid-svg-icons";
+import { faArrowRight, faCalendarDays, faXmark } from "@fortawesome/free-solid-svg-icons";
 
+const KEY = "up_cal_banner_dismissed";
+
+/** Nudge to connect Google Calendar (UNT-72). Stays dismissed once the user closes it. */
 export default function ConnectCalendarBanner() {
-  const [dismissed, setDismissed] = useState(false);
-
-  if (dismissed) return null;
-
+  const [hidden, setHidden] = useState(() => {
+    try {
+      return window.localStorage.getItem(KEY) === "1";
+    } catch {
+      return false;
+    }
+  });
+  if (hidden) return null;
+  const dismiss = () => {
+    setHidden(true);
+    try {
+      window.localStorage.setItem(KEY, "1");
+    } catch {
+      /* private mode: it just comes back next visit */
+    }
+  };
   return (
-    <div
-      role="region"
-      aria-label="Google Calendar integration banner"
-      className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-r2 border border-line bg-surface-muted/60 px-4 py-3 text-sm transition-colors hover:bg-surface-muted"
+    <aside
+      aria-label="Google Calendar"
+      className="at-blue tint mb-[18px] flex flex-wrap items-center gap-x-4 gap-y-2.5 rounded-r3 px-4 py-3"
     >
-      <div className="flex items-center gap-3">
-        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-bg/20 text-blue-fg">
-          <FA icon={faCalendarDays} className="text-xs" />
-        </span>
-        <div>
-          <p className="font-medium text-fg">Sync with Google Calendar</p>
-          <p className="text-xs text-fg-muted">Connect your Google account in Settings to sync events two-way with Google Calendar.</p>
-        </div>
-      </div>
-
-      <div className="flex items-center gap-2">
-        <Link
-          href="/dashboard/settings"
-          className="inline-flex items-center gap-1.5 rounded-pill bg-surface px-3 py-1.5 text-xs font-medium text-fg shadow-e1 hover:bg-surface-sunken"
-        >
-          <span>Connect Google</span>
-          <FA icon={faArrowRight} className="text-[10px]" />
-        </Link>
-        <button
-          type="button"
-          onClick={() => setDismissed(true)}
-          aria-label="Dismiss banner"
-          className="flex h-7 w-7 items-center justify-center rounded-pill text-fg-muted hover:bg-surface-sunken hover:text-fg"
-        >
-          <FA icon={faXmark} className="text-xs" />
-        </button>
-      </div>
-    </div>
+      <span className="grid size-9 shrink-0 place-items-center rounded-full bg-white/70 text-[14px]">
+        <FA icon={faCalendarDays} />
+      </span>
+      <p className="min-w-0 flex-1 basis-60 text-[13.5px] leading-snug">
+        <b className="font-semibold">Bring in Google Calendar.</b>{" "}
+        <span className="opacity-80">Connect it in Settings to see your events here and keep both in sync.</span>
+      </p>
+      <Link
+        href="/dashboard/settings"
+        className="inline-flex h-9 items-center gap-2 rounded-pill bg-white/80 px-4 text-[13.5px] font-medium shadow-e1 transition-colors hover:bg-white"
+      >
+        Connect <FA icon={faArrowRight} className="text-[11px]" />
+      </Link>
+      <button
+        type="button"
+        aria-label="Dismiss"
+        onClick={dismiss}
+        className="grid size-8 place-items-center rounded-full text-[12px] hover:bg-white/60"
+      >
+        <FA icon={faXmark} />
+      </button>
+    </aside>
   );
 }

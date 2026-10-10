@@ -1,305 +1,200 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import Modal from "../../../components/ui/Modal";
-import { CALENDAR_TONES, type CalendarEventItem, type CalendarTone, type EventDraft } from "../types";
-import { isoDate } from "../../../lib/dates";
+import { useState, type FormEvent } from "react";
 import { FontAwesomeIcon as FA } from "@fortawesome/react-fontawesome";
-import { faClock, faLocationDot, faAlignLeft, faTrash, faCheck } from "@fortawesome/free-solid-svg-icons";
+import { faAlignLeft, faCalendarDay, faCheck, faClock, faLocationDot, faTrash, faXmark } from "@fortawesome/free-solid-svg-icons";
+import JournalCalendar from "../../../components/app/JournalCalendar";
+import Modal from "../../../components/ui/Modal";
+import { dayLabel, isoDate } from "../../../lib/dates";
+import { CALENDAR_TONES, type EventDraft } from "../types";
+import { TIME_OPTIONS, timeLabel } from "../utils";
 
+const at = (date: string, time: string) => new Date(`${date}T${time}:00`).getTime();
+const toLocal = (ms: number) => {
+  const d = new Date(ms);
+  const p = (n: number) => String(n).padStart(2, "0");
+  return { date: isoDate(d), time: `${p(d.getHours())}:${p(d.getMinutes())}` };
+};
+
+/**
+ * Create / edit form. It is mounted only while open (the parent renders it conditionally), so the initial values are plain
+ * `useState` defaults — no effect re-syncing them. `onSave` resolves to false when the save failed; the parent shows the message.
+ */
 export default function EventDialog({
-  isOpen,
-  event,
-  defaultSlot,
-  onClose,
+  initial,
+  editing,
   onSave,
   onDelete,
+  onClose,
 }: {
-  isOpen: boolean;
-  event: CalendarEventItem | null;
-  defaultSlot: { date: string; time?: string } | null;
+  initial: EventDraft;
+  editing: boolean;
+  onSave: (d: EventDraft) => Promise<boolean>;
+  onDelete?: () => void;
   onClose: () => void;
-  onSave: (draft: EventDraft) => Promise<void>;
-  onDelete?: (id: string) => Promise<void>;
 }) {
-  const [title, setTitle] = useState("");
-  const [allDay, setAllDay] = useState(false);
-  const [startDate, setStartDate] = useState(isoDate());
-  const [startTime, setStartTime] = useState("09:00");
-  const [endDate, setEndDate] = useState(isoDate());
-  const [endTime, setEndTime] = useState("10:00");
-  const [color, setColor] = useState<CalendarTone | string>("blue");
-  const [location, setLocation] = useState("");
-  const [description, setDescription] = useState("");
+  const [d, setD] = useState(initial);
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [err, setErr] = useState("");
+  const today = isoDate();
+  const set = <K extends keyof EventDraft>(k: K, v: EventDraft[K]) => setD((p) => ({ ...p, [k]: v }));
 
-  useEffect(() => {
-    if (event) {
-      setTitle(event.title);
-      setAllDay(event.all_day);
-      const s = new Date(event.start_at);
-      const e = new Date(event.end_at);
-      setStartDate(isoDate(s));
-      setEndDate(isoDate(e));
-      setStartTime(`${String(s.getHours()).padStart(2, "0")}:${String(s.getMinutes()).padStart(2, "0")}`);
-      setEndTime(`${String(e.getHours()).padStart(2, "0")}:${String(e.getMinutes()).padStart(2, "0")}`);
-      setColor(event.color || "blue");
-      setLocation(event.location || "");
-      setDescription(event.description || "");
-    } else if (defaultSlot) {
-      setTitle("");
-      setAllDay(false);
-      setStartDate(defaultSlot.date);
-      setEndDate(defaultSlot.date);
-      const t = defaultSlot.time || "09:00";
-      setStartTime(t);
-      const [h, m] = t.split(":").map(Number);
-      const endH = (h + 1) % 24;
-      setEndTime(`${String(endH).padStart(2, "0")}:${String(m).padStart(2, "0")}`);
-      setColor("blue");
-      setLocation("");
-      setDescription("");
-    } else {
-      const now = new Date();
-      setTitle("");
-      setAllDay(false);
-      setStartDate(isoDate(now));
-      setEndDate(isoDate(now));
-      setStartTime("09:00");
-      setEndTime("10:00");
-      setColor("blue");
-      setLocation("");
-      setDescription("");
-    }
-    setError(null);
-  }, [event, defaultSlot, isOpen]);
+  // Moving the start moves the end with it, so the event keeps its length.
+  const moveStart = (date: string, time: string) =>
+    setD((p) => {
+      const length = Math.max(at(p.end_date, p.end_time) - at(p.start_date, p.start_time), 0);
+      const end = toLocal(at(date, time) + length);
+      return { ...p, start_date: date, start_time: time, end_date: end.date, end_time: end.time };
+    });
+  const moveStartDate = (date: string) =>
+    setD((p) => {
+      // All-day events keep whole days; timed events keep their length.
+      if (p.all_day) return { ...p, start_date: date, end_date: p.end_date < date ? date : p.end_date };
+      const length = Math.max(at(p.end_date, p.end_time) - at(p.start_date, p.start_time), 0);
+      const end = toLocal(at(date, p.start_time) + length);
+      return { ...p, start_date: date, end_date: end.date, end_time: end.time };
+    });
 
-  if (!isOpen) return null;
-
-  async function handleSubmit(e: React.FormEvent) {
+  const submit = async (e: FormEvent) => {
     e.preventDefault();
-    if (!title.trim()) {
-      setError("Please provide a title");
-      return;
-    }
+    if (!d.title.trim()) return setErr("Give the event a title.");
+    if (!d.all_day && at(d.end_date, d.end_time) <= at(d.start_date, d.start_time)) return setErr("The event has to end after it starts.");
+    if (d.all_day && d.end_date < d.start_date) return setErr("The last day can’t be before the first.");
     setBusy(true);
-    setError(null);
-    try {
-      await onSave({
-        title: title.trim(),
-        all_day: allDay,
-        start_date: startDate,
-        start_time: startTime,
-        end_date: endDate,
-        end_time: endTime,
-        color,
-        location: location.trim(),
-        description: description.trim(),
-      });
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to save event";
-      setError(msg);
-    } finally {
-      setBusy(false);
-    }
-  }
+    setErr("");
+    const ok = await onSave(d);
+    setBusy(false);
+    if (ok) onClose();
+    else setErr("Couldn’t save that event. Try again.");
+  };
 
-  async function handleDelete() {
-    if (!event || !onDelete) return;
-    setBusy(true);
-    try {
-      await onDelete(event.id);
-    } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : "Failed to delete event";
-      setError(msg);
-      setBusy(false);
-    }
-  }
+  const label = editing ? "Edit event" : "New event";
+  const datePill = (value: string, onPick: (iso: string) => void) => (
+    // The to-do form's pills open their calendar upward (they sit at the bottom of that dialog); these sit near the top, so open it downward.
+    <div className="tf-pill tf-date [&_.jc-pop]:top-[calc(100%+8px)] [&_.jc-pop]:bottom-auto [&_.jc-pop]:left-0" data-set>
+      <FA icon={faCalendarDay} />
+      <JournalCalendar value={value} today={today} counts={{}} allowFuture label={dayLabel(value, today)} onPick={onPick} />
+    </div>
+  );
+  const timePill = (value: string, onChange: (t: string) => void, name: string) => (
+    <label className="tf-pill">
+      <FA icon={faClock} />
+      <select value={value} onChange={(e) => onChange(e.target.value)} aria-label={name}>
+        {(TIME_OPTIONS.includes(value) ? TIME_OPTIONS : [...TIME_OPTIONS, value].sort()).map((t) => (
+          <option key={t} value={t}>
+            {timeLabel(t)}
+          </option>
+        ))}
+      </select>
+    </label>
+  );
 
   return (
-    <Modal label={event ? "Edit Event" : "New Event"} onClose={onClose} size="md">
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4 p-5 sm:p-6">
-        <div className="flex items-center justify-between border-b border-line pb-3">
-          <h2 className="text-base font-medium text-fg">{event ? "Edit event" : "New event"}</h2>
-          {event && onDelete && (
+    <Modal label={label} onClose={onClose}>
+      <form className="td" onSubmit={submit}>
+        <div className="td-head">
+          <h2 className="h3">{label}</h2>
+          <button type="button" className="ne-btn" aria-label="Close" onClick={onClose}>
+            <FA icon={faXmark} />
+          </button>
+        </div>
+
+        <div className="tf">
+          <input
+            className="tf-title"
+            value={d.title}
+            onChange={(e) => set("title", e.target.value)}
+            placeholder="Event title"
+            aria-label="Event title"
+            maxLength={300}
+            autoFocus
+          />
+
+          <div className="flex flex-col gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="w-12 text-[12.5px] text-fg-subtle">Starts</span>
+              {datePill(d.start_date, moveStartDate)}
+              {!d.all_day && timePill(d.start_time, (t) => moveStart(d.start_date, t), "Start time")}
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="w-12 text-[12.5px] text-fg-subtle">Ends</span>
+              {datePill(d.end_date, (iso) => set("end_date", iso))}
+              {!d.all_day && timePill(d.end_time, (t) => set("end_time", t), "End time")}
+            </div>
+          </div>
+
+          <div className="tf-pills">
             <button
               type="button"
-              onClick={handleDelete}
-              disabled={busy}
-              aria-label="Delete event"
-              className="flex h-8 w-8 items-center justify-center rounded-pill text-fg-muted hover:bg-clay-bg/20 hover:text-clay-fg"
+              className="tf-pill"
+              data-set={d.all_day}
+              aria-pressed={d.all_day}
+              onClick={() => set("all_day", !d.all_day)}
             >
-              <FA icon={faTrash} className="text-xs" />
+              <FA icon={faClock} /> All day
             </button>
-          )}
-        </div>
-
-        {error && (
-          <div role="alert" className="rounded-r1 bg-clay-bg/15 px-3 py-2 text-xs text-clay-fg">
-            {error}
-          </div>
-        )}
-
-        {/* Title */}
-        <div>
-          <label htmlFor="event-title" className="sr-only">
-            Event title
-          </label>
-          <input
-            id="event-title"
-            type="text"
-            placeholder="Event title..."
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            autoFocus
-            required
-            className="w-full rounded-r1 border border-line bg-surface px-3 py-2 text-sm font-medium text-fg placeholder:text-fg-faint focus:border-line-strong focus:outline-none"
-          />
-        </div>
-
-        {/* Date and Time */}
-        <div className="space-y-3 rounded-r2 border border-line bg-surface-muted/30 p-3">
-          <div className="flex items-center justify-between">
-            <label htmlFor="event-all-day" className="flex items-center gap-2 text-xs font-medium text-fg">
-              <FA icon={faClock} className="text-fg-muted" />
-              <span>All-day event</span>
+            <label className="tf-pill min-w-0 flex-1">
+              <FA icon={faLocationDot} />
+              <input
+                className="w-full cursor-text"
+                value={d.location}
+                onChange={(e) => set("location", e.target.value)}
+                placeholder="Location or meeting link"
+                aria-label="Location"
+                maxLength={300}
+              />
             </label>
-            <input
-              id="event-all-day"
-              type="checkbox"
-              checked={allDay}
-              onChange={(e) => setAllDay(e.target.checked)}
-              className="h-4 w-4 rounded border-line text-blue-fg focus:ring-0"
-            />
           </div>
 
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-            <div>
-              <span className="block text-[11px] font-medium text-fg-muted mb-1">Starts</span>
-              <div className="flex items-center gap-1.5">
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => {
-                    setStartDate(e.target.value);
-                    if (e.target.value > endDate) setEndDate(e.target.value);
-                  }}
-                  className="w-full rounded-r1 border border-line bg-surface px-2.5 py-1.5 text-xs text-fg focus:outline-none"
-                />
-                {!allDay && (
-                  <input
-                    type="time"
-                    value={startTime}
-                    onChange={(e) => setStartTime(e.target.value)}
-                    className="w-24 rounded-r1 border border-line bg-surface px-2 py-1.5 text-xs text-fg focus:outline-none"
-                  />
-                )}
-              </div>
-            </div>
-
-            <div>
-              <span className="block text-[11px] font-medium text-fg-muted mb-1">Ends</span>
-              <div className="flex items-center gap-1.5">
-                <input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="w-full rounded-r1 border border-line bg-surface px-2.5 py-1.5 text-xs text-fg focus:outline-none"
-                />
-                {!allDay && (
-                  <input
-                    type="time"
-                    value={endTime}
-                    onChange={(e) => setEndTime(e.target.value)}
-                    className="w-24 rounded-r1 border border-line bg-surface px-2 py-1.5 text-xs text-fg focus:outline-none"
-                  />
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Color / Calendar tint */}
-        <div>
-          <span className="block text-xs font-medium text-fg-muted mb-1.5">Color tint</span>
-          <div className="flex flex-wrap items-center gap-2" role="radiogroup" aria-label="Event color">
+          <div role="radiogroup" aria-label="Colour" className="mt-1 flex flex-wrap items-center gap-2.5 px-1">
             {CALENDAR_TONES.map((t) => (
               <button
                 key={t}
                 type="button"
                 role="radio"
-                aria-checked={color === t}
-                aria-label={`Color ${t}`}
-                onClick={() => setColor(t)}
-                className={`relative flex h-7 w-7 items-center justify-center rounded-full border transition-transform ${
-                  color === t ? "scale-110 border-fg-strong shadow-e1" : "border-transparent opacity-80 hover:opacity-100"
-                } at-${t}`}
+                aria-checked={d.color === t}
+                aria-label={t}
+                title={t}
+                onClick={() => set("color", t)}
+                className={`at-${t} grid size-7 place-items-center rounded-full bg-(--abf) text-[11px] text-white transition-transform duration-300 hover:scale-110 ${d.color === t ? "ring-2 ring-(--abf) ring-offset-2" : ""}`}
               >
-                <span className="h-4 w-4 rounded-full bg-current opacity-80" />
-                {color === t && (
-                  <span className="absolute inset-0 flex items-center justify-center text-fg-strong">
-                    <FA icon={faCheck} className="text-[10px]" />
-                  </span>
-                )}
+                {d.color === t && <FA icon={faCheck} />}
               </button>
             ))}
           </div>
-        </div>
 
-        {/* Location */}
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <FA icon={faLocationDot} className="text-xs text-fg-muted" />
-            <label htmlFor="event-location" className="text-xs font-medium text-fg-muted">
-              Location
-            </label>
+          <div className="mt-1 flex items-start gap-2.5 px-1 text-fg-subtle">
+            <FA icon={faAlignLeft} className="mt-2 text-[13px]" />
+            <textarea
+              className="tf-desc"
+              value={d.description}
+              onChange={(e) => set("description", e.target.value)}
+              placeholder="Notes"
+              aria-label="Notes"
+              rows={3}
+              maxLength={5000}
+            />
           </div>
-          <input
-            id="event-location"
-            type="text"
-            placeholder="Room, office, or meet link..."
-            value={location}
-            onChange={(e) => setLocation(e.target.value)}
-            className="w-full rounded-r1 border border-line bg-surface px-3 py-1.5 text-xs text-fg placeholder:text-fg-faint focus:border-line-strong focus:outline-none"
-          />
-        </div>
 
-        {/* Description */}
-        <div>
-          <div className="flex items-center gap-2 mb-1">
-            <FA icon={faAlignLeft} className="text-xs text-fg-muted" />
-            <label htmlFor="event-desc" className="text-xs font-medium text-fg-muted">
-              Description & notes
-            </label>
+          {err && (
+            <p className="form-err" role="alert">
+              {err}
+            </p>
+          )}
+
+          <div className="tf-acts items-center">
+            {editing && onDelete && (
+              <button type="button" className="btn btn-secondary btn-sm td-del" onClick={onDelete} disabled={busy}>
+                <FA icon={faTrash} /> Delete
+              </button>
+            )}
+            <button type="button" className="btn btn-secondary btn-sm" onClick={onClose}>
+              Cancel
+            </button>
+            <button className="btn btn-primary btn-sm" disabled={busy}>
+              {busy ? "Saving…" : editing ? "Save" : "Add event"}
+            </button>
           </div>
-          <textarea
-            id="event-desc"
-            rows={3}
-            placeholder="Agenda, notes, or details..."
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            className="w-full rounded-r1 border border-line bg-surface px-3 py-1.5 text-xs text-fg placeholder:text-fg-faint focus:border-line-strong focus:outline-none resize-none"
-          />
-        </div>
-
-        {/* Actions */}
-        <div className="flex items-center justify-end gap-2 border-t border-line pt-3 mt-1">
-          <button
-            type="button"
-            onClick={onClose}
-            disabled={busy}
-            className="rounded-pill px-4 py-1.5 text-xs font-medium text-fg-muted hover:bg-surface-sunken hover:text-fg"
-          >
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={busy}
-            className="rounded-pill bg-fg px-4 py-1.5 text-xs font-medium text-surface shadow-e1 hover:opacity-90 disabled:opacity-50"
-          >
-            {busy ? "Saving..." : event ? "Save changes" : "Create event"}
-          </button>
         </div>
       </form>
     </Modal>

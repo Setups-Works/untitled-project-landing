@@ -1,153 +1,95 @@
 "use client";
 
-import { useMemo } from "react";
-import { dayLabel, isoDate } from "../../../lib/dates";
-import { fmtTime } from "../../../lib/prefs";
-import type { CalendarEventItem } from "../types";
-import type { Task } from "../../../lib/workspace";
 import { FontAwesomeIcon as FA } from "@fortawesome/react-fontawesome";
-import { faCheck, faClock, faLocationDot, faListCheck, faCalendarPlus } from "@fortawesome/free-solid-svg-icons";
+import { faLocationDot, faPlus } from "@fortawesome/free-solid-svg-icons";
+import { addDays, dayLabel, isoDate } from "../../../lib/dates";
+import type { Task } from "../../../lib/workspace";
+import type { CalendarEventItem } from "../types";
+import { AGENDA_DAYS, hhmm, timeLabel, toneOf } from "../utils";
+import { TaskChip } from "./Chips";
 
+/** The next four weeks as a list: only days with something on them, plus the first day so there is always a place to add. */
 export default function AgendaView({
   currentDate,
-  events,
-  tasks,
-  showTasksLayer,
-  onSelectEvent,
-  onNewEventOnDate,
+  eventsByDay,
+  tasksByDay,
+  onOpenEvent,
+  onNewOn,
 }: {
   currentDate: Date;
-  events: CalendarEventItem[];
-  tasks: Task[];
-  showTasksLayer: boolean;
-  onSelectEvent: (event: CalendarEventItem) => void;
-  onNewEventOnDate: (dateStr: string) => void;
+  eventsByDay: Map<string, CalendarEventItem[]>;
+  tasksByDay: Map<string, Task[]>;
+  onOpenEvent: (ev: CalendarEventItem) => void;
+  onNewOn: (iso: string) => void;
 }) {
-  const todayIso = isoDate(new Date());
-
-  // Group events and tasks by date starting from currentDate for 28 days
-  const agendaDays = useMemo(() => {
-    const list: {
-      iso: string;
-      label: string;
-      isToday: boolean;
-      events: CalendarEventItem[];
-      tasks: Task[];
-    }[] = [];
-
-    const start = new Date(currentDate);
-
-    for (let i = 0; i < 28; i++) {
-      const d = new Date(start);
-      d.setDate(start.getDate() + i);
-      const iso = isoDate(d);
-
-      const dayEvents = events.filter((ev) => {
-        const sIso = isoDate(new Date(ev.start_at));
-        const eIso = isoDate(new Date(ev.end_at));
-        return iso >= sIso && iso <= eIso;
-      });
-
-      const dayTasks = showTasksLayer ? tasks.filter((t) => t.due_date === iso) : [];
-
-      if (dayEvents.length > 0 || dayTasks.length > 0 || i === 0) {
-        list.push({
-          iso,
-          label: dayLabel(iso, todayIso),
-          isToday: iso === todayIso,
-          events: dayEvents,
-          tasks: dayTasks,
-        });
-      }
-    }
-
-    return list;
-  }, [currentDate, events, tasks, showTasksLayer, todayIso]);
+  const today = isoDate();
+  const first = isoDate(currentDate);
+  const days = Array.from({ length: AGENDA_DAYS }, (_, i) => addDays(first, i)).filter(
+    (iso, i) => i === 0 || eventsByDay.has(iso) || tasksByDay.has(iso),
+  );
+  const empty = days.length === 1 && !eventsByDay.has(first) && !tasksByDay.has(first);
 
   return (
-    <div role="region" aria-label="Agenda view" className="space-y-4 rounded-r2 border border-line bg-surface p-3 sm:p-5 shadow-e1">
-      {agendaDays.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-center">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-surface-muted text-fg-muted mb-3">
-            <FA icon={faCalendarPlus} className="text-lg" />
-          </div>
-          <h3 className="text-sm font-medium text-fg">No upcoming events</h3>
-          <p className="text-xs text-fg-muted mt-1 max-w-xs">
-            No events scheduled for the next 4 weeks. Click "+ New event" or pick a date to create one.
-          </p>
-        </div>
-      ) : (
-        agendaDays.map((day) => (
-          <div key={day.iso} className="space-y-2">
-            {/* Day Header */}
-            <div className="flex items-center justify-between border-b border-line pb-1.5 pt-2">
-              <div className="flex items-center gap-2">
-                <span className={`text-xs font-semibold uppercase tracking-wider ${day.isToday ? "text-fg" : "text-fg-muted"}`}>
-                  {day.label}
-                </span>
-                <span className="text-[11px] text-fg-faint">{day.iso}</span>
-                {day.isToday && <span className="rounded-pill bg-fg px-1.5 py-0.2 text-[9px] font-medium text-surface">Today</span>}
-              </div>
-
+    <section aria-label="Agenda" className="glass overflow-hidden rounded-r3 pb-2">
+      {days.map((iso) => {
+        const events = eventsByDay.get(iso) ?? [];
+        const tasks = tasksByDay.get(iso) ?? [];
+        return (
+          <div key={iso}>
+            <h2 className="flex items-center justify-between px-5 pt-4 pb-1.5 text-[11px] font-semibold tracking-[0.1em] text-fg-faint uppercase">
+              <span className={iso === today ? "text-fg" : ""}>
+                {dayLabel(iso, today)}
+                {iso === today || iso === addDays(today, 1) ? (
+                  <span className="ml-2 font-normal tracking-normal normal-case">{dayLabel(iso, "")}</span>
+                ) : null}
+              </span>
               <button
                 type="button"
-                onClick={() => onNewEventOnDate(day.iso)}
-                className="text-[11px] font-medium text-fg-muted hover:text-fg"
+                aria-label={`Add event on ${iso}`}
+                onClick={() => onNewOn(iso)}
+                className="grid size-8 place-items-center rounded-full text-[12px] text-fg-muted transition-colors hover:bg-surface-muted hover:text-fg"
               >
-                + Add
+                <FA icon={faPlus} />
               </button>
-            </div>
-
-            {/* Empty items state for day 0 if no events */}
-            {day.events.length === 0 && day.tasks.length === 0 && (
-              <p className="text-xs text-fg-faint italic py-1 pl-2">No events or tasks</p>
-            )}
-
-            {/* Events list */}
-            <div className="space-y-1.5">
-              {day.events.map((ev) => (
-                <button
-                  key={ev.id}
-                  type="button"
-                  onClick={() => onSelectEvent(ev)}
-                  className={`w-full rounded-r1 p-2.5 text-left transition-transform hover:scale-[1.005] shadow-e1 at-${ev.color}`}
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-1">
-                    <span className="font-semibold text-xs text-fg">{ev.title}</span>
-                    <span className="flex items-center gap-1 text-[10px] opacity-80">
-                      <FA icon={faClock} className="text-[9px]" />
-                      <span>{ev.all_day ? "All day" : `${fmtTime(ev.start_at)} – ${fmtTime(ev.end_at)}`}</span>
+            </h2>
+            <ul className="flex flex-col gap-1.5 px-3 sm:px-4">
+              {events.map((ev) => (
+                <li key={`${ev.id}-${iso}`}>
+                  <button
+                    type="button"
+                    onClick={() => onOpenEvent(ev)}
+                    className={`at-${toneOf(ev.color)} tint flex w-full items-start gap-3 rounded-r2 px-3.5 py-2.5 text-left transition-[filter] hover:brightness-95`}
+                  >
+                    <span className="w-[84px] shrink-0 pt-px text-[13px] opacity-80 max-sm:w-[62px]">
+                      {ev.all_day ? "All day" : timeLabel(hhmm(new Date(ev.start_at)), true)}
                     </span>
-                  </div>
-
-                  {ev.location && (
-                    <div className="flex items-center gap-1.5 text-[11px] opacity-85 mt-1">
-                      <FA icon={faLocationDot} className="text-[9px]" />
-                      <span>{ev.location}</span>
-                    </div>
-                  )}
-
-                  {ev.description && <p className="text-[11px] opacity-75 mt-1 line-clamp-2">{ev.description}</p>}
-                </button>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[14.5px] font-medium">{ev.title}</span>
+                      {!ev.all_day && (
+                        <span className="block text-[12.5px] opacity-75">
+                          {timeLabel(hhmm(new Date(ev.start_at)))} – {timeLabel(hhmm(new Date(ev.end_at)))}
+                        </span>
+                      )}
+                      {ev.location && (
+                        <span className="mt-0.5 flex items-center gap-1.5 text-[12.5px] opacity-75">
+                          <FA icon={faLocationDot} className="text-[10px]" />
+                          <span className="truncate">{ev.location}</span>
+                        </span>
+                      )}
+                    </span>
+                  </button>
+                </li>
               ))}
-
-              {/* Tasks */}
-              {day.tasks.map((t) => (
-                <div
-                  key={t.id}
-                  className="flex items-center justify-between rounded-r1 border border-amber-fg/20 bg-amber-bg/15 p-2 text-xs text-amber-fg"
-                >
-                  <div className="flex items-center gap-2">
-                    <FA icon={t.done ? faCheck : faListCheck} className="text-xs shrink-0" />
-                    <span className={t.done ? "line-through opacity-70" : "font-medium"}>{t.title}</span>
-                  </div>
-                  <span className="text-[10px] opacity-75 uppercase">Task</span>
-                </div>
+              {tasks.map((t) => (
+                <li key={t.id} className="pl-[26px] max-sm:pl-3">
+                  <TaskChip task={t} />
+                </li>
               ))}
-            </div>
+            </ul>
           </div>
-        ))
-      )}
-    </div>
+        );
+      })}
+      {empty && <p className="ap-none">Nothing coming up. Add an event, or give a task a due date.</p>}
+    </section>
   );
 }
