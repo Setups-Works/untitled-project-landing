@@ -10,6 +10,7 @@ import UniversalSearch, { OPEN_SETTINGS_EVENT } from "./UniversalSearch";
 import { FontAwesomeIcon as FA } from "@fortawesome/react-fontawesome";
 import {
   faHouse,
+  faCalendarDays,
   faBookOpen,
   faComments,
   faPenToSquare,
@@ -27,6 +28,7 @@ import SectionTabs from "./SectionTabs";
 /** One line per workspace section — pages live in app/dashboard/<section>. */
 const TABS = [
   { href: "/dashboard", t: "Home", icon: faHouse },
+  { href: "/dashboard/calendar", t: "Calendar", icon: faCalendarDays },
   { href: "/dashboard/journal", t: "Journal", icon: faBookOpen },
   { href: "/dashboard/chat", t: "Chat", icon: faComments },
   { href: "/dashboard/notes", t: "Notes", icon: faPenToSquare },
