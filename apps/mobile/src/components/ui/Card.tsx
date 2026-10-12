@@ -10,16 +10,17 @@ type Props = {
   tone?: Tone | null;
   onPress?: () => void;
   style?: StyleProp<ViewStyle>;
+  liquidTint?: boolean;
   accessibilityLabel?: string;
 };
 
 /** Liquid-glass card, tinted like the web's `at-<tint>`. Tap targets keep their glass and just dim while pressed. */
-export function Card({ children, tone, onPress, style, accessibilityLabel }: Props) {
+export function Card({ children, tone, onPress, style, liquidTint, accessibilityLabel }: Props) {
   const preferences = useRuntimePrefs();
   const density = preferences.density === "compact" ? styles.cardCompact : styles.card;
   if (!onPress)
     return (
-      <GlassSurface tone={tone} style={[density, style]} accessibilityLabel={accessibilityLabel}>
+      <GlassSurface tone={tone} liquidTint={liquidTint} style={[density, style]} accessibilityLabel={accessibilityLabel}>
         {children}
       </GlassSurface>
     );
@@ -30,7 +31,7 @@ export function Card({ children, tone, onPress, style, accessibilityLabel }: Pro
       onPress={onPress}
       style={({ pressed }) => [styles.press, pressed ? { opacity: 0.85 } : null]}
     >
-      <GlassSurface tone={tone} style={[density, style]}>
+      <GlassSurface tone={tone} liquidTint={liquidTint} style={[density, style]}>
         {children}
       </GlassSurface>
     </Pressable>

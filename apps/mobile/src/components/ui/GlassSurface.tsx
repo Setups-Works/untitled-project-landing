@@ -5,16 +5,16 @@ import { Platform, StyleSheet, View, type StyleProp, type ViewStyle } from "reac
 
 import { glassTint, Palette, Radius, Shadow, Tints } from "@/constants/theme";
 
-// Tinted cards use the same solid pastel fill as the web; untinted surfaces can use native glass on iOS 26.
+// Native iOS glass can take the same tint tokens as the web; other platforms use the matching pastel fill.
 const liquid = Platform.OS === "ios" && isLiquidGlassAvailable();
 
-type Props = { children: ReactNode; tone?: Tone | null; style?: StyleProp<ViewStyle>; interactive?: boolean; accessibilityLabel?: string };
+type Props = { children: ReactNode; tone?: Tone | null; style?: StyleProp<ViewStyle>; interactive?: boolean; liquidTint?: boolean; accessibilityLabel?: string };
 
 /** The app's glass material (the web's `liquid-*` tokens), tinted with one of the product's colours. */
-export function GlassSurface({ children, tone, style, interactive, accessibilityLabel }: Props) {
+export function GlassSurface({ children, tone, style, interactive, liquidTint, accessibilityLabel }: Props) {
   const t = tone ? Tints[tone] : null;
   const ring = { borderColor: t?.line ?? Palette.glassRing, borderWidth: 1 };
-  if (liquid && !tone)
+  if (liquid && (!tone || liquidTint))
     return (
       <GlassView
         glassEffectStyle="regular"

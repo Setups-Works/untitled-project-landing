@@ -37,7 +37,7 @@ export function PersonalityInsightsCard() {
   const failed = tasksQ.isError || journalQ.isError || notesQ.isError;
 
   return (
-    <Card tone="gold" style={styles.card} accessibilityLabel="Personality insights">
+    <Card tone="gold" liquidTint style={styles.card} accessibilityLabel="Personality insights">
       <View style={styles.header}>
         <View style={styles.headerTitle}>
           <Icon name="wand-magic-sparkles" size={17} color={Tints.gold.fg} />
