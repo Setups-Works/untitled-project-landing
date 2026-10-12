@@ -5,7 +5,7 @@ import { Platform, StyleSheet, View, type StyleProp, type ViewStyle } from "reac
 
 import { glassTint, Palette, Radius, Shadow, Tints } from "@/constants/theme";
 
-// Real liquid glass needs iOS 26; everywhere else a translucent tinted fill with a bright ring stands in for it.
+// Tinted cards use the same solid pastel fill as the web; untinted surfaces can use native glass on iOS 26.
 const liquid = Platform.OS === "ios" && isLiquidGlassAvailable();
 
 type Props = { children: ReactNode; tone?: Tone | null; style?: StyleProp<ViewStyle>; interactive?: boolean; accessibilityLabel?: string };
@@ -14,7 +14,7 @@ type Props = { children: ReactNode; tone?: Tone | null; style?: StyleProp<ViewSt
 export function GlassSurface({ children, tone, style, interactive, accessibilityLabel }: Props) {
   const t = tone ? Tints[tone] : null;
   const ring = { borderColor: t?.line ?? Palette.glassRing, borderWidth: 1 };
-  if (liquid)
+  if (liquid && !tone)
     return (
       <GlassView
         glassEffectStyle="regular"
@@ -29,7 +29,7 @@ export function GlassSurface({ children, tone, style, interactive, accessibility
   return (
     <View
       accessibilityLabel={accessibilityLabel}
-      style={[styles.base, ring, { backgroundColor: t ? `${t.bg}d9` : Palette.glassHi }, Shadow.e1, style]}
+      style={[styles.base, ring, { backgroundColor: t?.bg ?? Palette.glassHi }, Shadow.e1, style]}
     >
       {children}
     </View>

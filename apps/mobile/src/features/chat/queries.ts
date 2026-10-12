@@ -13,7 +13,7 @@ export function useChats() {
       (await dbQuery<Chat[]>({
         table: "chats",
         op: "select",
-        columns: "id,title,updated_at,last_read_at",
+        columns: "id,title,updated_at,last_read_at,pinned,folder_id,share_token",
         order: [{ column: "updated_at", ascending: false }],
         limit: 200,
       })) ?? [],
@@ -41,7 +41,7 @@ export function useChatActions() {
 
   const createChat = useMutation({
     mutationFn: async (title: string) =>
-      dbQuery<Chat>({ table: "chats", op: "insert", values: { title }, returning: "id,title,updated_at,last_read_at", single: "single" }),
+      dbQuery<Chat>({ table: "chats", op: "insert", values: { title }, returning: "id,title,updated_at,last_read_at,pinned,folder_id,share_token", single: "single" }),
     onSettled: refreshChats,
   });
 
@@ -74,5 +74,29 @@ export function useChatActions() {
     onSettled: refreshChats,
   });
 
-  return { createChat, addMessage, removeChat, refreshMessages: (id: string) => qc.invalidateQueries({ queryKey: keys.messages(id) }) };
+  const patchChat = useMutation({
+    mutationFn: ({ id, ...values }: { id: string; title?: string; pinned?: boolean; last_read_at?: string; share_token?: string | null; shared_at?: string | null }) =>
+      dbQuery({ table: "chats", op: "update", values, filters: [{ column: "id", op: "eq", value: id }] }),
+    onSettled: refreshChats,
+  });
+
+  const duplicateChat = useMutation({
+    mutationFn: async (chat: Chat) => {
+      const copy = await dbQuery<Chat>({
+        table: "chats", op: "insert", values: { title: `${chat.title} (copy)`.slice(0, 200), folder_id: chat.folder_id },
+        returning: "id,title,updated_at,last_read_at,pinned,folder_id,share_token", single: "single",
+      });
+      if (!copy) throw new Error("Couldn’t duplicate that chat.");
+      const messages = await dbQuery<Message[]>({
+        table: "chat_messages", op: "select", columns: "role,body,created_at", filters: [{ column: "chat_id", op: "eq", value: chat.id }], order: [{ column: "created_at", ascending: true }],
+      });
+      if (messages?.length) {
+        await dbQuery({ table: "chat_messages", op: "insert", values: messages.map(({ role, body, created_at }) => ({ chat_id: copy.id, role, body, created_at, attachments: [] })) });
+      }
+      return copy;
+    },
+    onSettled: refreshChats,
+  });
+
+  return { createChat, addMessage, removeChat, patchChat, duplicateChat, refreshChats, refreshMessages: (id: string) => qc.invalidateQueries({ queryKey: keys.messages(id) }) };
 }

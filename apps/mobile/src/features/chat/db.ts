@@ -6,10 +6,11 @@ type Spec = {
   op: "select" | "insert" | "update" | "delete";
   columns?: string;
   returning?: string | null;
-  values?: Record<string, unknown>;
+  values?: Record<string, unknown> | Record<string, unknown>[];
   filters?: Filter[];
   order?: { column: string; ascending: boolean }[];
   limit?: number;
+  range?: [number, number];
   single?: "single" | "maybe";
 };
 type Result<T> = { data: T | null; count: number | null; error: { message: string; code?: string } | null };

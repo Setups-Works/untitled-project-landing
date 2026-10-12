@@ -80,6 +80,30 @@ export function itemHandlers(def: ResourceDef) {
       if (!id.success) return fail("Not found.", 404);
       const p = def.update.safeParse(await readBody(req));
       if (!p.success) return fail(firstIssue(p.error), 400);
+      if (def.key === "journal") {
+        const attachments = (p.data as { attachments?: { path: string }[] }).attachments;
+        if (
+          attachments?.some(
+            (attachment) =>
+              !ownsKey(user.id, attachment.path) ||
+              !attachment.path.startsWith(`${user.id}/journal/${id.data}/`),
+          )
+        ) {
+          return forbidden();
+        }
+      }
+      if (def.key === "notes") {
+        const attachments = (p.data as { attachments?: { path: string }[] }).attachments;
+        if (
+          attachments?.some(
+            (attachment) =>
+              !ownsKey(user.id, attachment.path) ||
+              !attachment.path.startsWith(`${user.id}/note/${id.data}/`),
+          )
+        ) {
+          return forbidden();
+        }
+      }
       const values: Row = { ...p.data };
       if (!Object.keys(values).length) return fail("Nothing to change.", 400);
       if (hasStamp) values.updated_at = new Date().toISOString();

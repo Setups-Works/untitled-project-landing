@@ -9,8 +9,8 @@ export function useNotes() {
     queryKey: qk.notes,
     queryFn: async () => {
       const { data } = await api.get<ListResponse<Note>>("/api/v1/notes?limit=500");
-      // The server sorts by last edit; pinned notes float to the top like on the web.
-      return [...data].sort((a, b) => Number(b.pinned) - Number(a.pinned));
+      // Match the web's default manual order while keeping pinned notes at the top.
+      return [...data].sort((a, b) => Number(b.pinned) - Number(a.pinned) || b.sort_order - a.sort_order);
     },
   });
 }
@@ -24,7 +24,7 @@ export function useNote(id: string | undefined) {
   });
 }
 
-export type NoteInput = { title: string; body: string; pinned?: boolean; color?: Tone | null };
+export type NoteInput = { title: string; body: string; pinned?: boolean; color?: Tone | null; category?: string; attachments?: Note["attachments"]; sort_order?: number };
 
 export function useNoteActions() {
   const qc = useQueryClient();

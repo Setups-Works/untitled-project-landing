@@ -7,15 +7,27 @@ import { Button } from "./Button";
 import { Icon } from "./Icon";
 import { Sheet } from "./Sheet";
 import { Palette, Radius } from "@/constants/theme";
-
-const WEEK = ["S", "M", "T", "W", "T", "F", "S"];
+import { useAppState } from "@/providers/AppState";
 
 /** The app's own month calendar (the web never uses native date inputs either): pick a day, jump to today, or clear. */
-export function CalendarGrid({ value, onPick, marks }: { value: string | null; onPick: (iso: string) => void; marks?: Set<string> }) {
+export function CalendarGrid({
+  value,
+  onPick,
+  marks,
+  maxDate,
+}: {
+  value: string | null;
+  onPick: (iso: string) => void;
+  marks?: Set<string>;
+  maxDate?: string;
+}) {
+  const { preferences } = useAppState();
+  const weekStart = preferences.weekStart === "sun" ? 0 : 1;
+  const week = weekStart === 0 ? ["S", "M", "T", "W", "T", "F", "S"] : ["M", "T", "W", "T", "F", "S", "S"];
   const today = isoDate();
   const start = fromIso(value ?? today);
   const [cursor, setCursor] = useState({ y: start.getFullYear(), m: start.getMonth() });
-  const days = monthGrid(cursor.y, cursor.m, 0);
+  const days = monthGrid(cursor.y, cursor.m, weekStart);
   const move = (n: number) =>
     setCursor((c) => {
       const d = new Date(c.y, c.m + n, 1);
@@ -40,7 +52,7 @@ export function CalendarGrid({ value, onPick, marks }: { value: string | null; o
         </Pressable>
       </View>
       <View style={styles.week}>
-        {WEEK.map((w, i) => (
+        {week.map((w, i) => (
           <AppText key={i} variant="label" align="center" style={styles.cell}>
             {w}
           </AppText>
@@ -50,14 +62,16 @@ export function CalendarGrid({ value, onPick, marks }: { value: string | null; o
         {days.map((iso) => {
           const inMonth = fromIso(iso).getMonth() === cursor.m;
           const on = iso === value;
+          const disabled = maxDate !== undefined && iso > maxDate;
           return (
             <Pressable
               key={iso}
               accessibilityRole="button"
               accessibilityLabel={fromIso(iso).toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" })}
-              accessibilityState={{ selected: on }}
+              accessibilityState={{ selected: on, disabled }}
+              disabled={disabled}
               onPress={() => onPick(iso)}
-              style={styles.cell}
+              style={[styles.cell, disabled ? { opacity: 0.35 } : null]}
             >
               <View
                 style={[

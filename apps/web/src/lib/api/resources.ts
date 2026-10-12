@@ -79,7 +79,11 @@ const journalRow = z.object({
   created_at: z.string(),
   updated_at: z.string(),
 });
-const journalCreate = z.object({ entry_date: date, body: z.string().max(50_000).default("") });
+const journalCreate = z.object({
+  entry_date: date,
+  body: z.string().max(50_000).default(""),
+  kind: z.enum(["text", "voice"]).optional(),
+});
 
 export const RESOURCES: ResourceDef[] = [
   {
@@ -93,7 +97,7 @@ export const RESOURCES: ResourceDef[] = [
     filters: { pinned: "boolean", category: "string" },
     row: noteRow,
     create: noteCreate,
-    update: noteCreate.partial().extend({ sort_order: z.number().optional() }),
+    update: noteCreate.partial().extend({ sort_order: z.number().optional(), attachments: z.array(attachment).optional() }),
   },
   {
     key: "tasks",
@@ -127,6 +131,10 @@ export const RESOURCES: ResourceDef[] = [
     filters: { entry_date: "date" },
     row: journalRow,
     create: journalCreate,
-    update: z.object({ body: z.string().max(50_000).optional(), entry_date: date.optional() }),
+    update: z.object({
+      body: z.string().max(50_000).optional(),
+      entry_date: date.optional(),
+      attachments: z.array(attachment).optional(),
+    }),
   },
 ];

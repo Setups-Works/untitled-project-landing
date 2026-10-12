@@ -1,6 +1,6 @@
 import { applyOpts, DEFAULT_OPTS, emptyDraft, inView, isOverdue, VIEW_TITLES, type ViewKey, type ViewOpts } from "@untitled/logic";
 import { router } from "expo-router";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Alert, Pressable, StyleSheet, View } from "react-native";
 
 import { ListSheet } from "./ListSheet";
@@ -19,12 +19,14 @@ import { Palette, Radius } from "@/constants/theme";
 import { errorMessage } from "@/lib/api";
 import { isoDate } from "@untitled/logic";
 import type { Task } from "@untitled/types";
+import { useAppState } from "@/providers/AppState";
 
 const SMART: ViewKey[] = ["inbox", "today", "upcoming", "overdue", "recurring", "completed", "cancelled", "archived"];
 const LAYOUT_ICON: Record<ViewOpts["layout"], IconName> = { list: "list-ul", board: "table-columns", calendar: "calendar-days" };
 const NEW_LIST = "__new";
 
 export function TodoScreen() {
+  const { preferences, preferencesReady } = useAppState();
   const today = useMemo(() => isoDate(), []);
   const tasksQ = useTasks();
   const listsQ = useTaskLists();
@@ -37,6 +39,13 @@ export function TodoScreen() {
   const [error, setError] = useState("");
   const [sheet, setSheet] = useState<"view" | "new-list" | "edit-list" | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const appliedStartView = useRef(false);
+
+  useEffect(() => {
+    if (!preferencesReady || appliedStartView.current) return;
+    appliedStartView.current = true;
+    setView(preferences.todoView);
+  }, [preferences.todoView, preferencesReady]);
 
   const tasks = useMemo(() => tasksQ.data ?? [], [tasksQ.data]);
   const lists = useMemo(() => listsQ.data ?? [], [listsQ.data]);

@@ -2,6 +2,7 @@ import "server-only";
 import { createHmac, timingSafeEqual } from "node:crypto";
 import {
   CreateBucketCommand,
+  DeleteObjectCommand,
   DeleteObjectsCommand,
   GetObjectCommand,
   ListObjectsV2Command,
@@ -69,10 +70,21 @@ export async function putObject(bucket: BucketName, key: string, body: Uint8Arra
   );
 }
 
-export async function getObject(bucket: BucketName, key: string) {
+/** Remove one file from an owner-scoped storage path. */
+export async function deleteObject(bucket: BucketName, key: string) {
   await ready();
-  const r = await s3().send(new GetObjectCommand({ Bucket: bucket, Key: key }));
-  return { stream: r.Body!.transformToWebStream(), contentType: r.ContentType ?? "application/octet-stream", length: r.ContentLength };
+  await s3().send(new DeleteObjectCommand({ Bucket: bucket, Key: key }));
+}
+
+export async function getObject(bucket: BucketName, key: string, range?: string) {
+  await ready();
+  const r = await s3().send(new GetObjectCommand({ Bucket: bucket, Key: key, ...(range ? { Range: range } : {}) }));
+  return {
+    stream: r.Body!.transformToWebStream(),
+    contentType: r.ContentType ?? "application/octet-stream",
+    length: r.ContentLength,
+    contentRange: r.ContentRange,
+  };
 }
 
 /** Deletes the given keys (up to 1000). */

@@ -5,6 +5,7 @@ import * as DocumentPicker from "expo-document-picker";
 import { FILES_BUCKET } from "@/features/attachments/useSignedUrls";
 import { mobileEnv } from "@/config/env";
 import { authClient } from "@/lib/auth-client";
+import { createUploadId } from "@/lib/uploadId";
 
 /** A file chosen on this device and not uploaded yet. */
 export type PendingFile = { uri: string; name: string; type: string; size: number };
@@ -20,7 +21,7 @@ export async function pickFiles(): Promise<{ files: PendingFile[]; tooBig: numbe
 
 /** Uploads one file into the user's own folder of the files bucket (PUT /api/v1/storage/o/…), like the web does. */
 export async function uploadChatFile(userId: string, chatId: string, file: PendingFile): Promise<Attachment> {
-  const path = `${userId}/chat/${chatId}/${globalThis.crypto.randomUUID()}-${safeName(file.name)}`;
+  const path = `${userId}/chat/${chatId}/${createUploadId()}-${safeName(file.name)}`;
   const body = await (await fetch(file.uri)).blob();
   const cookie = await authClient?.getCookie();
   const res = await fetch(`${mobileEnv.apiBaseUrl}/api/v1/storage/o/${FILES_BUCKET}/${path.split("/").map(encodeURIComponent).join("/")}`, {
@@ -34,4 +35,15 @@ export async function uploadChatFile(userId: string, chatId: string, file: Pendi
     throw new Error(j.error ?? `Couldn’t upload ${file.name}.`);
   }
   return { path, name: file.name, type: file.type, size: file.size || body.size };
+}
+
+/** Remove an attachment through the authenticated storage route. */
+export async function deleteChatFile(path: string) {
+  const cookie = await authClient?.getCookie();
+  const res = await fetch(`${mobileEnv.apiBaseUrl}/api/v1/storage/o/${FILES_BUCKET}/${path.split("/").map(encodeURIComponent).join("/")}`, {
+    method: "DELETE",
+    headers: cookie ? { Cookie: cookie } : {},
+    credentials: "omit",
+  });
+  if (!res.ok) throw new Error("Couldn’t remove a chat attachment.");
 }

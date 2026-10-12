@@ -65,7 +65,16 @@ function Routes() {
       </Stack.Protected>
       <Stack.Protected guard={signedIn}>
         <Stack.Screen name="(tabs)" />
-        <Stack.Screen name="note/[id]" options={{ presentation: "modal" }} />
+        <Stack.Screen
+          name="note/[id]"
+          options={{
+            presentation: "formSheet",
+            sheetAllowedDetents: [0.82, 1],
+            sheetInitialDetentIndex: 1,
+            sheetGrabberVisible: true,
+            sheetCornerRadius: 28,
+          }}
+        />
         <Stack.Screen name="journal/[id]" options={{ presentation: "modal" }} />
         <Stack.Screen name="task/[id]" options={{ presentation: "modal" }} />
         <Stack.Screen name="profile" options={{ presentation: "modal" }} />

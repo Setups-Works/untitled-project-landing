@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { forbidden, json, sameOrigin, unauthorized } from "../../../../../../../server/http";
 import { currentUser } from "../../../../../../../server/session";
-import { BUCKETS, getObject, isBucket, ownsKey, putObject, validKey, verifySignature } from "../../../../../../../server/storage";
+import { BUCKETS, deleteObject, getObject, isBucket, ownsKey, putObject, validKey, verifySignature } from "../../../../../../../server/storage";
 
 type Ctx = { params: Promise<{ bucket: string; key: string[] }> };
 
@@ -21,11 +21,16 @@ export async function GET(req: Request, { params }: Ctx) {
     }
   }
   try {
-    const o = await getObject(bucket, key);
+    // Native audio players request byte ranges to stream and seek within media files.
+    const range = req.headers.get("range") ?? undefined;
+    const o = await getObject(bucket, key, range);
     return new NextResponse(o.stream, {
+      status: o.contentRange ? 206 : 200,
       headers: {
         "content-type": o.contentType,
         ...(o.length ? { "content-length": String(o.length) } : {}),
+        ...(o.contentRange ? { "content-range": o.contentRange } : {}),
+        "accept-ranges": "bytes",
         "cache-control": BUCKETS[bucket].public ? "public, max-age=31536000, immutable" : "private, max-age=300",
         "x-content-type-options": "nosniff",
         // Uploaded files are untrusted: never let them run as pages in our origin.
@@ -55,4 +60,21 @@ export async function PUT(req: Request, { params }: Ctx) {
   if (body.byteLength > rules.maxBytes) return json({ error: "That file is too large." }, 413);
   await putObject(bucket, key, body, type);
   return json({ ok: true });
+}
+
+/** Delete one object from the caller's own storage folder. */
+export async function DELETE(req: Request, { params }: Ctx) {
+  if (!sameOrigin(req)) return forbidden();
+  const user = await currentUser();
+  if (!user) return unauthorized();
+  const { bucket, key: parts } = await params;
+  const key = keyOf(parts);
+  if (!isBucket(bucket) || !validKey(key)) return json({ error: "Not found." }, 404);
+  if (!ownsKey(user.id, key)) return forbidden();
+  try {
+    await deleteObject(bucket, key);
+    return json({ ok: true });
+  } catch {
+    return json({ error: "Couldn’t delete that file." }, 500);
+  }
 }

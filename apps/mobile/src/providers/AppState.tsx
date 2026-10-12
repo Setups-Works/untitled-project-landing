@@ -1,7 +1,9 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
 
 import { readOnboardingDone, writeOnboardingDone } from "@/features/onboarding/storage";
+import { cleanSettingsPrefs, DEFAULT_SETTINGS_PREFS, updateRuntimePrefs, type SettingsPrefs } from "@/lib/preferences";
+import { api } from "@/lib/api";
 import { authClient, type MobileAuthClient } from "@/lib/auth-client";
 
 type SessionUser = { id: string; name: string; email: string; image?: string | null; username?: string | null };
@@ -12,6 +14,9 @@ type AppStateValue = {
   onboardingDone: boolean;
   signedIn: boolean;
   user: SessionUser | null;
+  preferences: SettingsPrefs;
+  preferencesReady: boolean;
+  setPreferences: Dispatch<SetStateAction<SettingsPrefs>>;
   completeOnboarding: () => Promise<void>;
   signOut: () => Promise<void>;
 };
@@ -34,6 +39,8 @@ function Inner({ client, children }: { client: MobileAuthClient; children: React
   const { data, isPending } = client.useSession();
   const [onboardingDone, setOnboardingDone] = useState(false);
   const [onboardingLoaded, setOnboardingLoaded] = useState(false);
+  const [preferences, setPreferences] = useState<SettingsPrefs>(DEFAULT_SETTINGS_PREFS);
+  const [preferencesUserId, setPreferencesUserId] = useState<string | null>(null);
   const [queryClient] = useState(() => new QueryClient({ defaultOptions: { queries: { retry: 1, staleTime: 15_000 } } }));
 
   useEffect(() => {
@@ -44,6 +51,28 @@ function Inner({ client, children }: { client: MobileAuthClient; children: React
   }, []);
 
   const userId = data?.user.id ?? null;
+  useEffect(() => {
+    let active = true;
+    if (!userId) return () => { active = false; };
+    void api.get<{ data: { preferences: unknown } }>("/api/v1/account/settings")
+      .then((response) => {
+        if (active) {
+          setPreferences(cleanSettingsPrefs(response.data.preferences));
+          setPreferencesUserId(userId);
+        }
+      })
+      .catch(() => {
+        if (active) {
+          setPreferences(DEFAULT_SETTINGS_PREFS);
+          setPreferencesUserId(userId);
+        }
+      });
+    return () => { active = false; };
+  }, [userId]);
+
+  const preferencesReady = !userId || preferencesUserId === userId;
+  const activePreferences = userId && preferencesUserId === userId ? preferences : DEFAULT_SETTINGS_PREFS;
+  useEffect(() => updateRuntimePrefs(activePreferences), [activePreferences]);
   useEffect(() => {
     // Another account must never see the previous account's cached lists.
     if (!userId) queryClient.clear();
@@ -73,10 +102,13 @@ function Inner({ client, children }: { client: MobileAuthClient; children: React
             username: (data.user as { username?: string | null }).username ?? null,
           }
         : null,
+      preferences: activePreferences,
+      preferencesReady,
+      setPreferences,
       completeOnboarding,
       signOut,
     }),
-    [isPending, onboardingLoaded, onboardingDone, data, completeOnboarding, signOut],
+    [isPending, onboardingLoaded, onboardingDone, data, activePreferences, preferencesReady, completeOnboarding, signOut],
   );
 
   return (

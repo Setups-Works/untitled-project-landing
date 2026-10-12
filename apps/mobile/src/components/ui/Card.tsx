@@ -3,6 +3,7 @@ import { Pressable, StyleSheet, type StyleProp, type ViewStyle } from "react-nat
 
 import { GlassSurface } from "./GlassSurface";
 import { Radius } from "@/constants/theme";
+import { useRuntimePrefs } from "@/lib/preferences";
 
 type Props = {
   children: React.ReactNode;
@@ -14,9 +15,11 @@ type Props = {
 
 /** Liquid-glass card, tinted like the web's `at-<tint>`. Tap targets keep their glass and just dim while pressed. */
 export function Card({ children, tone, onPress, style, accessibilityLabel }: Props) {
+  const preferences = useRuntimePrefs();
+  const density = preferences.density === "compact" ? styles.cardCompact : styles.card;
   if (!onPress)
     return (
-      <GlassSurface tone={tone} style={[styles.card, style]} accessibilityLabel={accessibilityLabel}>
+      <GlassSurface tone={tone} style={[density, style]} accessibilityLabel={accessibilityLabel}>
         {children}
       </GlassSurface>
     );
@@ -27,7 +30,7 @@ export function Card({ children, tone, onPress, style, accessibilityLabel }: Pro
       onPress={onPress}
       style={({ pressed }) => [styles.press, pressed ? { opacity: 0.85 } : null]}
     >
-      <GlassSurface tone={tone} style={[styles.card, style]}>
+      <GlassSurface tone={tone} style={[density, style]}>
         {children}
       </GlassSurface>
     </Pressable>
@@ -36,5 +39,6 @@ export function Card({ children, tone, onPress, style, accessibilityLabel }: Pro
 
 const styles = StyleSheet.create({
   card: { padding: 16 },
+  cardCompact: { padding: 10 },
   press: { borderRadius: Radius.r3 },
 });
