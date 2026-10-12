@@ -38,15 +38,16 @@ Fonts are loaded in `src/app/layout.tsx` and exposed as `--serif`, `--sans`, `--
 
 Defined once in `:root`; Tailwind names in brackets. **Never write a hex colour that already has a token.**
 
-| Token                                                                            | Tailwind                       | Use                                          |
-| -------------------------------------------------------------------------------- | ------------------------------ | -------------------------------------------- |
-| `--page` `#f5f4eb`                                                               | `bg-page`                      | The cream canvas (set on `body`)             |
-| `--surface` `#fff`, `--surface-muted`, `--surface-sunken`, `--surface-accent`    | `bg-surface…`                  | Solid fills (chips, hover states)            |
-| `--fg` `#1b1c14` (ink), `--fg-strong`, `--fg-muted`, `--fg-subtle`, `--fg-faint` | `text-fg`, `text-fg-muted`, …  | Text, from strongest to faintest             |
-| `--fill-dark` `#191d1a`, `--on-dark` `#f4f3e9`                                   | `bg-fill-dark`, `text-on-dark` | Dark pills (primary button, "today" number)  |
-| `--line` (10 % ink), `--line-strong` (20 %)                                      | `bg-line`, `border-line`       | Hairlines — **sparingly** (see §5)           |
-| `--green-fg` `#1f5d49` (forest)                                                  | `text-green-fg`                | The accent: focus ring, links, "quiet" words |
-| `--{green,blue,amber,clay,violet,sand}-{bg,fg}`                                  | `bg-clay-bg text-clay-fg`, …   | Soft status colours (errors use clay)        |
+| Token                                                                            | Tailwind                                   | Use                                          |
+| -------------------------------------------------------------------------------- | ------------------------------------------ | -------------------------------------------- |
+| `--page` `#f5f4eb`                                                               | `bg-page`                                  | The cream canvas (set on `body`)             |
+| `--surface` `#fff`, `--surface-muted`, `--surface-sunken`, `--surface-accent`    | `bg-surface…`                              | Solid fills (chips, hover states)            |
+| `--fg` `#1b1c14` (ink), `--fg-strong`, `--fg-muted`, `--fg-subtle`, `--fg-faint` | `text-fg`, `text-fg-muted`, …              | Text, from strongest to faintest             |
+| `--fill-dark` `#191d1a`, `--on-dark` `#f4f3e9`                                   | `bg-fill-dark`, `text-on-dark`             | Dark pills (primary button, "today" number)  |
+| `--line` (10 % ink), `--line-strong` (20 %)                                      | `bg-line`, `border-line`                   | Hairlines — **sparingly** (see §5)           |
+| `--rec` `#d64545`, `--orange-fg` `#c26a1a`                                       | `bg-rec`, `text-rec`, `border-l-orange-fg` | Recording indicator; medium-priority tasks   |
+| `--green-fg` `#1f5d49` (forest)                                                  | `text-green-fg`                            | The accent: focus ring, links, "quiet" words |
+| `--{green,blue,amber,clay,violet,sand}-{bg,fg}`                                  | `bg-clay-bg text-clay-fg`, …               | Soft status colours (errors use clay)        |
 
 No dark mode today. The only global switches are attributes on `<html>`: `data-density="compact"` and `data-motion="reduce"` — respect them.
 
@@ -72,7 +73,7 @@ Cards, pills and buttons are **frosted glass with a hairline inset ring**, not b
 - Tailwind utilities (in `src/styles/tailwind.css`): `glass` (translucent fill + blur + ring), `glass-hover` (brighter on hover), `tint` (see above).
 - Legacy equivalents: `ap-card` (card), `btn btn-secondary` (glass pill), `tf-pill` (form pill).
 - Radii: `rounded-r1` 10 · `r2` 14 · `r3` 20 (cards) · `r4` 28 (dialogs) · `rounded-pill`. Small chips use `rounded-[7px]`.
-- Shadows: `shadow-e1` … `e4` (warm, low-contrast). Never `shadow-md`/`shadow-lg` (grey, harsh).
+- Shadows: `shadow-e1` … `e4` (warm, low-contrast); `shadow-glass` / `shadow-glass-hi` (glass ring, hover), `shadow-lens` (highlighted search row), `shadow-jelly` / `shadow-jelly-held` (section-switcher knob). Never `shadow-md`/`shadow-lg` (grey, harsh).
 - Dialogs are the _thick_ frosted version (`Modal` handles it). Don't restyle them.
 - Grid lines inside a card: a 1 px gap over `bg-line` with translucent white cells (`grid gap-px bg-line` + `bg-white/60` cells), as in the month view and `.tv-cal-grid`. Not `border` on every cell.
 
@@ -151,3 +152,27 @@ Do not mix a legacy class and a utility that set the same property (e.g. `btn` +
 | Delete on a single click                                         | `useConfirm({ danger: true })`.                                              |
 | 24 × 7 `role="button"` divs as tab stops in a grid               | One click target per column; provide a keyboard shortcut / button instead.   |
 | Dark rectangle buttons (`bg-fg rounded-md text-xs`)              | `btn btn-primary btn-sm` (pill, 44 px).                                      |
+
+## 12. How this is enforced (so it doesn't depend on anyone remembering)
+
+| Layer                   | What it does                                                                                                                                                                             |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `npm run check:design`  | Scans the lines **you added** (vs the merge-base with `main`) with the rules in `scripts/design/rules.mjs`. Old code never blocks you. `npm run check:design:all` audits the whole tree. |
+| Git pre-commit hook     | `.githooks/pre-commit` runs it on staged changes. `npm install` turns it on (`prepare` sets `core.hooksPath`).                                                                           |
+| Claude Code hook        | `.claude/settings.json` runs it after every Edit/Write and feeds the problems straight back to the agent so it fixes them itself.                                                        |
+| CI                      | `ci.yml` runs it on every PR; a violation fails the _Typecheck and build_ check, which branch protection requires.                                                                       |
+| Agent instruction files | `AGENTS.md` (the source), `CLAUDE.md`, `GEMINI.md`, `.github/copilot-instructions.md`, `.cursor/rules/` all point here.                                                                  |
+| Code owners             | Changes to the rules, tokens and this guide need the tech lead (`.github/CODEOWNERS`).                                                                                                   |
+
+What it checks: hex / `rgb()` colours, Tailwind's default palette and `black`, default shadows and radii, text under 11 px, hand-set fonts, literal colours in inline styles, native `alert/confirm/prompt`, native date/time inputs, `process.env` outside `src/config`, `NEXT_PUBLIC_*` secrets, secret-looking strings, hard-coded localhost URLs, and `any`.
+
+**Need something the tokens don't offer?** Don't inline it. Add the token once — a custom property in `:root` (`src/app/globals.css`) and a mapping in `@theme inline` (`src/styles/tailwind.css`) — and use it from there; that is how `--orange-fg` (medium-priority tasks) was added. **A real, justified exception?** Put `design-ok: <reason>` in a comment on that line or the one above; reviewers read these.
+
+Adding or changing a rule: edit `scripts/design/rules.mjs`, add a case to `tests/unit/check-design.test.ts`, and make the message say _what to use instead_ — agents read it.
+
+### Colours in places CSS can't reach
+
+- **Canvas / charts:** a canvas can't read `var(--x)`. Pass tokens as strings (`"var(--green-fg)"`) and resolve them at draw time with `tokenColor()` from `src/lib/cssVar.ts` (`ctx.fillStyle = tokenColor(barColor)`). SVG attributes accept `var(--x)` directly (`stroke="var(--green-fg)"`).
+- **Third-party brand marks** (Google, HubSpot) keep their mandated colours: put them in their own small file marked `// design-ok-file: <reason>` (see `src/components/auth/GoogleMark.tsx`) or tag the line with `design-ok:`.
+- **Art-directed materials** (the gift card's iridescent foil) are literal by design and marked `design-ok-file:` with the reason. That is the only kind of file allowed to be wholly literal.
+- `src/app/globals.css` and `src/styles/tailwind.css` are the token files: literal values live there and nowhere else.

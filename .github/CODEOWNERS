@@ -39,3 +39,10 @@
 /db/migrations/            @nitheeshdr
 /docs/SECURITY.md          @nitheeshdr
 /AGENTS.md                 @nitheeshdr
+# The design contract: tokens, rules and the guide change only with the tech lead's review
+/docs/DESIGN_LANGUAGE.md   @nitheeshdr
+/scripts/design/           @nitheeshdr
+/scripts/check-design.mjs  @nitheeshdr
+/src/styles/tailwind.css   @nitheeshdr
+/.githooks/                @nitheeshdr
+/.claude/settings.json     @nitheeshdr

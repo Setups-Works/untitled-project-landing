@@ -15,6 +15,7 @@ Closes: [UNT-](https://setups-works.atlassian.net/browse/UNT-)
 <!-- Steps a reviewer can repeat. Mention desktop AND 375 px mobile for UI changes. -->
 
 - [ ] `npx tsc --noEmit`
+- [ ] `npm run check:design` (no hard-coded colours/fonts/URLs; UI matches `docs/DESIGN_LANGUAGE.md`)
 - [ ] `npx next build`
 - [ ]
 
@@ -27,6 +28,7 @@ Closes: [UNT-](https://setups-works.atlassian.net/browse/UNT-)
 - [ ] Acceptance criteria of the Jira task are met
 - [ ] Layering respected (`UI → feature hook → API/server action → service → repository`); no `src/server` imports in client code
 - [ ] No secrets, tokens or personal data in code, logs or screenshots
+- [ ] UI compared side by side with `/dashboard/todo` (fonts, glass, tints, buttons) — desktop and 375 px
 - [ ] Accessible by keyboard; labels/roles on custom controls; works at 375 px
 - [ ] Docs updated: folder `AGENTS.md`, `docs/CURRENT_STATE.md`
 - [ ] **If the database changed:** new migration file (applied ones untouched) · RLS + policies · indexes · `docs/DATA_MODEL.md` updated · tech lead tagged

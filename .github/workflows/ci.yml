@@ -16,6 +16,8 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # the design check diffs against the base branch
 
       - uses: actions/setup-node@v4
         with:
@@ -24,6 +26,10 @@ jobs:
 
       - name: Install
         run: npm ci
+
+      - name: Design language and hard-coding check
+        if: github.event_name == 'pull_request'
+        run: node scripts/check-design.mjs --base origin/${{ github.base_ref }}
 
       - name: Typecheck
         run: npx tsc --noEmit

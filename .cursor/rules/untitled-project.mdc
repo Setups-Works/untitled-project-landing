@@ -1,0 +1,11 @@
+---
+description: Project rules — design language, no hard-coding, architecture
+alwaysApply: true
+---
+
+Read `AGENTS.md` (the contract for every agent) and `docs/DESIGN_LANGUAGE.md` before you touch UI, plus the folder `AGENTS.md` of every folder you change.
+
+- Never hard-code colours, fonts, radii, shadows, URLs, keys or env reads. Use the design tokens, `at-<tint> tint`, `glass`, `src/config`, `qk`. Missing a token? Add it once in `:root` (`src/app/globals.css`) and `@theme` (`src/styles/tailwind.css`).
+- Copy `/dashboard/todo` for look and feel: cream canvas, serif titles, Geist text, frosted glass, pill buttons.
+- No Tailwind default palette, native `alert/confirm/prompt`, or `<input type="date|time">`.
+- Before finishing run `npx tsc --noEmit`, `npm test`, `npm run check:design`. Never `--no-verify`.

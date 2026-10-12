@@ -14,7 +14,10 @@
     "test:db": "RUN_DB_TESTS=1 vitest run",
     "test:e2e": "playwright test",
     "format": "prettier --write .",
-    "format:check": "prettier --check ."
+    "format:check": "prettier --check .",
+    "check:design": "node scripts/check-design.mjs",
+    "check:design:all": "node scripts/check-design.mjs --all",
+    "prepare": "git config core.hooksPath .githooks 2>/dev/null || true"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.1147.0",

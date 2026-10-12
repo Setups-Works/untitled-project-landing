@@ -97,6 +97,24 @@ Acceptance criteria met · typecheck and build pass · works on mobile · access
 - Inventing product behaviour. If a requirement is unclear, ask the task owner; don't guess.
 - Putting Composio/AI keys in `NEXT_PUBLIC_*` variables.
 
+## 9a. No hard-coding, one design language (enforced)
+
+Three developers and several AI agents write UI here. To keep it one product, these are **rules checked by tooling**, not suggestions:
+
+| Never hard-code…                                          | Use instead                                                                                                             |
+| --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Colours (`#fff`, `rgb()`, `bg-gray-100`, `text-blue-500`) | Tokens (`bg-surface`, `text-fg-muted`, `text-green-fg`…), tints (`at-<tint> tint`), `glass` — `docs/DESIGN_LANGUAGE.md` |
+| Radii, shadows, fonts, spacing scales                     | `rounded-r1…r5`/`rounded-pill`, `shadow-e1…e4`, `font-serif` / default Geist / `font-mono`                              |
+| A colour/size that has no token yet                       | Add the token once (`:root` in `globals.css` + `@theme` in `src/styles/tailwind.css`), then use it everywhere           |
+| Env values, URLs, keys, secrets                           | `src/config` (`serverEnv()`), `.env.example`; never `process.env` in feature code, never `NEXT_PUBLIC_*` secrets        |
+| Feature gating                                            | `src/config/features.ts` (global) or the database (per user/plan)                                                       |
+| Query keys                                                | `qk` in `src/lib/query/keys.ts`                                                                                         |
+| Dialogs, date/time pickers, menus, tabs                   | `useConfirm()`/`usePrompt()`, `JournalCalendar` + `tf-pill` select, Radix wrappers in `src/components/ui`               |
+
+**Check your work:** `npm run check:design` (lines you added vs `main`). It runs automatically in the git pre-commit hook (installed by `npm install`), after every file edit in Claude Code (`.claude/settings.json`), and in CI — a PR with new violations cannot merge. A genuine exception needs a `design-ok: <reason>` comment on that line. Don't bypass with `--no-verify`.
+
+**Every AI agent** (Claude Code, Antigravity/Gemini, Cursor, Copilot, Codex…): read this file and `docs/DESIGN_LANGUAGE.md` before touching UI, and compare the result with `/dashboard/todo` at desktop and 375 px before you say it is done.
+
 ## 10. Map of the docs
 
 | File                        | Read it when                                                                                                                                                                    |
@@ -108,7 +126,7 @@ Acceptance criteria met · typecheck and build pass · works on mobile · access
 | `docs/DATA_MODEL.md`        | You touch the database                                                                                                                                                          |
 | `docs/SELF_HOSTING.md`      | You run, deploy or back up the stack (Docker, env, storage, auth, Supabase data import)                                                                                         |
 | `docs/SECURITY.md`          | You touch auth, uploads, sharing, admin, AI tools or secrets                                                                                                                    |
-| `docs/DESIGN_LANGUAGE.md`   | **You build or change any UI** — fonts, colours, glass, buttons, tints, reference screens, mistakes to avoid                                                                    |
+| `docs/DESIGN_LANGUAGE.md`   | **You build or change any UI** — fonts, colours, glass, buttons, tints, reference screens, mistakes to avoid, how it is enforced                                                |
 | `docs/CONVENTIONS.md`       | Naming, UI patterns, error handling, testing                                                                                                                                    |
 | `docs/AI_WORKFLOW.md`       | **You are an AI agent taking a Jira task** — the exact loop, the Jira helper (`node scripts/jira/jira.mjs`) and what you must not do (never merge; never handle tokens in chat) |
 | `docs/JIRA_GUIDE.md`        | You write or refine tasks                                                                                                                                                       |
