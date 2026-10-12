@@ -11,6 +11,9 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/web/package.json ./apps/web/package.json
 COPY apps/mobile/package.json ./apps/mobile/package.json
 COPY packages/api-client/package.json ./packages/api-client/package.json
+COPY packages/logic/package.json ./packages/logic/package.json
+COPY packages/types/package.json ./packages/types/package.json
+COPY packages/validation/package.json ./packages/validation/package.json
 RUN --mount=type=cache,target=/root/.local/share/pnpm/store pnpm install --frozen-lockfile
 
 FROM node:${NODE_VERSION} AS builder

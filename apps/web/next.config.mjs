@@ -4,5 +4,5 @@ import path from "node:path";
 export default {
   outputFileTracingRoot: path.join(import.meta.dirname, "../.."),
   output: "standalone",
-  transpilePackages: ["@untitled/api-client"],
+  transpilePackages: ["@untitled/api-client", "@untitled/logic", "@untitled/validation", "@untitled/types"],
 };

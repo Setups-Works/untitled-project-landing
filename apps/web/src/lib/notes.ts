@@ -42,4 +42,5 @@ export function editedLabel(iso: string) {
   });
 }
 
-export const safeName = (n: string) => n.replace(/[^\w.\- ]+/g, "_").slice(0, 80) || "file";
+// Shared with the mobile app so both name stored files the same way.
+export { safeName } from "@untitled/logic/files";

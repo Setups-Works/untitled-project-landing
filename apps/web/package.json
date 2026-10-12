@@ -14,9 +14,8 @@
     "test:e2e": "playwright test"
   },
   "dependencies": {
-    "@untitled/api-client": "workspace:*",
-    "@better-auth/expo": "^1.7.7",
     "@aws-sdk/client-s3": "^3.1147.0",
+    "@better-auth/expo": "^1.7.7",
     "@better-auth/passkey": "^1.7.7",
     "@fortawesome/fontawesome-svg-core": "^7.3.1",
     "@fortawesome/free-solid-svg-icons": "^7.3.1",
@@ -26,6 +25,10 @@
     "@radix-ui/react-dropdown-menu": "^2.1.25",
     "@radix-ui/react-tabs": "^1.1.22",
     "@tanstack/react-query": "^5.104.1",
+    "@untitled/api-client": "workspace:*",
+    "@untitled/logic": "workspace:*",
+    "@untitled/types": "workspace:*",
+    "@untitled/validation": "workspace:*",
     "better-auth": "^1.7.7",
     "gsap": "^3.15.0",
     "ioredis": "^6.0.0",
