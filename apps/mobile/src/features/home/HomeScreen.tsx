@@ -241,7 +241,7 @@ function SectionLink({ title, onPress }: { title: string; onPress: () => void })
   return (
     <Pressable accessibilityRole="button" onPress={onPress} hitSlop={8} style={styles.sectionLink}>
       <AppText variant="label" color={Palette.greenFg}>{title}</AppText>
-      <Icon name="arrow-up-right" size={13} color={Palette.greenFg} />
+      <Icon name="arrow-up-right-from-square" size={13} color={Palette.greenFg} />
     </Pressable>
   );
 }
