@@ -14,7 +14,7 @@ The repository is a pnpm/Turborepo workspace: the existing Next.js web app and i
 | Public share    | `/share/[token]` (read-only chat)                                                                                                     | `apps/web/src/app/share/[token]/page.tsx`                                        |
 | Admin           | `/admin`, `/admin/users`, `/admin/usage`, `/admin/announcements`, `/admin/audit`                                                      | `apps/web/src/app/admin`, `apps/web/src/components/admin/*`                               |
 | Gate            | Proxy redirects signed-out visitors away from `/dashboard` and `/admin`; admin role re-checked in the admin layout                    | `apps/web/src/proxy.ts`, `apps/web/src/server/session.ts`                                 |
-| Mobile app      | Expo Router app; Better Auth email sign-in/sign-up and task list/create/complete through `/api/v1/tasks`                               | `apps/mobile/src`, `packages/api-client`                                                  |
+| Mobile app      | Expo Router workspace client with native task, journal, notes, chat, settings and home insights screens                               | `apps/mobile/src`, `packages/api-client`, `packages/logic`                               |
 
 Target URLs (`/notes`, `/tasks`, …, route groups `(marketing)`, `(auth)`, `(app)`) are decided in **UNT-49**.
 
@@ -45,7 +45,7 @@ Target URLs (`/notes`, `/tasks`, …, route groups `(marketing)`, `(auth)`, `(ap
 
 ## Foundation code already in place
 
-- `apps/mobile` — Expo Router app using Better Auth SecureStore sessions and the shared API transport. Native task, journal, notes, chat history and settings screens are available. The journal supports day navigation, a marked month calendar, per-day text drafts, attachments, voice notes and entry CRUD. The note editor has Markdown controls and autosave; chat has conversation history and per-chat actions.
+- `apps/mobile` — Expo Router app using Better Auth SecureStore sessions and the shared API transport. Native task, journal, notes, chat history, settings and home personality insights are available. The journal supports day navigation, a marked month calendar, per-day text drafts, attachments, voice notes and entry CRUD. The note editor has Markdown controls and autosave; chat has conversation history and per-chat actions. Personality insights reuse the shared, explainable analysis from tasks, journal entries and notes.
 - `packages/api-client` — platform-independent JSON API transport used by web and mobile clients.
 - `apps/web/src/config/env.ts` — typed env access (`publicEnv`, `serverEnv()`, `requireEnv`).
 - `apps/web/src/config/features.ts` — feature flags per phase.

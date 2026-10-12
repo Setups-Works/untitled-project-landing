@@ -2,7 +2,7 @@
 
 **Does:** Personality insights card on Home today (archetype, 8-axis radar, observations, "on your mind" words) computed **in the browser from the user's own journal, notes and tasks — no quiz, no AI**. Planned: an `/insights` page, Daily Brief, AI weekly review. **Track B. Phases 2–5.**
 
-**Today (legacy):** `lib/insights.ts` (pure `analyse()`), `components/app/{InsightsCard,Radar}.tsx`.
+**Today:** pure `analyse()` in `packages/logic/src/insights.ts`, shared by web and mobile. Legacy web UI lives in `components/app/{InsightsCard,Radar}.tsx`.
 
 **Rules**
 

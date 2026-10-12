@@ -3,6 +3,7 @@ import { useCallback, useMemo, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 
 import { useJournal } from "@/features/journal/queries";
+import { useNotes } from "@/features/notes/queries";
 import { isOpen, isOverdue } from "@untitled/logic";
 import { useTasks } from "@/features/tasks/queries";
 import { TaskRow } from "@/features/tasks/TaskRow";
@@ -17,6 +18,7 @@ import { Palette, Radius, Tints } from "@/constants/theme";
 import { greeting, isoDate, longDate, timeOf } from "@/lib/dates";
 import { errorMessage } from "@/lib/api";
 import { useAppState } from "@/providers/AppState";
+import { PersonalityInsightsCard } from "./PersonalityInsightsCard";
 
 const QUICK: { href: "/todo" | "/notes" | "/journal"; label: string; icon: IconName; tone: "violet" | "amber" | "mint" }[] = [
   { href: "/todo", label: "Plan my day", icon: "list-check", tone: "violet" },
@@ -29,15 +31,16 @@ export function HomeScreen() {
   const { user } = useAppState();
   const tasksQ = useTasks();
   const journalQ = useJournal();
+  const notesQ = useNotes();
   const toggle = useToggleTask();
   const today = useMemo(() => isoDate(), []);
   const [refreshing, setRefreshing] = useState(false);
 
   const refresh = useCallback(async () => {
     setRefreshing(true);
-    await Promise.all([tasksQ.refetch(), journalQ.refetch()]);
+    await Promise.all([tasksQ.refetch(), journalQ.refetch(), notesQ.refetch()]);
     setRefreshing(false);
-  }, [tasksQ, journalQ]);
+  }, [tasksQ, journalQ, notesQ]);
 
   const first = user?.name.split(" ")[0] ?? "";
   const header = (
@@ -178,6 +181,8 @@ export function HomeScreen() {
           );
         })}
       </View>
+
+      <PersonalityInsightsCard />
     </Screen>
   );
 }
