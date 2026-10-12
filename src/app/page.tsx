@@ -132,7 +132,7 @@ export default function Page() {
           <div className="aurora" aria-hidden />
           <div className="container inner">
             <div className="chip" style={{ marginBottom: 24 }}>
-              <FA icon={faWandMagicSparkles} style={{ color: "#1f5d49" }} />
+              <FA icon={faWandMagicSparkles} className="text-green-fg" />
               Your AI can change. Your workspace shouldn’t.
             </div>
             <h1 className="display" style={{ maxWidth: 940, margin: "0 auto" }}>
@@ -274,8 +274,8 @@ export default function Page() {
                       ))}
                     </ul>
                     <p className="body">
-                      <strong style={{ color: "var(--fg)" }}>Multiple accounts? No problem.</strong> With Pro, connect up to 5 email
-                      accounts and manage them all from one place.
+                      <strong className="text-fg">Multiple accounts? No problem.</strong> With Pro, connect up to 5 email accounts and
+                      manage them all from one place.
                     </p>
                   </div>
                   <div className="card" data-emphasis style={{ gap: 0 }}>
@@ -404,9 +404,7 @@ export default function Page() {
             <Reveal>
               <div className="panel ai-panel" data-tone="dark">
                 <div className="ai-copy stack">
-                  <div className="eyebrow" style={{ color: "#f4f3e999" }}>
-                    AI, on your terms
-                  </div>
+                  <div className="eyebrow text-on-dark/60">AI, on your terms</div>
                   <h2 className="h2">
                     Your AI can change. <span className="quiet">Your workspace shouldn’t.</span>
                   </h2>

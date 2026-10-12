@@ -29,6 +29,13 @@
     --violet-fg: #5f4a7a;
     --sand-bg: #f0eadd;
     --sand-fg: #7a6a3c;
+    --orange-fg: #c26a1a; /* medium-priority tasks (priority 2) */
+    --rec: #d64545; /* recording indicator */
+    /* Raised glass shapes (the section switcher's knob, the highlighted search result). */
+    --lens: inset 0 1px 0 #fff, inset 0 0 0 1px #ffffffe6, 0 8px 22px -10px #1b1c1466;
+    --jelly: inset 0 1px 0 #fff, inset 0 0 0 1px #ffffffbf, inset 0 -1px 2px #1b1c1412, 0 6px 18px -8px #1b1c1466, 0 1px 3px #1b1c1424;
+    --jelly-held:
+      inset 0 1px 0 #fff, inset 0 0 0 1px #ffffffe6, inset 0 -2px 6px #1f5d491f, 0 14px 30px -8px #1b1c1473, 0 3px 8px #1b1c1429;
     /* Liquid glass: the material of the section switcher and round search button, shared by every card and button. */
     --glass: #ffffff99;
     --glass-hi: #ffffffcc;

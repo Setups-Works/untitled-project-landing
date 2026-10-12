@@ -61,7 +61,7 @@ export default function FilePreviewList({
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={url} alt="" className="size-full object-cover" />
-                  <span className="absolute inset-0 grid place-items-center bg-black/35 text-[13px] text-white opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
+                  <span className="absolute inset-0 grid place-items-center bg-fill-dark/35 text-[13px] text-on-dark opacity-0 transition-opacity group-hover:opacity-100 group-focus-visible:opacity-100">
                     <FA icon={faMagnifyingGlassPlus} />
                   </span>
                 </button>

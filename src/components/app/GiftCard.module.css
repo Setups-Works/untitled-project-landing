@@ -1,3 +1,4 @@
+/* design-ok-file: the iridescent foil is art-directed (holographic gradients, specular light) — it is a material, not UI chrome, and has no tokens by design. */
 /* Iridescent foil technique adapted from dqnamo.com/experiments/iridescent-foil (light theme only). */
 .card {
   --pointer-x: 50%;
@@ -194,7 +195,9 @@
   height: 10px;
   border-radius: 50%;
   background: #1f6b4a;
-  box-shadow: inset 0 1px 1px rgba(0, 0, 0, 0.3), 0 1px 0 rgba(255, 255, 255, 0.7);
+  box-shadow:
+    inset 0 1px 1px rgba(0, 0, 0, 0.3),
+    0 1px 0 rgba(255, 255, 255, 0.7);
 }
 .tag {
   margin-left: auto;

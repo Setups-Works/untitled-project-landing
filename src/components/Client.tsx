@@ -124,13 +124,11 @@ export function Integrations({ groups }: { groups: { name: string; items: Int[] 
       <div className="car-track" ref={ref} onScroll={onScroll} tabIndex={0} aria-label="Integration groups">
         {groups.map((g, n) => (
           <div className={`card car-slide ${tone[n]}`} key={g.name}>
-            <div className="eyebrow" style={{ color: "var(--tint-fg, var(--green-fg))" }}>
-              {g.name}
-            </div>
+            <div className="eyebrow text-[color:var(--tint-fg,var(--green-fg))]">{g.name}</div>
             <div className="ilist">
               {g.items.map((it) => (
                 <div className="int" data-soon={!isLive(it.name)} key={it.name}>
-                  <div className="tile" style={{ background: "var(--surface-muted)" }}>
+                  <div className="tile bg-surface-muted">
                     <Logo name={it.name} size={34} />
                   </div>
                   <div>
@@ -174,9 +172,7 @@ export function AiSwap({ models }: { models: string[] }) {
   return (
     <div className="swap">
       <div className="ws">
-        <div className="eyebrow" style={{ color: "#5f6055" }}>
-          Your workspace
-        </div>
+        <div className="eyebrow text-fg-muted">Your workspace</div>
         <div className="statement" style={{ marginTop: 10 }}>
           Notes · Tasks
           <br />

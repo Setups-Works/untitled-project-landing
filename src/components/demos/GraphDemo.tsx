@@ -53,7 +53,7 @@ export default function GraphDemo() {
                 y1={get(a).y}
                 x2={get(b).x}
                 y2={get(b).y}
-                stroke={on ? "#1f5d49" : "#1b1c1433"}
+                stroke={on ? "var(--green-fg)" : "var(--line-strong)"}
                 strokeWidth={on ? 2 : 1.2}
                 vectorEffect="non-scaling-stroke"
                 strokeDasharray={on ? "0" : "4 4"}

@@ -150,16 +150,14 @@ export default function SectionTabs({ tabs, current, onGo }: { tabs: SectionTab[
         <span
           ref={jelly}
           className={`relative block size-full rounded-full bg-linear-to-b from-white/95 via-white/70 to-white/50 backdrop-blur-md backdrop-saturate-200 transition-[scale,box-shadow] duration-300 ${SPRING} ${
-            holding
-              ? "shadow-[inset_0_1px_0_#fff,inset_0_0_0_1px_rgba(255,255,255,0.9),inset_0_-2px_6px_rgba(31,93,73,0.12),0_14px_30px_-8px_rgba(27,28,20,0.45),0_3px_8px_rgba(27,28,20,0.16)]"
-              : "shadow-[inset_0_1px_0_#fff,inset_0_0_0_1px_rgba(255,255,255,0.75),inset_0_-1px_2px_rgba(27,28,20,0.07),0_6px_18px_-8px_rgba(27,28,20,0.4),0_1px_3px_rgba(27,28,20,0.14)]"
+            holding ? "shadow-jelly-held" : "shadow-jelly"
           }`}
           style={{ scale: holding ? "1.14 1.22" : "1" }}
         >
           {/* specular highlight along the top edge */}
           <span className="absolute inset-x-[14%] top-[6%] h-[34%] rounded-full bg-linear-to-b from-white/90 to-transparent" />
           {/* faint green tint along the bottom edge, picking up the site accent */}
-          <span className="absolute inset-x-[10%] bottom-[5%] h-[28%] rounded-full bg-linear-to-t from-[#1f5d49]/10 to-transparent" />
+          <span className="absolute inset-x-[10%] bottom-[5%] h-[28%] rounded-full bg-linear-to-t from-green-fg/10 to-transparent" />
         </span>
       </span>
 

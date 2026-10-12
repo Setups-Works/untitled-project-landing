@@ -234,14 +234,14 @@ export default function ChatWidget() {
                 return (
                   <div
                     key={m.id}
-                    className="max-w-[85%] self-end whitespace-pre-wrap break-words rounded-r3 rounded-br-lg bg-fg px-4 py-2.5 text-sm text-on-dark"
+                    className="max-w-[85%] self-end whitespace-pre-wrap break-words rounded-r3 rounded-br-r1 bg-fg px-4 py-2.5 text-sm text-on-dark"
                   >
                     {m.body}
                   </div>
                 );
               const parsed = parseChatActions(m.body);
               return (
-                <div key={m.id} className="max-w-[92%] self-start rounded-r3 rounded-bl-lg bg-surface px-4 py-3 text-sm shadow-e1">
+                <div key={m.id} className="max-w-[92%] self-start rounded-r3 rounded-bl-r1 bg-surface px-4 py-3 text-sm shadow-e1">
                   {parsed.body && <Markdown text={parsed.body} />}
                   {parsed.proposals.length > 0 && chatId && (
                     <ChatActionProposal proposals={parsed.proposals} messageId={m.id} chatId={chatId} />
@@ -250,7 +250,7 @@ export default function ChatWidget() {
               );
             })}
             {live !== null && (
-              <div className="max-w-[92%] self-start rounded-r3 rounded-bl-lg bg-surface px-4 py-3 text-sm shadow-e1">
+              <div className="max-w-[92%] self-start rounded-r3 rounded-bl-r1 bg-surface px-4 py-3 text-sm shadow-e1">
                 {live ? <Markdown text={parseChatActions(live).body} /> : <span className="text-fg-muted">Thinking…</span>}
               </div>
             )}

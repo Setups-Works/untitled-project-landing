@@ -14,6 +14,9 @@ export const publicEnv = {
   sentryDsn: process.env.NEXT_PUBLIC_SENTRY_DSN?.trim() || undefined,
 } as const;
 
+/** `API_DOCS=off` hides the Swagger UI and openapi.json (for environments where they must not be public). Read per request. */
+export const apiDocsEnabled = () => process.env.API_DOCS?.trim().toLowerCase() !== "off";
+
 export class MissingEnvError extends Error {
   constructor(
     public readonly name: string,

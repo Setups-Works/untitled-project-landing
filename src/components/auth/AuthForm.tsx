@@ -1,4 +1,5 @@
 "use client";
+import GoogleMark from "./GoogleMark";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -59,7 +60,8 @@ function friendly(msg: string) {
   const m = msg.toLowerCase();
   if (m.includes("invalid login") || m.includes("invalid email or password")) return "That email and password don’t match.";
   if (m.includes("invalid username or password")) return "That email or username and password don’t match.";
-  if (m.includes("username_is_already_taken") || m.includes("username already taken")) return "That username is already in use. Choose another one.";
+  if (m.includes("username_is_already_taken") || m.includes("username already taken"))
+    return "That username is already in use. Choose another one.";
   if (m.includes("not verified") || m.includes("not confirmed")) return "Please confirm your email first — check your inbox.";
   if (m.includes("already exists") || m.includes("already registered")) return "An account with this email already exists. Try logging in.";
   if (m.includes("suspended")) return "This account has been suspended. Contact support if you think this is a mistake.";
@@ -122,9 +124,11 @@ export default function AuthForm({ mode }: { mode: Mode }) {
     const username = String(f.get("username") || "").trim();
     if (mode === "login" && !EMAIL_RE.test(email.trim()) && !USERNAME_RE.test(email.trim()))
       return setErr("Enter a valid email address or a username with 3–30 letters, numbers, dots or underscores.");
-    if ((mode === "signup" || (mode === "forgot" && !otpSent)) && !EMAIL_RE.test(email.trim())) return setErr("Please enter a valid email address.");
+    if ((mode === "signup" || (mode === "forgot" && !otpSent)) && !EMAIL_RE.test(email.trim()))
+      return setErr("Please enter a valid email address.");
     const resettingWithOtp = mode === "forgot" && otpSent;
-    if ((mode === "signup" || mode === "reset" || resettingWithOtp) && pw.length < 8) return setErr("Your password needs at least 8 characters.");
+    if ((mode === "signup" || mode === "reset" || resettingWithOtp) && pw.length < 8)
+      return setErr("Your password needs at least 8 characters.");
     if (resettingWithOtp && !/^\d{6}$/.test(otp.trim())) return setErr("Enter the 6-digit code from your email.");
     if (resettingWithOtp && pw !== confirmPw) return setErr("Your passwords don’t match.");
     if (mode === "signup" && !name) return setErr("Please tell us your name.");
@@ -149,7 +153,13 @@ export default function AuthForm({ mode }: { mode: Mode }) {
         return;
       }
       if (mode === "signup") {
-        const { data, error } = await authClient.signUp.email({ email: email.trim(), password: pw, name, username, callbackURL: "/dashboard" });
+        const { data, error } = await authClient.signUp.email({
+          email: email.trim(),
+          password: pw,
+          name,
+          username,
+          callbackURL: "/dashboard",
+        });
         if (error) throw new Error(error.message || "Couldn’t create the account.");
         if (data?.token) {
           router.push("/dashboard");
@@ -231,7 +241,9 @@ export default function AuthForm({ mode }: { mode: Mode }) {
         </span>
         <h2 className="h3">{done === "reset" ? "Password updated" : "Confirm your email"}</h2>
         <p className="body">
-          {done === "reset" ? "You can now log in with your new password." : (
+          {done === "reset" ? (
+            "You can now log in with your new password."
+          ) : (
             <>
               We sent a confirmation link to <b>{email}</b>. Open it to activate your account.
             </>
@@ -259,7 +271,11 @@ export default function AuthForm({ mode }: { mode: Mode }) {
       <h1 className="h2">
         {c.title} <span className="quiet">{c.quiet}</span>
       </h1>
-      <p className="body">{mode === "forgot" && otpSent ? `If an account exists for ${email}, a code is on its way. Enter it below to set a new password.` : c.sub}</p>
+      <p className="body">
+        {mode === "forgot" && otpSent
+          ? `If an account exists for ${email}, a code is on its way. Enter it below to set a new password.`
+          : c.sub}
+      </p>
 
       {cfg && !cfg.configured && (
         <p className="au-note" role="note">
@@ -274,21 +290,7 @@ export default function AuthForm({ mode }: { mode: Mode }) {
       {cfg?.google && (mode === "login" || mode === "signup") && (
         <>
           <button type="button" className="au-google" onClick={google} disabled={busy || googleBusy || passkeyBusy}>
-            <svg width="18" height="18" viewBox="0 0 48 48" aria-hidden>
-              <path
-                fill="#EA4335"
-                d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.5 17.7 9.5 24 9.5z"
-              />
-              <path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.6 5.9c4.4-4.1 7-10.1 7-17.6z" />
-              <path
-                fill="#FBBC05"
-                d="M10.5 28.7A14.5 14.5 0 019.5 24c0-1.6.3-3.2.8-4.7l-7.9-6.1A24 24 0 000 24c0 3.9.9 7.5 2.6 10.8l7.9-6.1z"
-              />
-              <path
-                fill="#34A853"
-                d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.6-5.9c-2.1 1.4-4.9 2.3-8.3 2.3-6.3 0-11.6-4-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z"
-              />
-            </svg>
+            <GoogleMark />
             {googleBusy ? (
               <>
                 <FA icon={faSpinner} spin /> Connecting to Google…
@@ -360,10 +362,31 @@ export default function AuthForm({ mode }: { mode: Mode }) {
         )}
         {mode === "forgot" && otpSent && (
           <>
-            <div className="meta">Reset code sent to <b>{email}</b> · <button className="au-link" type="button" onClick={() => { setOtpSent(false); setOtp(""); setPw(""); setConfirmPw(""); }}>Change email</button></div>
+            <div className="meta">
+              Reset code sent to <b>{email}</b> ·{" "}
+              <button
+                className="au-link"
+                type="button"
+                onClick={() => {
+                  setOtpSent(false);
+                  setOtp("");
+                  setPw("");
+                  setConfirmPw("");
+                }}
+              >
+                Change email
+              </button>
+            </div>
             <label>
               <span>6-digit code</span>
-              <input inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={otp} onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))} placeholder="123456" />
+              <input
+                inputMode="numeric"
+                autoComplete="one-time-code"
+                maxLength={6}
+                value={otp}
+                onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                placeholder="123456"
+              />
             </label>
           </>
         )}
@@ -404,9 +427,17 @@ export default function AuthForm({ mode }: { mode: Mode }) {
           <>
             <label>
               <span>Confirm new password</span>
-              <input type="password" autoComplete="new-password" value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)} placeholder="Enter it again" />
+              <input
+                type="password"
+                autoComplete="new-password"
+                value={confirmPw}
+                onChange={(e) => setConfirmPw(e.target.value)}
+                placeholder="Enter it again"
+              />
             </label>
-            <button className="au-link" type="button" onClick={resendResetCode} disabled={busy}>Resend code</button>
+            <button className="au-link" type="button" onClick={resendResetCode} disabled={busy}>
+              Resend code
+            </button>
           </>
         )}
         {err && (

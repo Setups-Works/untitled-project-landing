@@ -43,6 +43,8 @@
   --color-violet-fg: var(--violet-fg);
   --color-sand-bg: var(--sand-bg);
   --color-sand-fg: var(--sand-fg);
+  --color-orange-fg: var(--orange-fg);
+  --color-rec: var(--rec);
 
   --radius-r1: var(--r1);
   --radius-r2: var(--r2);
@@ -55,6 +57,11 @@
   --shadow-e2: var(--e2);
   --shadow-e3: var(--e3);
   --shadow-e4: var(--e4);
+  --shadow-glass: var(--glass-ring);
+  --shadow-glass-hi: var(--glass-ring-hi);
+  --shadow-lens: var(--lens);
+  --shadow-jelly: var(--jelly);
+  --shadow-jelly-held: var(--jelly-held);
 
   --font-sans: var(--sans);
   --font-serif: var(--serif);

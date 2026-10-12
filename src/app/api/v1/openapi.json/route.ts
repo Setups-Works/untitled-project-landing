@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { apiDocsEnabled } from "../../../../config";
 import { buildOpenApi } from "../../../../lib/api/openapi";
 import { auth } from "../../../../server/auth";
 
@@ -17,7 +18,7 @@ type Doc = {
  * Set API_DOCS=off to hide it in an environment where it should not be public.
  */
 export async function GET() {
-  if (process.env.API_DOCS?.trim().toLowerCase() === "off") return NextResponse.json({ error: "Not found." }, { status: 404 });
+  if (!apiDocsEnabled()) return NextResponse.json({ error: "Not found." }, { status: 404 });
   const ours = buildOpenApi() as unknown as Doc & Record<string, unknown>;
   try {
     const theirs = (await (auth.api as unknown as { generateOpenAPISchema: () => Promise<Doc> }).generateOpenAPISchema()) as Doc;

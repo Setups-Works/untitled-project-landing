@@ -110,7 +110,7 @@ export default function AppNav({
         <SectionTabs tabs={TABS} current={current} onGo={(href) => router.push(href)} />
         <UniversalSearch
           admin={admin}
-          className="relative size-12 justify-center rounded-full bg-white/60 p-0 text-[15px] text-fg-muted [&_kbd]:hidden [&_span]:hidden backdrop-blur-xl backdrop-saturate-150 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.85),inset_0_1px_3px_rgba(27,28,20,0.06)] transition-[transform,background-color,color,box-shadow] duration-300 ease-[cubic-bezier(0.34,1.45,0.5,1)] hover:bg-white/80 hover:text-fg hover:shadow-[inset_0_1px_0_#fff,inset_0_0_0_1px_rgba(255,255,255,0.95)] active:scale-95 motion-reduce:transition-none"
+          className="relative size-12 justify-center rounded-full bg-white/60 p-0 text-[15px] text-fg-muted [&_kbd]:hidden [&_span]:hidden backdrop-blur-xl backdrop-saturate-150 shadow-glass transition-[transform,background-color,color,box-shadow] duration-300 ease-[cubic-bezier(0.34,1.45,0.5,1)] hover:bg-white/80 hover:text-fg hover:shadow-glass-hi active:scale-95 motion-reduce:transition-none"
         />
       </div>
       <div className="ap-user" ref={box}>

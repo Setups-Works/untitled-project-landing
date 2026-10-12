@@ -240,7 +240,7 @@ export default function HeroApp() {
           {view === "meetings" && (
             <>
               <div className="eyebrow">
-                <FA icon={faCircleDot} style={{ color: "#c0493a" }} /> Recording · Launch review
+                <FA icon={faCircleDot} className="text-rec" /> Recording · Launch review
               </div>
               <h4>Capture, transcribe, follow through</h4>
               <div className="app-wave" aria-hidden>
@@ -300,7 +300,7 @@ export default function HeroApp() {
             </div>
           ))}
           <div className="eyebrow app-sec">Inbox</div>
-          <div className="app-ev" style={{ background: "var(--surface-sunken)" }}>
+          <div className="app-ev bg-surface-sunken">
             Re: Q3 roadmap<small>Gmail · full thread</small>
           </div>
         </aside>

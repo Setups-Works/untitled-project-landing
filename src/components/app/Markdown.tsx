@@ -15,7 +15,7 @@ function ItemLink({ href, text, tip }: { href: string; text: string; tip?: strin
     <span className="group/item relative inline-block">
       <Link
         href={href}
-        className="rounded-sm font-medium text-green-fg underline decoration-green-fg/50 decoration-dotted decoration-2 underline-offset-4 transition-colors hover:decoration-solid focus-visible:outline-2 focus-visible:outline-violet-fg"
+        className="rounded-r1 font-medium text-green-fg underline decoration-green-fg/50 decoration-dotted decoration-2 underline-offset-4 transition-colors hover:decoration-solid focus-visible:outline-2 focus-visible:outline-violet-fg"
         aria-label={tip ? `${text} — ${tip}` : undefined}
       >
         {text}

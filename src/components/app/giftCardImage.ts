@@ -1,3 +1,4 @@
+// design-ok-file: flattens the art-directed foil card (same literal gradients as GiftCard.module.css) to a PNG — a canvas, not UI chrome.
 /** Draws the welcome card to a PNG (same layers as GiftCard, flattened) and saves it. Browser only. */
 
 const W = 1712; // 2x a credit card at 856 px wide, ratio 1.586
@@ -71,12 +72,24 @@ export async function downloadGiftCard(name: string, fonts: { serif: string; mon
   ctx.clip();
 
   // Foil base, then the rainbow band, the colour film, the pearl highlight and the specular sheen.
-  ctx.fillStyle = linear(ctx, 135, [[0, "#eeeeee"], [0.4, "#dcdcdc"], [0.72, "#c9c9c9"], [1, "#e8e8e8"]]);
+  ctx.fillStyle = linear(ctx, 135, [
+    [0, "#eeeeee"],
+    [0.4, "#dcdcdc"],
+    [0.72, "#c9c9c9"],
+    [1, "#e8e8e8"],
+  ]);
   ctx.fillRect(0, 0, W, H);
 
   ctx.fillStyle = linear(ctx, 112, [
-    [0.3, "rgba(0,220,255,0)"], [0.38, "rgba(0,220,255,0.06)"], [0.46, "rgba(80,255,190,0.05)"], [0.54, "rgba(190,255,80,0.03)"],
-    [0.62, "rgba(255,230,70,0.03)"], [0.7, "rgba(255,70,180,0.06)"], [0.8, "rgba(150,90,255,0.06)"], [0.9, "rgba(60,120,255,0.04)"], [1, "rgba(60,120,255,0)"],
+    [0.3, "rgba(0,220,255,0)"],
+    [0.38, "rgba(0,220,255,0.06)"],
+    [0.46, "rgba(80,255,190,0.05)"],
+    [0.54, "rgba(190,255,80,0.03)"],
+    [0.62, "rgba(255,230,70,0.03)"],
+    [0.7, "rgba(255,70,180,0.06)"],
+    [0.8, "rgba(150,90,255,0.06)"],
+    [0.9, "rgba(60,120,255,0.04)"],
+    [1, "rgba(60,120,255,0)"],
   ]);
   ctx.fillRect(0, 0, W, H);
 
@@ -88,21 +101,40 @@ export async function downloadGiftCard(name: string, fonts: { serif: string; mon
     [0.38, 0.82, "150,90,255"],
   ];
   for (const [fx, fy, c] of film) {
-    ctx.fillStyle = radial(ctx, fx * W, fy * H, W * 0.5, [[0, `rgba(${c},0.14)`], [0.4, `rgba(${c},0.05)`], [1, `rgba(${c},0)`]]);
+    ctx.fillStyle = radial(ctx, fx * W, fy * H, W * 0.5, [
+      [0, `rgba(${c},0.14)`],
+      [0.4, `rgba(${c},0.05)`],
+      [1, `rgba(${c},0)`],
+    ]);
     ctx.fillRect(0, 0, W, H);
   }
 
   ctx.globalCompositeOperation = "soft-light";
-  ctx.fillStyle = linear(ctx, 112, [[0, "rgba(220,230,238,0.5)"], [0.3, "rgba(220,230,238,0)"], [0.5, "rgba(84,108,128,0.35)"], [0.72, "rgba(215,226,235,0.5)"], [1, "rgba(215,226,235,0.1)"]]);
+  ctx.fillStyle = linear(ctx, 112, [
+    [0, "rgba(220,230,238,0.5)"],
+    [0.3, "rgba(220,230,238,0)"],
+    [0.5, "rgba(84,108,128,0.35)"],
+    [0.72, "rgba(215,226,235,0.5)"],
+    [1, "rgba(215,226,235,0.1)"],
+  ]);
   ctx.fillRect(0, 0, W, H);
 
   ctx.globalCompositeOperation = "screen";
   ctx.fillStyle = linear(ctx, 120, [
-    [0, "rgba(220,230,238,0)"], [0.3, "rgba(226,235,242,0.42)"], [0.52, "rgba(37,52,66,0.2)"], [0.66, "rgba(0,124,255,0.04)"],
-    [0.76, "rgba(255,0,147,0.04)"], [0.88, "rgba(223,232,239,0.28)"], [1, "rgba(220,230,238,0)"],
+    [0, "rgba(220,230,238,0)"],
+    [0.3, "rgba(226,235,242,0.42)"],
+    [0.52, "rgba(37,52,66,0.2)"],
+    [0.66, "rgba(0,124,255,0.04)"],
+    [0.76, "rgba(255,0,147,0.04)"],
+    [0.88, "rgba(223,232,239,0.28)"],
+    [1, "rgba(220,230,238,0)"],
   ]);
   ctx.fillRect(0, 0, W, H);
-  ctx.fillStyle = radial(ctx, W * 0.62, H * 0.38, W * 0.4, [[0, "rgba(226,235,242,0.4)"], [0.25, "rgba(205,218,228,0.14)"], [1, "rgba(226,237,246,0)"]]);
+  ctx.fillStyle = radial(ctx, W * 0.62, H * 0.38, W * 0.4, [
+    [0, "rgba(226,235,242,0.4)"],
+    [0.25, "rgba(205,218,228,0.14)"],
+    [1, "rgba(226,237,246,0)"],
+  ]);
   ctx.fillRect(0, 0, W, H);
   ctx.globalCompositeOperation = "source-over";
 

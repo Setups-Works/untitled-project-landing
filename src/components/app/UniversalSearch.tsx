@@ -310,7 +310,7 @@ export default function UniversalSearch({ admin, className = "" }: { admin: bool
                           aria-selected={idx === i}
                           data-on={idx === i}
                           // The highlighted result is a small glass lens: lighter, raised, and it eases between rows.
-                          className="rounded-2xl transition-[background-color,box-shadow,transform] duration-300 ease-[cubic-bezier(0.34,1.45,0.5,1)] data-[on=true]:scale-[1.012] data-[on=true]:bg-white/85 data-[on=true]:shadow-[inset_0_1px_0_#fff,inset_0_0_0_1px_rgba(255,255,255,0.9),0_8px_22px_-10px_rgba(27,28,20,0.4)] motion-reduce:transition-none"
+                          className="rounded-r2 transition-[background-color,box-shadow,transform] duration-300 ease-[cubic-bezier(0.34,1.45,0.5,1)] data-[on=true]:scale-[1.012] data-[on=true]:bg-white/85 data-[on=true]:shadow-lens motion-reduce:transition-none"
                           onMouseMove={() => setI(idx)}
                           onClick={h.run}
                         >

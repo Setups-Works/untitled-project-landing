@@ -30,7 +30,7 @@ export function EventChip({
 }
 
 // Same priority colours as the To-do calendar's chips.
-const PRIORITY_EDGE: Record<number, string> = { 1: "border-l-clay-fg", 2: "border-l-[#c26a1a]", 3: "border-l-blue-fg" };
+const PRIORITY_EDGE: Record<number, string> = { 1: "border-l-clay-fg", 2: "border-l-orange-fg", 3: "border-l-blue-fg" };
 
 /** A task with a due date. It stays on the To-do side: the chip links there instead of editing the task here. */
 export function TaskChip({ task }: { task: Task }) {
@@ -38,7 +38,7 @@ export function TaskChip({ task }: { task: Task }) {
     <Link
       href="/dashboard/todo"
       title={`Task: ${task.title} (opens To-do)`}
-      className={`flex w-full min-w-0 items-center gap-1.5 rounded-[7px] border-l-[3px] bg-surface-sunken px-2 py-[3px] text-[12px] leading-snug text-fg-muted transition-colors hover:text-fg max-[900px]:px-1.5 max-[900px]:text-[11px] ${PRIORITY_EDGE[task.priority] ?? "border-l-[#8f9084]"} ${task.done ? "opacity-60" : ""}`}
+      className={`flex w-full min-w-0 items-center gap-1.5 rounded-[7px] border-l-[3px] bg-surface-sunken px-2 py-[3px] text-[12px] leading-snug text-fg-muted transition-colors hover:text-fg max-[900px]:px-1.5 max-[900px]:text-[11px] ${PRIORITY_EDGE[task.priority] ?? "border-l-fg-faint"} ${task.done ? "opacity-60" : ""}`}
     >
       {task.done && <FA icon={faCheck} className="text-[9px] shrink-0" />}
       <span className={`truncate ${task.done ? "line-through" : ""}`}>{task.title}</span>

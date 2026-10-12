@@ -76,9 +76,7 @@ export default function Page() {
             <div className="panel" data-tone="dark">
               <div className="ps-grid">
                 <div className="stack">
-                  <div className="eyebrow" style={{ color: "#f4f3e999" }}>
-                    In the open
-                  </div>
+                  <div className="eyebrow text-on-dark/60">In the open</div>
                   <h2 className="h2">
                     Security details, <span className="quiet">published before launch.</span>
                   </h2>

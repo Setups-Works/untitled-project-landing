@@ -40,11 +40,11 @@ export default function RecordButton({
       onClick={onToggle}
       aria-pressed
       aria-label={`Stop recording, ${clock(secs)} so far`}
-      className="flex h-10 flex-none items-center gap-2.5 rounded-pill bg-clay-bg py-1 pr-1 pl-3.5 text-clay-fg shadow-[inset_0_0_0_1px_#9a5a4a40] transition-colors hover:bg-[#f0dcd6]"
+      className="flex h-10 flex-none items-center gap-2.5 rounded-pill bg-clay-bg py-1 pr-1 pl-3.5 text-clay-fg shadow-[inset_0_0_0_1px_color-mix(in_srgb,var(--clay-fg)_25%,transparent)] transition-colors hover:brightness-95"
     >
       <span className="relative flex size-2.5 flex-none" aria-hidden>
-        <span className="absolute inset-0 animate-ping rounded-full bg-[#d64545]/60 motion-reduce:animate-none" />
-        <span className="relative size-2.5 rounded-full bg-[#d64545]" />
+        <span className="absolute inset-0 animate-ping rounded-full bg-rec/60 motion-reduce:animate-none" />
+        <span className="relative size-2.5 rounded-full bg-rec" />
       </span>
       <span className="flex h-4 items-center gap-[2px]" aria-hidden>
         {BARS.map((h, i) => (

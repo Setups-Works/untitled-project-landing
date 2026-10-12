@@ -98,9 +98,7 @@ export default function Page() {
           <Reveal>
             <div className="panel" data-tone="dark">
               <div className="center stack">
-                <div className="eyebrow" style={{ color: "#f4f3e999" }}>
-                  The principle
-                </div>
+                <div className="eyebrow text-on-dark/60">The principle</div>
                 <h2 className="h2">
                   Your AI can change. <span className="quiet">Your workspace shouldn’t.</span>
                 </h2>

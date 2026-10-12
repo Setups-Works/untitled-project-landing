@@ -122,8 +122,8 @@ export default function AudioWave({ src, label, bare = false }: { src: string; l
         barWidth={3}
         barGap={2}
         barRadius={1.5}
-        barColor="#1b1c14"
-        accent="#1f5d49"
+        barColor="var(--fg)"
+        accent="var(--green-fg)"
         onSeek={seek}
       />
       <span className="flex-none text-[12px] tabular-nums text-fg-subtle">{fmt(isPlaying || time > 0 ? time : total)}</span>

@@ -14,9 +14,9 @@ const pct = (v: number) => `${Number((v * 100).toFixed(3))}%`;
 /** The resolved font stack for a CSS variable (a canvas cannot read `var(--x)` itself). */
 function fontStack(variable: string, fallback: string) {
   const probe = document.createElement("span");
-  probe.style.fontFamily = `var(${variable})`;
+  probe.style.fontFamily = `var(${variable})`; // design-ok: resolving a font token for canvas, not choosing a font
   document.body.appendChild(probe);
-  const resolved = getComputedStyle(probe).fontFamily;
+  const resolved = getComputedStyle(probe).fontFamily; // design-ok: reads the resolved token
   probe.remove();
   return resolved || fallback;
 }
@@ -32,8 +32,7 @@ export default function GiftCard({ name }: { name: string }) {
   useEffect(() => {
     const card = ref.current;
     if (!card) return;
-    const still =
-      window.matchMedia("(prefers-reduced-motion: reduce)").matches || document.documentElement.dataset.motion === "reduce";
+    const still = window.matchMedia("(prefers-reduced-motion: reduce)").matches || document.documentElement.dataset.motion === "reduce";
     if (still) return;
 
     let frame: number | null = null;

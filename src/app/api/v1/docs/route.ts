@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { apiDocsEnabled } from "../../../../config";
 
 export const dynamic = "force-dynamic";
 
@@ -9,7 +10,7 @@ const UI = "https://cdn.jsdelivr.net/npm/swagger-ui-dist@5.17.14";
  * The Swagger UI files come from a pinned CDN version; for a strict deployment, self-host them or add integrity hashes.
  */
 export async function GET() {
-  if (process.env.API_DOCS?.trim().toLowerCase() === "off") return NextResponse.json({ error: "Not found." }, { status: 404 });
+  if (!apiDocsEnabled()) return NextResponse.json({ error: "Not found." }, { status: 404 });
   const html = `<!doctype html>
 <html lang="en"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>untitled project API</title><link rel="stylesheet" href="${UI}/swagger-ui.css" /></head>

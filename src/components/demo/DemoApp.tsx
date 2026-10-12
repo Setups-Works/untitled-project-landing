@@ -919,9 +919,7 @@ function Meetings({
   const mm = `${String(Math.floor(secs / 60)).padStart(2, "0")}:${String(secs % 60).padStart(2, "0")}`;
   return (
     <>
-      <div className="eyebrow">
-        {recording && <FA icon={faCircle} style={{ color: "#c0493a", fontSize: 8 }} />} Meetings · Launch review
-      </div>
+      <div className="eyebrow">{recording && <FA icon={faCircle} className="text-[8px] text-rec" />} Meetings · Launch review</div>
       <h4>Capture, transcribe, follow through</h4>
       <div className="da-rec">
         {recording ? (

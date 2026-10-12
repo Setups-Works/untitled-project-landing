@@ -4,6 +4,7 @@
  * Original © 2025 Eleven Labs Inc., MIT License. Changes: our design tokens instead of shadcn colours, pointer (touch + mouse)
  * scrubbing, keyboard seeking, no `cn` helper, only the two pieces this app uses (Waveform, AudioScrubber).
  */
+import { tokenColor } from "../../lib/cssVar";
 import { useCallback, useEffect, useRef, useState, type HTMLAttributes, type KeyboardEvent as ReactKeyboardEvent } from "react";
 
 export type WaveformProps = Omit<HTMLAttributes<HTMLDivElement>, "onClick"> & {
@@ -25,7 +26,7 @@ export function Waveform({
   barHeight: baseBarHeight = 4,
   barGap = 2,
   barRadius = 2,
-  barColor = "#1b1c14",
+  barColor = "var(--fg)",
   fadeEdges = true,
   fadeWidth = 24,
   height = 128,
@@ -55,7 +56,7 @@ export function Waveform({
 
       const barCount = Math.floor(rect.width / (barWidth + barGap));
       const centerY = rect.height / 2;
-      ctx.fillStyle = barColor;
+      ctx.fillStyle = tokenColor(barColor);
       for (let i = 0; i < barCount; i++) {
         const value = data[Math.floor((i / barCount) * data.length)] || 0;
         const h = Math.max(baseBarHeight, value * rect.height * 0.8);
@@ -70,10 +71,10 @@ export function Waveform({
       if (fadeEdges && fadeWidth > 0 && rect.width > 0) {
         const g = ctx.createLinearGradient(0, 0, rect.width, 0);
         const p = Math.min(0.2, fadeWidth / rect.width);
-        g.addColorStop(0, "rgba(255,255,255,1)");
-        g.addColorStop(p, "rgba(255,255,255,0)");
-        g.addColorStop(1 - p, "rgba(255,255,255,0)");
-        g.addColorStop(1, "rgba(255,255,255,1)");
+        g.addColorStop(0, "white");
+        g.addColorStop(p, "transparent");
+        g.addColorStop(1 - p, "transparent");
+        g.addColorStop(1, "white");
         ctx.globalCompositeOperation = "destination-out";
         ctx.fillStyle = g;
         ctx.fillRect(0, 0, rect.width, rect.height);
@@ -117,7 +118,7 @@ export function AudioScrubber({
   barGap = 2,
   barRadius = 1.5,
   barColor,
-  accent = "#1f5d49",
+  accent = "var(--green-fg)",
   height = 40,
   label = "Audio waveform",
   className = "",
@@ -192,7 +193,7 @@ export function AudioScrubber({
       <div className="pointer-events-none absolute inset-y-0 w-0.5 rounded-full" style={{ left: `${local * 100}%`, background: accent }} />
       {showHandle && (
         <div
-          className="pointer-events-none absolute top-1/2 size-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-white shadow-md"
+          className="pointer-events-none absolute top-1/2 size-3.5 -translate-x-1/2 -translate-y-1/2 rounded-full border-2 border-surface shadow-e2"
           style={{ left: `${local * 100}%`, background: accent }}
         />
       )}
