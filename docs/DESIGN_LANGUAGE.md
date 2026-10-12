@@ -176,3 +176,22 @@ Adding or changing a rule: edit `scripts/design/rules.mjs`, add a case to `tests
 - **Third-party brand marks** (Google, HubSpot) keep their mandated colours: put them in their own small file marked `// design-ok-file: <reason>` (see `src/components/auth/GoogleMark.tsx`) or tag the line with `design-ok:`.
 - **Art-directed materials** (the gift card's iridescent foil) are literal by design and marked `design-ok-file:` with the reason. That is the only kind of file allowed to be wholly literal.
 - `src/app/globals.css` and `src/styles/tailwind.css` are the token files: literal values live there and nowhere else.
+
+## 13. The marketing site: liquid glass and motion
+
+The public site (`/`, `/how-it-works`, `/pricing`, …) is the most expressive part of the product, and it has its own kit in
+`src/components/landing/` (read `landing/AGENTS.md` before touching it). The in-app screens above stay calm; the marketing site adds:
+
+- **Liquid glass.** Thick translucent panels with a specular rim, a sheen and a pointer-following glare (`liquid`, `liquid-flat`,
+  `liquid-dark`, `liquid-tint`, `liquid-pill` in `src/styles/tailwind.css`; tokens `--liquid-*`). Glass needs colour behind it, so every
+  marketing page gets the drifting colour orbs of `Ambient`. Inner cards use `liquid-flat` (no second blur).
+- **GSAP for all motion.** Entrances, split-text headings, scroll-scrubbed scenes, parallax, magnetic buttons, the sticky one-by-one
+  panel stack, and an interactive cursor. Everything goes through `useMotion`, which cleans up after itself and switches to a calm mode
+  for visitors who ask for less motion (OS setting or the app's "Reduce motion"). Animate transforms and opacity only.
+- **Tooltips** (`Tip`) on anything that deserves a one-line explanation: status chips, shortcuts, integrations, security cards. They open on
+  hover and keyboard focus, are announced via `aria-describedby`, and never get clipped.
+- **Honest content.** Anything that states what the product does carries a status (`live`, `building`, `soon`) that must match
+  `docs/CURRENT_STATE.md`. No invented testimonials, numbers or security claims.
+- **The header bar stays transparent** (no scroll-triggered frost; a past commit removed it on purpose). The glass lives in the nav pill and menus.
+
+New dependency: `gsap` (3.15, includes `ScrollTrigger` and `SplitText`, free to use). It is used only under `src/components/landing/`.

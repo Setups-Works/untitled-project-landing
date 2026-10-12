@@ -5,6 +5,8 @@ import "../styles/tailwind.css";
 import "./globals.css";
 import { SiteHeader, SiteFooter } from "../components/SiteChrome";
 import HideInApp from "../components/HideInApp";
+import Ambient from "../components/landing/Ambient";
+import MotionRoot from "../components/landing/MotionRoot";
 import ContextMenu from "../components/app/ContextMenu";
 
 config.autoAddCss = false;
@@ -33,14 +35,23 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${geist.variable} ${mono.variable} ${serif.variable} ${tamil.variable}`}>
       <body>
-        <HideInApp>
-          <SiteHeader />
-        </HideInApp>
-        {children}
+        {/* Marketing content starts hidden for its entrance animation; without JavaScript it must simply be there. */}
+        <noscript>
+          <style>{"[data-reveal]{opacity:1!important}"}</style>
+        </noscript>
+        {/* `clip` (not `hidden`) so animated elements that start off to the side can't widen the page on a phone, and sticky still works. */}
+        <div className="overflow-x-clip">
+          <HideInApp>
+            <Ambient />
+            <MotionRoot />
+            <SiteHeader />
+          </HideInApp>
+          {children}
+          <HideInApp>
+            <SiteFooter />
+          </HideInApp>
+        </div>
         <ContextMenu />
-        <HideInApp>
-          <SiteFooter />
-        </HideInApp>
       </body>
     </html>
   );

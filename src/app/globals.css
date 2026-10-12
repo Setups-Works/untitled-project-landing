@@ -36,6 +36,16 @@
     --jelly: inset 0 1px 0 #fff, inset 0 0 0 1px #ffffffbf, inset 0 -1px 2px #1b1c1412, 0 6px 18px -8px #1b1c1466, 0 1px 3px #1b1c1424;
     --jelly-held:
       inset 0 1px 0 #fff, inset 0 0 0 1px #ffffffe6, inset 0 -2px 6px #1f5d491f, 0 14px 30px -8px #1b1c1473, 0 3px 8px #1b1c1429;
+    /* Liquid glass (marketing): a thicker, brighter material than --glass, with a specular rim and a soft tinted drop shadow. */
+    --liquid-fill: linear-gradient(145deg, #ffffffcc 0%, #ffffff70 55%, #ffffff8f 100%);
+    --liquid-fill-dark: linear-gradient(145deg, #191d1af0 0%, #191d1ab8 100%);
+    --liquid-blur: blur(30px) saturate(1.9) brightness(1.04);
+    --liquid-ring: inset 0 1px 0 #fff, inset 0 0 0 1px #ffffffb8, inset 0 -14px 28px -16px #ffffff99;
+    --liquid-ring-dark: inset 0 1px 0 #ffffff2e, inset 0 0 0 1px #ffffff1a;
+    --liquid-drop: 0 1px 2px #28230a14, 0 28px 56px -28px #28230a66;
+    --liquid-sheen: linear-gradient(115deg, #ffffffa6 0%, #ffffff00 32%, #ffffff00 64%, #ffffff5c 100%);
+    --liquid-glare: #ffffffcc;
+    --liquid-ghost: #ffffff33;
     /* Liquid glass: the material of the section switcher and round search button, shared by every card and button. */
     --glass: #ffffff99;
     --glass-hi: #ffffffcc;

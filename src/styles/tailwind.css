@@ -72,6 +72,43 @@
   /* Liquid-glass dialogs: the panel blooms in from slightly smaller and blurred, with a springy overshoot. */
   --animate-glass-in: glass-in 0.55s cubic-bezier(0.34, 1.4, 0.5, 1) both;
   --animate-glass-fade: glass-fade 0.28s ease-out both;
+
+  /* Landing: slow ambient drift for the colour orbs behind the glass, a gentle float for the floating cards. */
+  --animate-drift-a: drift-a 28s ease-in-out infinite alternate;
+  --animate-drift-b: drift-b 34s ease-in-out infinite alternate;
+  --animate-drift-c: drift-c 40s ease-in-out infinite alternate;
+  --animate-float: float 8s ease-in-out infinite;
+  --animate-float-slow: float 11s ease-in-out infinite reverse;
+  --animate-sheen: sheen 7s ease-in-out infinite;
+  @keyframes drift-a {
+    to {
+      transform: translate3d(14vw, 10vh, 0) scale(1.18);
+    }
+  }
+  @keyframes drift-b {
+    to {
+      transform: translate3d(-12vw, 14vh, 0) scale(0.9);
+    }
+  }
+  @keyframes drift-c {
+    to {
+      transform: translate3d(8vw, -12vh, 0) scale(1.12);
+    }
+  }
+  @keyframes float {
+    50% {
+      transform: translateY(-14px);
+    }
+  }
+  @keyframes sheen {
+    0%,
+    100% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+  }
   @keyframes glass-in {
     from {
       opacity: 0;
@@ -113,4 +150,116 @@
   background: var(--ab);
   color: var(--abf);
   box-shadow: inset 0 0 0 1px var(--abl);
+}
+
+/*
+ * Liquid glass for the marketing site. `liquid` is the full panel: a bright translucent fill over a strong blur, a specular rim,
+ * a diagonal sheen and a glare that follows the pointer (the GlassCard component sets --mx / --my / --glare). Inner cards that
+ * sit on a panel use `liquid-flat` — same look without a second backdrop blur, which is expensive and doesn't stack well.
+ */
+@utility liquid {
+  position: relative;
+  isolation: isolate;
+  background: var(--liquid-fill);
+  backdrop-filter: var(--liquid-blur);
+  -webkit-backdrop-filter: var(--liquid-blur);
+  box-shadow: var(--liquid-ring), var(--liquid-drop);
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    pointer-events: none;
+  }
+  &::before {
+    background: var(--liquid-sheen);
+  }
+  &::after {
+    background: radial-gradient(var(--glare-size, 440px) circle at var(--mx, 50%) var(--my, 0%), var(--liquid-glare), transparent 62%);
+    opacity: var(--glare, 0);
+    transition: opacity 0.35s var(--ease);
+  }
+}
+@utility liquid-flat {
+  position: relative;
+  isolation: isolate;
+  background: var(--liquid-fill);
+  box-shadow:
+    var(--liquid-ring),
+    0 1px 2px #28230a14;
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    pointer-events: none;
+    background: var(--liquid-sheen);
+    opacity: 0.7;
+  }
+}
+@utility liquid-dark {
+  position: relative;
+  isolation: isolate;
+  color: var(--on-dark);
+  background: var(--liquid-fill-dark);
+  backdrop-filter: var(--liquid-blur);
+  -webkit-backdrop-filter: var(--liquid-blur);
+  box-shadow:
+    var(--liquid-ring-dark),
+    0 40px 80px -36px #191d1ab3;
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    pointer-events: none;
+    background: linear-gradient(115deg, #ffffff1f 0%, #ffffff00 38%, #ffffff00 70%, #ffffff12 100%);
+  }
+}
+/* Tinted glass: the `at-<tint>` colour washed into the panel instead of replacing it. */
+@utility liquid-tint {
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--ab) 62%, #fff) 0%, color-mix(in srgb, var(--ab) 26%, transparent) 100%),
+    var(--liquid-fill);
+  box-shadow:
+    var(--liquid-ring),
+    inset 0 0 0 1px var(--abl),
+    var(--liquid-drop);
+}
+@utility liquid-pill {
+  background: var(--liquid-fill);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  box-shadow:
+    var(--liquid-ring),
+    0 1px 2px #28230a14;
+}
+@utility liquid-lift {
+  transition:
+    transform 0.5s var(--spring),
+    box-shadow 0.4s var(--ease);
+  &:hover {
+    transform: translateY(-4px);
+  }
+  &:active {
+    transform: translateY(-1px) scale(0.99);
+  }
+  html[data-motion="reduce"] & {
+    transition: none;
+    &:hover,
+    &:active {
+      transform: none;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    transition: none;
+    &:hover,
+    &:active {
+      transform: none;
+    }
+  }
 }

@@ -8,7 +8,7 @@ The product works end to end on a self-hosted Docker stack (PostgreSQL, Better A
 
 | Area            | Routes today                                                                                                                          | Source                                                                  |
 | --------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| Marketing       | `/`, `/how-it-works`, `/demo`, `/pricing`, `/early-users`, `/privacy-security`, `/universal-search`, `/context-graph`, `/daily-brief` | `src/app/*`, `src/components/{Client,PageKit,SiteChrome,Areas,...}.tsx` |
+| Marketing       | `/`, `/how-it-works`, `/demo`, `/pricing`, `/early-users`, `/privacy-security`, `/universal-search`, `/context-graph`, `/daily-brief` | `src/app/*`, `src/components/{PageKit,SiteChrome,landing/*,...}.tsx` |
 | Auth            | `/login`, `/signup`, `/forgot-password`, `/reset-password`, `/api/auth/*` (Better Auth)                                               | `src/app/*`, `src/components/auth/*`, `src/lib/supabase/*`              |
 | App (signed in) | `/dashboard` (Home), `/dashboard/calendar`, `/dashboard/journal`, `/dashboard/chat`, `/dashboard/notes`, `/dashboard/todo` | `src/app/dashboard`, `src/components/app/*`                             |
 | Public share    | `/share/[token]` (read-only chat)                                                                                                     | `src/app/share/[token]/page.tsx`                                        |
