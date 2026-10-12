@@ -1,4 +1,4 @@
 #!/bin/sh
 # Blocks commits that add hard-coded colours or off-system styling (rules: scripts/design/rules.mjs, guide: docs/DESIGN_LANGUAGE.md).
-# Installed automatically by `npm install` (prepare script sets core.hooksPath). Bypass only with a `design-ok: <reason>` comment, not --no-verify.
+# Installed automatically by `pnpm install` (prepare script sets core.hooksPath). Bypass only with a `design-ok: <reason>` comment, not --no-verify.
 exec node scripts/check-design.mjs --staged

@@ -27,16 +27,16 @@ How three developers (each with AI agents) work in one repository without breaki
 ## 4. Avoiding merge pain
 
 - **Own your folders.** If you must edit another track's folder, say so in the PR and tag its owner.
-- **Shared hot files** (`src/app/globals.css`, `src/types`, `src/config/features.ts`, `docs/CURRENT_STATE.md`): keep edits small and append-only; rebase often.
+- **Shared hot files** (`apps/web/src/app/globals.css`, `apps/web/src/types`, `apps/web/src/config/features.ts`, `docs/CURRENT_STATE.md`): keep edits small and append-only; rebase often.
 - **CSS:** add feature styles in a clearly commented block named after the feature (e.g. `/* ===== calendar ===== */`); don't restyle shared classes without a task.
 - **Migrations:** timestamps are unique per file; if two people create migrations the same day, the second renames theirs to a later timestamp before merging. Never edit an applied migration.
-- **Generated/lock files:** `package-lock.json` conflicts → take `main`'s, reinstall.
+- **Generated/lock files:** `pnpm-lock.yaml` conflicts → take `main`'s, reinstall.
 
 ## 5. Environments
 
 | Env        | Where                 | Database                                             | Notes                            |
 | ---------- | --------------------- | ---------------------------------------------------- | -------------------------------- |
-| Local      | `npm run dev`         | Docker Compose on your machine (`npm run docker:up`) | `.env.local` from `.env.example` |
+| Local      | `corepack pnpm dev:web`     | Docker Compose on your machine (`corepack pnpm docker:up`) | `apps/web/.env.local` from `.env.example` |
 | Preview    | Vercel preview per PR | Preview database (own Docker/Postgres)               | Env vars scoped to Preview       |
 | Staging    | Vercel (Phase 6)      | Staging stack (docker compose on a server)           | Release rehearsal                |
 | Production | Vercel + Cloudflare   | Production stack (docker compose, backups on)        | Migrations applied before deploy |
@@ -46,7 +46,7 @@ Never point local or preview at the production database.
 ## 6. Database changes
 
 1. Add `db/migrations/<timestamp>_<name>.sql` → write SQL (RLS included).
-2. Test locally or on the dev project (`npm run db:migrate`).
+2. Test locally or on the dev project (`corepack pnpm db:migrate`).
 3. PR includes the migration + `docs/DATA_MODEL.md` update; tech lead reviews.
 4. Release: apply migrations to production first, then deploy the code that uses them (migrations must be backward compatible with the previous code for one release).
 

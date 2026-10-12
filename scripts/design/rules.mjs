@@ -1,12 +1,12 @@
 /**
- * The rules behind `npm run check:design`. Pure functions (no git, no fs) so they can be unit-tested.
+ * The rules behind `pnpm check:design`. Pure functions (no git, no fs) so they can be unit-tested.
  * Each rule says what is wrong AND what to use instead — the message is read by AI agents, so it has to be actionable.
  * Escape hatch for a genuine exception: put `design-ok: <reason>` in a comment on the same line or the line above.
  */
 
-const UI = /^src\/(?!server\/).*\.(tsx|ts)$/; // UI code: server code (emails, images) has its own needs
-const CSS = /^src\/(?!app\/globals\.css$|styles\/tailwind\.css$).*\.css$/; // new stylesheets; the two token files are the source of truth
-const SRC = /^src\/.*\.(tsx|ts)$/;
+const UI = /^(?:apps\/(?:web|mobile)\/)?src\/(?!server\/).*\.(tsx|ts)$/; // UI code: server code (emails, images) has its own needs
+const CSS = /^(?:apps\/web\/)?src\/(?!app\/globals\.css$|styles\/tailwind\.css$).*\.css$/; // new stylesheets; the two token files are the source of truth
+const SRC = /^(?:apps\/(?:web|mobile)\/)?src\/.*\.(tsx|ts)$/;
 
 const PALETTE = "slate|gray|zinc|neutral|stone|red|orange|yellow|lime|emerald|teal|cyan|sky|indigo|purple|fuchsia|pink|rose";
 // Our own tints are named amber/green/blue/violet/clay/sand + -bg/-fg, so only the numbered default shades (…-500) are foreign.
@@ -82,9 +82,9 @@ export const RULES = [
   },
   {
     id: "env-direct",
-    files: [/^src\/(?!config\/|server\/|instrumentation).*\.(tsx|ts)$/],
+    files: [/^(?:apps\/(?:web|mobile)\/)?src\/(?!config\/|server\/|instrumentation).*\.(tsx|ts)$/],
     re: /\bprocess\.env\.(?!NODE_ENV\b|NEXT_PUBLIC_)/,
-    message: "Read configuration through src/config (serverEnv()), not process.env. Secrets never go in client code.",
+    message: "Read configuration through apps/web/src/config (serverEnv()), not process.env. Secrets never go in client code.",
   },
   {
     id: "public-secret",
@@ -94,15 +94,15 @@ export const RULES = [
   },
   {
     id: "secret-literal",
-    files: [/^src\/.*\.(tsx|ts)$/, /^scripts\/.*\.mjs$/],
+    files: [/^(?:apps\/(?:web|mobile)\/)?src\/.*\.(tsx|ts)$/, /^scripts\/.*\.mjs$/],
     re: /\b(?:sk-[A-Za-z0-9_-]{20,}|gsk_[A-Za-z0-9]{20,}|AKIA[0-9A-Z]{16}|eyJhbGciOi[A-Za-z0-9_-]{20,})/,
     message: "Looks like a committed secret. Remove it, rotate the key, load it from the environment.",
   },
   {
     id: "hard-coded-host",
-    files: [/^src\/(?!config\/).*\.(tsx|ts)$/],
+    files: [/^(?:apps\/(?:web|mobile)\/)?src\/(?!config\/).*\.(tsx|ts)$/],
     re: /["'`]https?:\/\/(?:localhost|127\.0\.0\.1|0\.0\.0\.0)[:/"'`]/,
-    message: "Hard-coded localhost URL. Use a relative URL (/api/v1/…) or the configured base URL from src/config.",
+    message: "Hard-coded localhost URL. Use a relative URL (/api/v1/…) or the configured base URL from apps/web/src/config.",
   },
   {
     id: "any-type",

@@ -22,23 +22,29 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
+          cache: pnpm
+
+      - name: Enable pnpm
+        run: corepack enable
 
       - name: Install
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Design language and hard-coding check
         if: github.event_name == 'pull_request'
         run: node scripts/check-design.mjs --base origin/${{ github.base_ref }}
 
       - name: Typecheck
-        run: npx tsc --noEmit
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
 
       - name: Unit tests
-        run: npm test
+        run: pnpm test
 
       - name: Build
-        run: npx next build
+        run: pnpm build
         env:
           # The app must build (and show its setup notice) without any secrets.
           NEXT_TELEMETRY_DISABLED: "1"
@@ -48,6 +54,6 @@ jobs:
           if git ls-files | grep -E '(^|/)\.env($|\.)' | grep -vE '^\.env(\.[a-z]+)?\.example$'; then
             echo "A .env file is tracked by git. Remove it and rotate any keys it contained."; exit 1
           fi
-          if git grep -nE 'eyJhbGciOi[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}' -- . ':!package-lock.json' ; then
+          if git grep -nE 'eyJhbGciOi[A-Za-z0-9_-]{20,}\.[A-Za-z0-9_-]{20,}' -- . ; then
             echo "Something that looks like a JWT/API key is committed. Remove it and rotate it."; exit 1
           fi

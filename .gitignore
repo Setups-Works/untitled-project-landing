@@ -1,7 +1,10 @@
 node_modules
+.turbo
 .next
+apps/web/.next
 out
 next-env.d.ts
+!apps/web/next-env.d.ts
 tsconfig.tsbuildinfo
 .DS_Store
 .env*

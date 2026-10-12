@@ -2,7 +2,7 @@
 /**
  * Design-language and no-hard-coding check. Fails on NEW violations only (lines you added), so existing code never blocks you.
  *
- *   npm run check:design                 your changes vs the merge-base with origin/main (or main) — committed and uncommitted
+ *   pnpm check:design                    your changes vs the merge-base with origin/main (or main) — committed and uncommitted
  *   node scripts/check-design.mjs --staged         only what is staged (the pre-commit hook)
  *   node scripts/check-design.mjs --base origin/main   explicit base (CI)
  *   node scripts/check-design.mjs --hook           Claude Code PostToolUse hook: reads the edited file from stdin, exit 2 = tell the agent

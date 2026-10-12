@@ -5,22 +5,13 @@ The target system, how code is layered, and the rules that keep three developers
 ## 1. System overview
 
 ```
-USER
+WEB USER ──► CLOUDFLARE ──► NEXT.JS WEB (Vercel)
+                           ├─ marketing + auth pages
+                           ├─ user panel + admin panel
+                           └─ API v1 routes ◄── shared API client ◄── EXPO / REACT NATIVE (iOS + Android)
   │
   ▼
-CLOUDFLARE            DNS · WAF · CDN · rate limiting          (Phase 6)
-  │
-  ▼
-NEXT.JS (Vercel)
-  ├─ marketing site            src/app/(marketing)
-  ├─ auth pages                src/app/(auth)
-  ├─ USER PANEL                dashboard, notes, tasks, calendar, email, journal,
-  │                            meetings, automations, integrations, ai, search, insights, settings
-  ├─ ADMIN PANEL               src/app/admin/*
-  └─ API / Server Actions / Proxy (middleware)      src/app/api/v1, src/proxy.ts
-  │
-  ▼
-APPLICATION SERVICES (src/server/services)
+APPLICATION SERVICES (apps/web/src/server/services)
   Auth · Workspace · Notes · Tasks · Calendar · Email · Journal · Meetings ·
   Automation · Search · Notifications · Integrations · AI Orchestrator
   │
@@ -35,19 +26,19 @@ OBSERVABILITY: Sentry (errors) · PostHog (product analytics) · audit logs · A
 
 ```
 UI component  →  feature hook  →  API v1 route / server action  →  service  →  repository  →  PostgreSQL
-(src/components, (src/features)    (src/app/api/v1)                (src/server/   (src/server/
- src/features)                                                      services)      repositories)
+(apps/web/src/components, (apps/web/src/features)    (apps/web/src/app/api/v1)                (apps/web/src/server/   (apps/web/src/server/
+ apps/web/src/features)                                                      services)      repositories)
 ```
 
 A layer may only import from the layer to its right. Concretely:
 
 | Layer                          | May import                                                | Must not                                          |
 | ------------------------------ | --------------------------------------------------------- | ------------------------------------------------- |
-| Components / features (client) | hooks, `src/lib`, `src/types`, `src/config` (public part) | `src/server/**`, secrets, the database owner role |
-| API routes / server actions    | services, `src/lib`, zod schemas                          | repositories directly, UI                         |
-| Services                       | repositories, providers, other services, `src/config`     | `next/*` UI APIs, React                           |
-| Repositories                   | `src/server/db`, `src/types`                              | business rules, other services                    |
-| Providers (AI)                 | `src/config`, SDK                                         | feature services                                  |
+| Components / features (client) | hooks, `apps/web/src/lib`, `apps/web/src/types`, `apps/web/src/config` (public part) | `apps/web/src/server/**`, secrets, the database owner role |
+| API routes / server actions    | services, `apps/web/src/lib`, zod schemas                          | repositories directly, UI                         |
+| Services                       | repositories, providers, other services, `apps/web/src/config`     | `next/*` UI APIs, React                           |
+| Repositories                   | `apps/web/src/server/db`, `apps/web/src/types`                              | business rules, other services                    |
+| Providers (AI)                 | `apps/web/src/config`, SDK                                         | feature services                                  |
 
 Why: services are reused by the UI (through routes), background jobs, automations and **AI tools**. If rules live in a component, the AI can't use them safely.
 
@@ -57,8 +48,9 @@ Why: services are reused by the UI (through routes), background jobs, automation
 | --------------------------------------------------- | ------------------------------------------------------------------------ | -------------------------- |
 | Browser                                             | React UI, the `/api/v1/db` client (RLS-protected reads/writes), Puter.js | None. Only `NEXT_PUBLIC_*` |
 | Vercel server (route handlers, server actions, RSC) | Services, repositories, Groq calls, Composio calls, Stripe               | Yes — via `serverEnv()`    |
+| iOS / Android                                        | Expo app, Better Auth Expo client, shared API transport                   | None; session token in SecureStore |
 | Vercel Cron → `/api/v1/jobs/*`                      | Background jobs (sync, transcription, automations, digests)              | Yes, plus `CRON_SECRET`    |
-| Supabase                                            | Postgres (RLS, triggers), Better Auth, S3 storage, Redis, realtime       | Docker                     |
+| Self-hosted Docker services                         | Postgres (RLS, triggers), Better Auth, S3 storage, Redis, realtime       | Docker                     |
 
 **Browser → `/api/v1/db`** (validated, allow-listed, run as the user so RLS applies) is allowed for simple, RLS-covered CRUD (current notes/tasks/journal/chat code does this). It is **not** allowed for anything with business rules, side effects, third-party calls, or multi-table atomicity — those go through a service. Phase 1 migrates notes as the reference and the rest follow.
 
@@ -71,7 +63,7 @@ Why: services are reused by the UI (through routes), background jobs, automation
 
 ## 5. API v1
 
-`src/app/api/v1/<resource>/route.ts`, built with the shared `handler({ auth, schema, rateLimit })` helper (Phase 1): Zod validation, uniform error JSON `{ error: { code, message } }`, cursor pagination, rate limiting. Server actions are fine for form-style UI mutations but call the same services.
+`apps/web/src/app/api/v1/<resource>/route.ts`, built with the shared `handler({ auth, schema, rateLimit })` helper (Phase 1): Zod validation, uniform error JSON `{ error: { code, message } }`, cursor pagination, rate limiting. Server actions are fine for form-style UI mutations but call the same services.
 
 ## 6. AI architecture
 
@@ -84,13 +76,13 @@ Chat UI ──► POST /api/v1/ai/chat ──► AI Orchestrator ──► Provi
                                           └─ "No AI" mode when no provider is available
 ```
 
-- Providers implement `AiProvider` (`src/server/providers/ai/types.ts`): `id`, `runtime` (`server`|`client`), `isAvailable()`, `stream()`.
+- Providers implement `AiProvider` (`apps/web/src/server/providers/ai/types.ts`): `id`, `runtime` (`server`|`client`), `isAvailable()`, `stream()`.
 - Puter runs in the browser; the orchestrator hands the prompt to the client, which streams the answer and posts the final message back so storage is identical.
-- Tool output and user content are **untrusted**; prompts are versioned files in `src/server/services/ai/prompts`.
+- Tool output and user content are **untrusted**; prompts are versioned files in `apps/web/src/server/services/ai/prompts`.
 
 ## 7. Integrations (Composio)
 
-Browser → our `/api/v1/integrations/*` → `src/server/services/composio` → Composio. We store only Composio connection ids and a display label — never OAuth tokens. Triggers (new mail, calendar change) arrive at a webhook route, are verified, and become job/automation events.
+Browser → our `/api/v1/integrations/*` → `apps/web/src/server/services/composio` → Composio. We store only Composio connection ids and a display label — never OAuth tokens. Triggers (new mail, calendar change) arrive at a webhook route, are verified, and become job/automation events.
 
 ## 8. Realtime, search, jobs
 
@@ -98,9 +90,9 @@ Browser → our `/api/v1/integrations/*` → `src/server/services/composio` → 
 - **Search:** Postgres full-text (tsvector + GIN) first; pgvector hybrid later.
 - **Jobs:** `jobs` table + Vercel Cron; locking prevents double runs; retries with backoff.
 
-## 9. Source layout
+## 9. Monorepo and source layout
 
-See `AGENTS.md` §3 and the `AGENTS.md` inside each folder. Target routes (Phase 0 decides the final URLs; today everything signed-in lives under `/dashboard/*`): `docs/CURRENT_STATE.md`.
+`apps/web` contains the Next.js app and its tests, `apps/mobile` contains the Expo Router app, and `packages/api-client` contains platform-independent HTTP transport shared by both clients. Database migrations and Docker configuration stay at the repository root. See `AGENTS.md` §3 and each app's folder instructions. Target routes (Phase 0 decides final URLs; today everything signed-in lives under `/dashboard/*`): `docs/CURRENT_STATE.md`.
 
 ## 10. Decisions log
 
@@ -108,7 +100,7 @@ Record architectural decisions here with date, decision, and reason. Open decisi
 
 | Date    | Decision                                                                  | Why                                                                                    |
 | ------- | ------------------------------------------------------------------------- | -------------------------------------------------------------------------------------- |
-| 2026-10 | `src/` layout and layered server code                                     | Parallel work for 3 developers + AI agents; services reusable by UI, jobs and AI tools |
+| 2026-10 | `apps/web/src/` layout and layered server code                                     | Parallel work for 3 developers + AI agents; services reusable by UI, jobs and AI tools |
 | 2026-10 | Composio for OAuth/tools; we store connection ids only                    | Avoid handling third-party tokens                                                      |
 | 2026-10 | Groq on the server, Puter.js in the browser behind one provider interface | Cheap fast default + bring-your-own-account option                                     |
 | _open_  | Final route structure (`(app)` group vs `/dashboard/*`)                   | Jira UNT-49                                                                            |

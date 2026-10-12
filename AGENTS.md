@@ -6,44 +6,54 @@ You are working on **untitled project**: one workspace for notes, tasks, journal
 
 ## 1. Stack
 
-Next.js 16 (App Router, React 19, TypeScript strict) · PostgreSQL + Better Auth (email/password + Google) + S3-compatible object storage + Redis, **all self-hosted in Docker** (no Supabase) · Composio (OAuth + tools + triggers for Gmail, Calendar, Slack, GitHub) · AI providers behind a router (Groq on the server, Puter.js in the browser) · Cloudflare (DNS/WAF/CDN) in front of Vercel · Sentry + PostHog (observability). Styling is migrating from hand-written CSS (`src/app/globals.css`, wrapped in the `legacy` cascade layer) to **Tailwind v4** (`src/styles/tailwind.css`, no preflight). Design tokens stay defined once in `:root` and are exposed as utilities (`bg-surface`, `text-fg-muted`, `rounded-r2`, `shadow-e2`). **New and touched screens use Tailwind utilities; when you convert a screen, delete its legacy rules in the same PR and keep the look pixel-identical.** Don't mix a legacy class and a utility that set the same property. No UI kit. Icons: Font Awesome Free (solid).
+pnpm/Turborepo monorepo: Next.js 16 web in `apps/web`, Expo/React Native in `apps/mobile`, and shared API transport in `packages/api-client`. Web stack: React 19, TypeScript strict, PostgreSQL + Better Auth + S3-compatible storage + Redis, all self-hosted in Docker (no Supabase), Composio and provider-routed AI. Web styling is migrating from hand-written CSS (`apps/web/src/app/globals.css`) to Tailwind v4 (`apps/web/src/styles/tailwind.css`). Design tokens stay defined once and exposed as utilities. No UI kit; icons are Font Awesome Free (solid).
 
 ## 2. Commands
 
 ```bash
-npm install
-npm run dev                    # http://localhost:3000   (do NOT run `next build` while dev is running)
-npx tsc --noEmit               # typecheck — must pass before every push
-npx next build                 # production build — must pass before every PR
+corepack pnpm install
+corepack pnpm dev                       # web + mobile; web at http://localhost:3000
+corepack pnpm typecheck                 # typecheck every workspace — must pass before every push
+corepack pnpm build                     # production builds — must pass before every PR
 docker compose --env-file .env.selfhost up -d   # PostgreSQL, Redis, object storage, Mailpit (see docs/SELF_HOSTING.md)
-npm run db:migrate             # apply new SQL migrations from db/migrations
+corepack pnpm db:migrate                # apply new SQL migrations from db/migrations
 ```
 
-Copy `.env.example` to `.env.local`. Never commit `.env*` (only `.env.example`). Never paste secrets into chats, tickets, code or commits.
+Copy `.env.example` to `apps/web/.env.local` and `apps/mobile/.env.example` to `apps/mobile/.env.local`. Never commit `.env*` files (only example files). Never paste secrets into chats, tickets, code or commits.
 
 ## 3. Where things go
 
 ```
-src/
-  app/            Routes only: pages, layouts, route handlers (api/v1). Thin — no business logic.
-  components/     Presentational, feature-agnostic UI (ui, layout, navigation, shared).
-  features/       One folder per product feature (notes, tasks, ...): its components, hooks, client logic.
-  server/         Server-only code: services (business rules), repositories (DB access), providers (AI), jobs.
-  lib/            Small shared libraries: composio vocabulary, ai provider list, auth, utils.
-  hooks/          Hooks used by 2+ features.
-  types/          Types used by 2+ places.
-  config/         Typed env, feature flags, constants.
+apps/
+  web/
+    public/       Web assets
+    tests/        Vitest and Playwright suites
+    src/
+      app/        Thin routes: pages, layouts and API handlers
+      components/ Presentational UI
+      features/   Feature components, hooks and client logic
+      server/     Services, repositories, providers and jobs
+      lib/        Shared web helpers and clients
+      hooks/      Hooks used by multiple features
+      types/      Shared types
+      config/     Typed env and feature flags
+  mobile/         Expo / React Native app
+packages/
+  api-client/     Platform-independent API transport shared by web and mobile
+db/migrations/     SQL migrations (append-only)
+docker-compose.yml The local service stack
+docs/              Architecture, phases, workflow, data model, security, Jira guide
 db/migrations/         SQL migrations (append-only).
 docker-compose.yml     the whole local/production stack.
 docs/                  Architecture, phases, workflow, data model, security, Jira guide.
 ```
 
-**Today the code is partly in the old locations** (`src/components/app/*`, `src/lib/*`). New code follows the layout above; existing code moves feature by feature via Jira tasks (see `docs/CURRENT_STATE.md`). Don't mass-move files outside a task.
+**Today the web code is partly in the old locations** (`apps/web/src/components/app/*`, `apps/web/src/lib/*`). New code follows the layout above; existing code moves feature by feature via Jira tasks (see `docs/CURRENT_STATE.md`). Don't mass-move files outside a task.
 
 ## 4. Architecture rules (non-negotiable)
 
-1. **Layering and direction of dependencies:** `UI component → feature hook → API v1 route / server action → service → repository → PostgreSQL`. A layer may import only from layers to its right. Components never import from `src/server`.
-2. **Server-only secrets stay on the server.** `DATABASE_URL`, `BETTER_AUTH_SECRET`, `S3_SECRET_KEY`, `GROQ_API_KEY`, `COMPOSIO_API_KEY`, Stripe keys: only in `src/server/**`, route handlers and server actions, via `serverEnv()` from `src/config`. Files that must never reach the browser import `"server-only"`.
+1. **Layering and direction of dependencies:** `UI component → feature hook → API v1 route / server action → service → repository → PostgreSQL`. A layer may import only from layers to its right. Components never import from `apps/web/src/server`.
+2. **Server-only secrets stay on the server.** `DATABASE_URL`, `BETTER_AUTH_SECRET`, `S3_SECRET_KEY`, `GROQ_API_KEY`, `COMPOSIO_API_KEY`, Stripe keys: only in `apps/web/src/server/**`, route handlers and server actions, via `serverEnv()` from `apps/web/src/config`. Files that must never reach the browser import `"server-only"`.
 3. **The browser never calls Composio or an AI provider with a secret.** It calls our `/api/v1/*` routes. (Exception: Puter.js runs in the browser by design, using the _user's_ Puter account.)
 4. **Every table has Row-Level Security.** Data is scoped to a workspace (`workspace_id`) or, for private data like journal entries, to the author. Never rely on UI checks for authorisation. Service-role queries must re-check permissions in code first.
 5. **Business rules live in services**, not in components or route handlers. A service exposes plain async functions with typed inputs/outputs so UI, API routes, background jobs and AI tools can all reuse them.
@@ -75,7 +85,7 @@ docs/                  Architecture, phases, workflow, data model, security, Jir
 2. Branch from `main`: `feature/UNT-n-short-name` (`fix/…` for bugs).
 3. Read the folder `AGENTS.md` files for the folders you'll touch. Plan before coding if the task is Size M/L.
 4. Implement in small commits. Add/adjust tests when logic is non-trivial.
-5. Run `npx tsc --noEmit` and `npx next build`. Test the feature in the browser at desktop and 375 px width.
+5. Run `corepack pnpm typecheck` and `corepack pnpm build`. Test the feature in the browser at desktop and 375 px width.
 6. Update docs: the folder `AGENTS.md`, `docs/CURRENT_STATE.md`, `docs/DATA_MODEL.md` if you changed behaviour or schema.
 7. Open a PR titled `UNT-n <summary>` using the template. Move the Jira issue to _In Review_. Another developer reviews; squash-merge to `main`.
 
@@ -87,7 +97,7 @@ Acceptance criteria met · typecheck and build pass · works on mobile · access
 
 ## 9. Things AI agents get wrong here — avoid them
 
-- Running queries as the database owner (`adminDb()`, `withOwner()`) from anything a normal user can trigger, or importing `src/server/**` into a component.
+- Running queries as the database owner (`adminDb()`, `withOwner()`) from anything a normal user can trigger, or importing `apps/web/src/server/**` into a component.
 - Editing an already-applied migration instead of adding a new one.
 - Writing business logic in a route handler or component "just this once".
 - Adding a table without RLS, or a policy that only checks `auth.uid() is not null`.
@@ -105,13 +115,13 @@ Three developers and several AI agents write UI here. To keep it one product, th
 | --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
 | Colours (`#fff`, `rgb()`, `bg-gray-100`, `text-blue-500`) | Tokens (`bg-surface`, `text-fg-muted`, `text-green-fg`…), tints (`at-<tint> tint`), `glass` — `docs/DESIGN_LANGUAGE.md` |
 | Radii, shadows, fonts, spacing scales                     | `rounded-r1…r5`/`rounded-pill`, `shadow-e1…e4`, `font-serif` / default Geist / `font-mono`                              |
-| A colour/size that has no token yet                       | Add the token once (`:root` in `globals.css` + `@theme` in `src/styles/tailwind.css`), then use it everywhere           |
-| Env values, URLs, keys, secrets                           | `src/config` (`serverEnv()`), `.env.example`; never `process.env` in feature code, never `NEXT_PUBLIC_*` secrets        |
-| Feature gating                                            | `src/config/features.ts` (global) or the database (per user/plan)                                                       |
-| Query keys                                                | `qk` in `src/lib/query/keys.ts`                                                                                         |
-| Dialogs, date/time pickers, menus, tabs                   | `useConfirm()`/`usePrompt()`, `JournalCalendar` + `tf-pill` select, Radix wrappers in `src/components/ui`               |
+| A colour/size that has no token yet                       | Add the token once (`:root` in `globals.css` + `@theme` in `apps/web/src/styles/tailwind.css`), then use it everywhere           |
+| Env values, URLs, keys, secrets                           | `apps/web/src/config` (`serverEnv()`), `.env.example`; never `process.env` in feature code, never `NEXT_PUBLIC_*` secrets        |
+| Feature gating                                            | `apps/web/src/config/features.ts` (global) or the database (per user/plan)                                                       |
+| Query keys                                                | `qk` in `apps/web/src/lib/query/keys.ts`                                                                                         |
+| Dialogs, date/time pickers, menus, tabs                   | `useConfirm()`/`usePrompt()`, `JournalCalendar` + `tf-pill` select, Radix wrappers in `apps/web/src/components/ui`               |
 
-**Check your work:** `npm run check:design` (lines you added vs `main`). It runs automatically in the git pre-commit hook (installed by `npm install`), after every file edit in Claude Code (`.claude/settings.json`), and in CI — a PR with new violations cannot merge. A genuine exception needs a `design-ok: <reason>` comment on that line. Don't bypass with `--no-verify`.
+**Check your work:** `corepack pnpm check:design` (lines you added vs `main`). It runs automatically in the git pre-commit hook (installed by `corepack pnpm install`), after every file edit in Claude Code (`.claude/settings.json`), and in CI — a PR with new violations cannot merge. A genuine exception needs a `design-ok: <reason>` comment on that line. Don't bypass with `--no-verify`.
 
 **Every AI agent** (Claude Code, Antigravity/Gemini, Cursor, Copilot, Codex…): read this file and `docs/DESIGN_LANGUAGE.md` before touching UI, and compare the result with `/dashboard/todo` at desktop and 375 px before you say it is done.
 
@@ -141,3 +151,14 @@ This version has breaking changes — APIs, conventions, and file structure may 
 This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
 
 <!-- END:nextjs-agent-rules -->
+
+<!-- BEGIN:turborepo-agent-rules -->
+
+# This is NOT the Turborepo you know
+
+Turborepo configuration, task behavior, and CLI commands can vary between installed versions and may differ from your training data. Resolve the `turbo` package from this file's directory or relevant workspace; in monorepos, it may not be visible from the repository root. For example, run `node -p "require.resolve('turbo/package.json')"` from a workspace that depends on `turbo`.
+
+Read `docs/README.md` inside that installed package first, then read the relevant pages from its `docs/` directory before changing Turborepo configuration or commands. Heed deprecation notices. These bundled docs match the installed package version and are available without network access.
+
+This block is written and re-added by `turbo` before repository-scoped commands when an AI agent is detected. In the Turborepo source repository, its template is defined in `crates/turborepo-cli/src/cli/agent_guidance.rs`. Removing the managed block while updates are enabled means a later qualifying invocation will add it again. Set `"agentGuidance": false` in the root `turbo.json` or `turbo.jsonc` to opt out; this does not remove an existing block. Keep the block committed with your work to avoid an uncommitted change on the next agent invocation.
+<!-- END:turborepo-agent-rules -->

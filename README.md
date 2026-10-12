@@ -2,7 +2,7 @@
 
 One workspace for **notes, tasks, journal, chat, calendar, email, meetings and automations** — with an AI layer you can swap, bring your own account to, or switch off entirely.
 
-This repository contains the marketing site **and** the signed-in app (user panel + admin panel). Built with **Next.js 16 (App Router)**, **React 19**, **TypeScript**, **PostgreSQL + Better Auth + S3 storage + Redis, self-hosted in Docker**. Styling is moving from hand-written CSS with design tokens to Tailwind v4 (see `AGENTS.md`).
+This pnpm/Turborepo monorepo contains the Next.js 16 web app (`apps/web`), Expo/React Native mobile app (`apps/mobile`), and shared API transport (`packages/api-client`). The web app includes the marketing site, signed-in workspace and admin panel. The backend uses PostgreSQL, Better Auth, S3 storage and Redis, self-hosted in Docker.
 
 > **Working on this project?** Read [`AGENTS.md`](AGENTS.md) (rules for humans _and_ AI agents), then [`docs/ONBOARDING.md`](docs/ONBOARDING.md). Plan and tasks live in Jira: https://setups-works.atlassian.net/jira/software/projects/UNT/boards
 
@@ -17,28 +17,32 @@ What's planned (workspaces, Calendar, Email, AI, Meetings, Automations, billing�
 
 ## Getting started
 
-Requires **Node.js 20+** (CI uses 22) and **Docker**. Everything the app needs runs in Docker: PostgreSQL, Redis, S3-compatible object storage and a local mail catcher. There is no third-party backend service.
+Requires **Node.js 22.13+**, Corepack/pnpm, and **Docker**. PostgreSQL, Redis, S3-compatible object storage and a local mail catcher run in Docker. There is no third-party backend service.
 
 ```bash
-npm install
+corepack pnpm install
 cp .env.selfhost.example .env.selfhost     # set the passwords (openssl rand -hex 16)
-cp .env.example .env.local                 # use the same passwords
-npm run docker:up                          # PostgreSQL, Redis, storage, Mailpit
-npm run db:migrate                         # create the tables
-npm run dev                                # http://localhost:3000   (emails: http://localhost:8025)
+cp .env.example apps/web/.env.local       # app settings
+corepack pnpm docker:up                            # PostgreSQL, Redis, storage, Mailpit
+corepack pnpm db:migrate                           # create the tables
+corepack pnpm dev:web                              # http://localhost:3000   (emails: http://localhost:8025)
 ```
+
+For Expo, set `EXPO_PUBLIC_API_URL` in `apps/mobile/.env.local` (Android emulator: `http://10.0.2.2:3000`; iOS simulator: `http://localhost:3000`; physical devices: your computer's LAN address), then run `corepack pnpm dev:mobile`. `corepack pnpm dev` starts both apps.
 
 Or run the whole thing, app included, in Docker: `docker compose --env-file .env.selfhost --profile app up -d --build`. Full guide (backups, production, Google sign-in, moving data from Supabase): [`docs/SELF_HOSTING.md`](docs/SELF_HOSTING.md).
 
 | Command              | Purpose                                       |
 | -------------------- | --------------------------------------------- |
-| `npm run dev`        | Dev server with hot reload                    |
-| `npm run docker:up`  | Start the data services                       |
-| `npm run db:migrate` | Apply new SQL migrations from `db/migrations` |
-| `npx tsc --noEmit`   | Typecheck (must pass before every push)       |
-| `npx next build`     | Production build (must pass before every PR)  |
+| `corepack pnpm dev`        | Start web and Expo development servers         |
+| `corepack pnpm dev:web`    | Start Next.js at localhost:3000                |
+| `corepack pnpm dev:mobile` | Start the Expo development server              |
+| `corepack pnpm docker:up`  | Start the data services                        |
+| `corepack pnpm db:migrate` | Apply SQL migrations from `db/migrations`      |
+| `corepack pnpm typecheck`  | Typecheck every workspace                      |
+| `corepack pnpm build`      | Build web and mobile apps                      |
 
-> Don't run `next build` while `npm run dev` is running — both write to `.next`. Stop dev (or delete `.next`) first.
+> Don't run `corepack pnpm build:web` while the web dev server is running; both write to `apps/web/.next`.
 
 ### Environment variables
 
@@ -57,20 +61,18 @@ See [`.env.example`](.env.example). Never commit `.env*` files; never prefix a s
 ## Project structure
 
 ```
-src/
-  app/          Routes: marketing, auth, dashboard (signed-in app), admin, share/[token], api/v1
-  components/   Shared UI (ui, layout, navigation, shared) + legacy feature UI being migrated
-  features/     One folder per product feature (notes, tasks, journal, calendar, email, meetings,
-                automation, integrations, ai, search, insights, workspace, settings)
-  server/       Server-only: services, repositories, providers (AI), jobs
-  lib/          browser data client (api/), composio vocabulary, ai provider list, auth client, utils
-  hooks/  types/  config/
+apps/web/
+  src/           Next.js routes, components, features and server code
+  public/        Web assets
+  tests/         Vitest unit and database tests
+  e2e/           Playwright end-to-end tests
+apps/mobile/     Expo Router / React Native app
+packages/api-client/  Shared API transport
 db/             SQL migrations (append-only)
-docker-compose.yml  PostgreSQL, Redis, object storage, Mailpit (+ the app with `--profile app`)
-docs/           Architecture, phases, workflow, data model, security, Jira guide
+docs/           Architecture, phases, workflow, model, security and Jira guide
 ```
 
-Every folder has an `AGENTS.md` explaining its purpose and rules. Today part of the code still lives in the legacy locations (`src/components/app/*`, `src/lib/*`); [`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md) maps what is where.
+Every folder has an `AGENTS.md` explaining its purpose and rules. Today part of the code still lives in the legacy locations (`apps/web/src/components/app/*`, `apps/web/src/lib/*`); [`docs/CURRENT_STATE.md`](docs/CURRENT_STATE.md) maps what is where.
 
 ## Documentation
 
@@ -78,7 +80,7 @@ Every folder has an `AGENTS.md` explaining its purpose and rules. Today part of 
 
 ## Design system
 
-Tokens are at the top of `src/app/globals.css`: canvas `#f5f4eb`, ink `#1b1c14`, forest-green accent `#1f5d49`; categorisation tints (violet, blue, green, amber, clay, sand, mint, gold) applied with `at-<tint>` classes. Type: Instrument Serif (display), Geist (UI), Geist Mono. Pill buttons, hairline inset rings, slow ambient motion that respects `prefers-reduced-motion`.
+Tokens are at the top of `apps/web/src/app/globals.css`: canvas `#f5f4eb`, ink `#1b1c14`, forest-green accent `#1f5d49`; categorisation tints (violet, blue, green, amber, clay, sand, mint, gold) applied with `at-<tint>` classes. Type: Instrument Serif (display), Geist (UI), Geist Mono. Pill buttons, hairline inset rings, slow ambient motion that respects `prefers-reduced-motion`.
 
 ## Deploying
 
@@ -86,7 +88,7 @@ Docker Compose on any server (see [`docs/SELF_HOSTING.md`](docs/SELF_HOSTING.md)
 
 ## Logos & trademarks
 
-Files in `public/logos/` belong to their respective owners and are shown only to indicate supported integrations. Icons elsewhere are [Font Awesome Free](https://fontawesome.com) (solid).
+Files in `apps/web/public/logos/` belong to their respective owners and are shown only to indicate supported integrations. Icons elsewhere are [Font Awesome Free](https://fontawesome.com) (solid).
 
 ---
 

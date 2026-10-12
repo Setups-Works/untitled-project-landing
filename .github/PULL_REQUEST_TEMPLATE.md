@@ -14,9 +14,9 @@ Closes: [UNT-](https://setups-works.atlassian.net/browse/UNT-)
 
 <!-- Steps a reviewer can repeat. Mention desktop AND 375 px mobile for UI changes. -->
 
-- [ ] `npx tsc --noEmit`
-- [ ] `npm run check:design` (no hard-coded colours/fonts/URLs; UI matches `docs/DESIGN_LANGUAGE.md`)
-- [ ] `npx next build`
+- [ ] `corepack pnpm typecheck`
+- [ ] `corepack pnpm check:design` (no hard-coded colours/fonts/URLs; UI matches `docs/DESIGN_LANGUAGE.md`)
+- [ ] `corepack pnpm build`
 - [ ]
 
 ## Screenshots / recordings
@@ -26,7 +26,7 @@ Closes: [UNT-](https://setups-works.atlassian.net/browse/UNT-)
 ## Checklist
 
 - [ ] Acceptance criteria of the Jira task are met
-- [ ] Layering respected (`UI → feature hook → API/server action → service → repository`); no `src/server` imports in client code
+- [ ] Layering respected (`UI → feature hook → API/server action → service → repository`); no `apps/web/src/server` imports in client code
 - [ ] No secrets, tokens or personal data in code, logs or screenshots
 - [ ] UI compared side by side with `/dashboard/todo` (fonts, glass, tints, buttons) — desktop and 375 px
 - [ ] Accessible by keyboard; labels/roles on custom controls; works at 375 px

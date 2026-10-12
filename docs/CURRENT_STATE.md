@@ -2,18 +2,19 @@
 
 _Update this file whenever behaviour or locations change. Last reviewed: 2026-10._
 
-The product works end to end on a self-hosted Docker stack (PostgreSQL, Better Auth, S3 storage, Redis), but the code still sits in the pre-architecture locations. New work follows the target layout in `AGENTS.md`; existing code moves feature by feature through Jira tasks.
+The repository is a pnpm/Turborepo workspace: the existing Next.js web app and its tests live in `apps/web`, the Expo mobile client lives in `apps/mobile`, and `packages/api-client` provides shared HTTP transport. Database migrations and Docker services remain at the root. Web feature code still includes pre-architecture locations; new work follows the target layout in `AGENTS.md`.
 
 ## Routes
 
 | Area            | Routes today                                                                                                                          | Source                                                                  |
 | --------------- | ------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
-| Marketing       | `/`, `/how-it-works`, `/demo`, `/pricing`, `/early-users`, `/privacy-security`, `/universal-search`, `/context-graph`, `/daily-brief` | `src/app/*`, `src/components/{PageKit,SiteChrome,landing/*,...}.tsx` |
-| Auth            | `/login`, `/signup`, `/forgot-password`, `/reset-password`, `/api/auth/*` (Better Auth)                                               | `src/app/*`, `src/components/auth/*`, `src/lib/supabase/*`              |
-| App (signed in) | `/dashboard` (Home), `/dashboard/calendar`, `/dashboard/journal`, `/dashboard/chat`, `/dashboard/notes`, `/dashboard/todo` | `src/app/dashboard`, `src/components/app/*`                             |
-| Public share    | `/share/[token]` (read-only chat)                                                                                                     | `src/app/share/[token]/page.tsx`                                        |
-| Admin           | `/admin`, `/admin/users`, `/admin/usage`, `/admin/announcements`, `/admin/audit`                                                      | `src/app/admin`, `src/components/admin/*`                               |
-| Gate            | Proxy redirects signed-out visitors away from `/dashboard` and `/admin`; admin role re-checked in the admin layout                    | `src/proxy.ts`, `src/server/session.ts`                                 |
+| Marketing       | `/`, `/how-it-works`, `/demo`, `/pricing`, `/early-users`, `/privacy-security`, `/universal-search`, `/context-graph`, `/daily-brief` | `apps/web/src/app/*`, `apps/web/src/components/{PageKit,SiteChrome,landing/*,...}.tsx` |
+| Auth            | `/login`, `/signup`, `/forgot-password`, `/reset-password`, `/api/auth/*` (Better Auth)                                               | `apps/web/src/app/*`, `apps/web/src/components/auth/*`, `apps/web/src/lib/supabase/*`              |
+| App (signed in) | `/dashboard` (Home), `/dashboard/calendar`, `/dashboard/journal`, `/dashboard/chat`, `/dashboard/notes`, `/dashboard/todo` | `apps/web/src/app/dashboard`, `apps/web/src/components/app/*`                             |
+| Public share    | `/share/[token]` (read-only chat)                                                                                                     | `apps/web/src/app/share/[token]/page.tsx`                                        |
+| Admin           | `/admin`, `/admin/users`, `/admin/usage`, `/admin/announcements`, `/admin/audit`                                                      | `apps/web/src/app/admin`, `apps/web/src/components/admin/*`                               |
+| Gate            | Proxy redirects signed-out visitors away from `/dashboard` and `/admin`; admin role re-checked in the admin layout                    | `apps/web/src/proxy.ts`, `apps/web/src/server/session.ts`                                 |
+| Mobile app      | Expo Router app; Better Auth email sign-in/sign-up and task list/create/complete through `/api/v1/tasks`                               | `apps/mobile/src`, `packages/api-client`                                                  |
 
 Target URLs (`/notes`, `/tasks`, …, route groups `(marketing)`, `(auth)`, `(app)`) are decided in **UNT-49**.
 
@@ -41,12 +42,14 @@ Target URLs (`/notes`, `/tasks`, …, route groups `(marketing)`, `(auth)`, `(ap
 
 ## Foundation code already in place
 
-- `src/config/env.ts` — typed env access (`publicEnv`, `serverEnv()`, `requireEnv`).
-- `src/config/features.ts` — feature flags per phase.
-- `src/server/providers/ai/*` — provider contract, registry, Groq/Puter stubs (`isAvailable()` is false).
-- `src/lib/composio/index.ts` — integration vocabulary and types.
-- `src/lib/ai/providers.ts` — client-safe list of AI options shown in the chat composer.
-- `src/types/index.ts` — shared type re-exports.
+- `apps/mobile` — Expo Router app using Better Auth SecureStore sessions and the shared API transport. Current feature coverage is a native task list; the rest of the product remains web-only.
+- `packages/api-client` — platform-independent JSON API transport used by web and mobile clients.
+- `apps/web/src/config/env.ts` — typed env access (`publicEnv`, `serverEnv()`, `requireEnv`).
+- `apps/web/src/config/features.ts` — feature flags per phase.
+- `apps/web/src/server/providers/ai/*` — provider contract, registry, Groq/Puter stubs (`isAvailable()` is false).
+- `apps/web/src/lib/composio/index.ts` — integration vocabulary and types.
+- `apps/web/src/lib/ai/providers.ts` — client-safe list of AI options shown in the chat composer.
+- `apps/web/src/types/index.ts` — shared type re-exports.
 
 ## Known gaps and shortcuts (be aware before building on them)
 

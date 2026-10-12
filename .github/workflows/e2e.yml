@@ -20,10 +20,13 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
+          cache: pnpm
+
+      - name: Enable pnpm
+        run: corepack enable
 
       - name: Install
-        run: npm ci
+        run: pnpm install --frozen-lockfile
 
       - name: Create throwaway secrets for this run
         run: |
@@ -43,13 +46,13 @@ jobs:
         run: |
           set -a; . ./.env.selfhost; set +a
           export DATABASE_URL="postgres://app:${POSTGRES_PASSWORD}@127.0.0.1:5432/untitled"
-          npm run test:db
+          pnpm test:db
 
       - name: Install the browser
-        run: npx playwright install --with-deps chromium
+        run: pnpm exec playwright install --with-deps chromium
 
       - name: Browser tests
-        run: npm run test:e2e
+        run: pnpm test:e2e
         env:
           E2E_SIGNUP: "1"
 
@@ -59,8 +62,8 @@ jobs:
         with:
           name: playwright-report
           path: |
-            playwright-report
-            test-results
+            apps/web/playwright-report
+            apps/web/test-results
           retention-days: 7
 
       - name: Show the app's logs if something failed

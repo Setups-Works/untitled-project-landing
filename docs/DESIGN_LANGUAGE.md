@@ -4,23 +4,23 @@ The app has one look: **warm cream canvas, ink text, forest-green accent, soft f
 
 If you are an AI agent: do not invent styling. Copy from the reference screens below, reuse the tokens and classes in this file, and compare your result side by side with the To-do page (`/dashboard/todo`) before opening a PR.
 
-> Source of truth for values: `:root` in `src/app/globals.css` (top of file) and `src/styles/tailwind.css`. This file explains how to use them.
+> Source of truth for values: `:root` in `apps/web/src/app/globals.css` (top of file) and `apps/web/src/styles/tailwind.css`. This file explains how to use them.
 
 ## 1. Reference screens (copy these, don't reinterpret)
 
 | Need                                | Look at                                                                                          |
 | ----------------------------------- | ------------------------------------------------------------------------------------------------ |
-| Page header, tools row, empty state | `src/components/app/todo/TodoApp.tsx` (`tdo-head`, `tdo-title`, `tdo-tools`)                     |
-| Glass card with a tint              | `ap-card at-violet` in `src/components/app/todo/Views.tsx` (`CalendarLayout`)                    |
-| Dialog with a form                  | `src/components/app/todo/TaskDialog.tsx` + `TaskForm.tsx` (`td`, `tf`, `tf-pill`)                |
-| Date picking                        | `src/components/app/JournalCalendar.tsx` (the site's own calendar — never `<input type="date">`) |
-| Tabs / segmented control            | `src/components/ui/Tabs.tsx`, styled like the top-bar section switcher                           |
-| Confirm / prompt                    | `useConfirm()` / `usePrompt()` in `src/components/ui/Confirm.tsx`                                |
-| A feature fully built to this guide | `src/features/calendar/` (Tailwind utilities + tokens, TanStack Query, Radix wrappers)           |
+| Page header, tools row, empty state | `apps/web/src/components/app/todo/TodoApp.tsx` (`tdo-head`, `tdo-title`, `tdo-tools`)                     |
+| Glass card with a tint              | `ap-card at-violet` in `apps/web/src/components/app/todo/Views.tsx` (`CalendarLayout`)                    |
+| Dialog with a form                  | `apps/web/src/components/app/todo/TaskDialog.tsx` + `TaskForm.tsx` (`td`, `tf`, `tf-pill`)                |
+| Date picking                        | `apps/web/src/components/app/JournalCalendar.tsx` (the site's own calendar — never `<input type="date">`) |
+| Tabs / segmented control            | `apps/web/src/components/ui/Tabs.tsx`, styled like the top-bar section switcher                           |
+| Confirm / prompt                    | `useConfirm()` / `usePrompt()` in `apps/web/src/components/ui/Confirm.tsx`                                |
+| A feature fully built to this guide | `apps/web/src/features/calendar/` (Tailwind utilities + tokens, TanStack Query, Radix wrappers)           |
 
 ## 2. Typography
 
-Fonts are loaded in `src/app/layout.tsx` and exposed as `--serif`, `--sans`, `--mono` (Tailwind: `font-serif`, `font-sans`, `font-mono`).
+Fonts are loaded in `apps/web/src/app/layout.tsx` and exposed as `--serif`, `--sans`, `--mono` (Tailwind: `font-serif`, `font-sans`, `font-mono`).
 
 | Use                                     | Font                                 | Notes                                                                                       |
 | --------------------------------------- | ------------------------------------ | ------------------------------------------------------------------------------------------- |
@@ -70,7 +70,7 @@ Don't pass user data into `at-${…}` without a whitelist (the calendar uses `to
 
 Cards, pills and buttons are **frosted glass with a hairline inset ring**, not bordered boxes.
 
-- Tailwind utilities (in `src/styles/tailwind.css`): `glass` (translucent fill + blur + ring), `glass-hover` (brighter on hover), `tint` (see above).
+- Tailwind utilities (in `apps/web/src/styles/tailwind.css`): `glass` (translucent fill + blur + ring), `glass-hover` (brighter on hover), `tint` (see above).
 - Legacy equivalents: `ap-card` (card), `btn btn-secondary` (glass pill), `tf-pill` (form pill).
 - Radii: `rounded-r1` 10 · `r2` 14 · `r3` 20 (cards) · `r4` 28 (dialogs) · `rounded-pill`. Small chips use `rounded-[7px]`.
 - Shadows: `shadow-e1` … `e4` (warm, low-contrast); `shadow-glass` / `shadow-glass-hi` (glass ring, hover), `shadow-lens` (highlighted search row), `shadow-jelly` / `shadow-jelly-held` (section-switcher knob). Never `shadow-md`/`shadow-lg` (grey, harsh).
@@ -118,11 +118,11 @@ Do not mix a legacy class and a utility that set the same property (e.g. `btn` +
 
 ## 9. How a screen is built (the whole stack, so the look and the behaviour match)
 
-1. **Route** in `src/app/dashboard/<name>/page.tsx` — thin; wrap in `ClientOnly` + `Suspense` when it prints dates.
-2. **Data** with TanStack Query: keys in `src/lib/query/keys.ts` (`qk`), hooks in `src/features/<name>/queries.ts` (copy `features/tasks/queries.ts`: optimistic update → rollback → invalidate). **No `useEffect` fetching, no `useState` copies of server data.**
+1. **Route** in `apps/web/src/app/dashboard/<name>/page.tsx` — thin; wrap in `ClientOnly` + `Suspense` when it prints dates.
+2. **Data** with TanStack Query: keys in `apps/web/src/lib/query/keys.ts` (`qk`), hooks in `apps/web/src/features/<name>/queries.ts` (copy `features/tasks/queries.ts`: optimistic update → rollback → invalidate). **No `useEffect` fetching, no `useState` copies of server data.**
 3. **Realtime**: `useRealtimeInvalidate("<table>", [qk.…])`; the table needs the notify trigger (a new migration — see `20261010130000_calendar_events_realtime.sql`).
-4. **Overlays** use the Radix wrappers in `src/components/ui` (`Modal`, `Menu`, `Tabs`, `useConfirm`). Dialog components are mounted only while open, so initial form values are plain `useState` defaults (no effect to re-sync them).
-5. **Pure logic** (grouping, layout, date maths) lives in a `utils.ts` next to the feature and gets table-driven Vitest tests (`tests/unit/`).
+4. **Overlays** use the Radix wrappers in `apps/web/src/components/ui` (`Modal`, `Menu`, `Tabs`, `useConfirm`). Dialog components are mounted only while open, so initial form values are plain `useState` defaults (no effect to re-sync them).
+5. **Pure logic** (grouping, layout, date maths) lives in a `utils.ts` next to the feature and gets table-driven Vitest tests (`apps/web/tests/unit/`).
 6. Styling is **Tailwind utilities + tokens**. If you convert a legacy screen, delete its rules from `globals.css` in the same PR and keep it pixel-identical.
 
 ## 10. Checklist before you open the PR
@@ -135,7 +135,7 @@ Do not mix a legacy class and a utility that set the same property (e.g. `btn` +
 - [ ] Keyboard: everything reachable, visible focus, labels on icon buttons, `aria-pressed`/`aria-selected` on toggles, colour never the only signal.
 - [ ] Reduced motion and compact density respected.
 - [ ] No hydration mismatches (dates/times only inside `ClientOnly`).
-- [ ] `npx tsc --noEmit`, `npm test`, `npx next build` pass.
+- [ ] `corepack pnpm typecheck`, `corepack pnpm test`, `corepack pnpm build:web` pass.
 
 ## 11. Mistakes this guide exists to prevent (all seen in real PRs)
 
@@ -157,33 +157,33 @@ Do not mix a legacy class and a utility that set the same property (e.g. `btn` +
 
 | Layer                   | What it does                                                                                                                                                                             |
 | ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `npm run check:design`  | Scans the lines **you added** (vs the merge-base with `main`) with the rules in `scripts/design/rules.mjs`. Old code never blocks you. `npm run check:design:all` audits the whole tree. |
-| Git pre-commit hook     | `.githooks/pre-commit` runs it on staged changes. `npm install` turns it on (`prepare` sets `core.hooksPath`).                                                                           |
+| `corepack pnpm check:design`  | Scans the lines **you added** (vs the merge-base with `main`) with the rules in `scripts/design/rules.mjs`. Old code never blocks you. `corepack pnpm check:design:all` audits the whole tree. |
+| Git pre-commit hook     | `.githooks/pre-commit` runs it on staged changes. `corepack pnpm install` turns it on (`prepare` sets `core.hooksPath`).                                                                           |
 | Claude Code hook        | `.claude/settings.json` runs it after every Edit/Write and feeds the problems straight back to the agent so it fixes them itself.                                                        |
 | CI                      | `ci.yml` runs it on every PR; a violation fails the _Typecheck and build_ check, which branch protection requires.                                                                       |
 | Agent instruction files | `AGENTS.md` (the source), `CLAUDE.md`, `GEMINI.md`, `.github/copilot-instructions.md`, `.cursor/rules/` all point here.                                                                  |
 | Code owners             | Changes to the rules, tokens and this guide need the tech lead (`.github/CODEOWNERS`).                                                                                                   |
 
-What it checks: hex / `rgb()` colours, Tailwind's default palette and `black`, default shadows and radii, text under 11 px, hand-set fonts, literal colours in inline styles, native `alert/confirm/prompt`, native date/time inputs, `process.env` outside `src/config`, `NEXT_PUBLIC_*` secrets, secret-looking strings, hard-coded localhost URLs, and `any`.
+What it checks: hex / `rgb()` colours, Tailwind's default palette and `black`, default shadows and radii, text under 11 px, hand-set fonts, literal colours in inline styles, native `alert/confirm/prompt`, native date/time inputs, `process.env` outside `apps/web/src/config`, `NEXT_PUBLIC_*` secrets, secret-looking strings, hard-coded localhost URLs, and `any`.
 
-**Need something the tokens don't offer?** Don't inline it. Add the token once — a custom property in `:root` (`src/app/globals.css`) and a mapping in `@theme inline` (`src/styles/tailwind.css`) — and use it from there; that is how `--orange-fg` (medium-priority tasks) was added. **A real, justified exception?** Put `design-ok: <reason>` in a comment on that line or the one above; reviewers read these.
+**Need something the tokens don't offer?** Don't inline it. Add the token once — a custom property in `:root` (`apps/web/src/app/globals.css`) and a mapping in `@theme inline` (`apps/web/src/styles/tailwind.css`) — and use it from there; that is how `--orange-fg` (medium-priority tasks) was added. **A real, justified exception?** Put `design-ok: <reason>` in a comment on that line or the one above; reviewers read these.
 
-Adding or changing a rule: edit `scripts/design/rules.mjs`, add a case to `tests/unit/check-design.test.ts`, and make the message say _what to use instead_ — agents read it.
+Adding or changing a rule: edit `scripts/design/rules.mjs`, add a case to `apps/web/tests/unit/check-design.test.ts`, and make the message say _what to use instead_ — agents read it.
 
 ### Colours in places CSS can't reach
 
-- **Canvas / charts:** a canvas can't read `var(--x)`. Pass tokens as strings (`"var(--green-fg)"`) and resolve them at draw time with `tokenColor()` from `src/lib/cssVar.ts` (`ctx.fillStyle = tokenColor(barColor)`). SVG attributes accept `var(--x)` directly (`stroke="var(--green-fg)"`).
-- **Third-party brand marks** (Google, HubSpot) keep their mandated colours: put them in their own small file marked `// design-ok-file: <reason>` (see `src/components/auth/GoogleMark.tsx`) or tag the line with `design-ok:`.
+- **Canvas / charts:** a canvas can't read `var(--x)`. Pass tokens as strings (`"var(--green-fg)"`) and resolve them at draw time with `tokenColor()` from `apps/web/src/lib/cssVar.ts` (`ctx.fillStyle = tokenColor(barColor)`). SVG attributes accept `var(--x)` directly (`stroke="var(--green-fg)"`).
+- **Third-party brand marks** (Google, HubSpot) keep their mandated colours: put them in their own small file marked `// design-ok-file: <reason>` (see `apps/web/src/components/auth/GoogleMark.tsx`) or tag the line with `design-ok:`.
 - **Art-directed materials** (the gift card's iridescent foil) are literal by design and marked `design-ok-file:` with the reason. That is the only kind of file allowed to be wholly literal.
-- `src/app/globals.css` and `src/styles/tailwind.css` are the token files: literal values live there and nowhere else.
+- `apps/web/src/app/globals.css` and `apps/web/src/styles/tailwind.css` are the token files: literal values live there and nowhere else.
 
 ## 13. The marketing site: liquid glass and motion
 
 The public site (`/`, `/how-it-works`, `/pricing`, …) is the most expressive part of the product, and it has its own kit in
-`src/components/landing/` (read `landing/AGENTS.md` before touching it). The in-app screens above stay calm; the marketing site adds:
+`apps/web/src/components/landing/` (read `landing/AGENTS.md` before touching it). The in-app screens above stay calm; the marketing site adds:
 
 - **Liquid glass.** Thick translucent panels with a specular rim, a sheen and a pointer-following glare (`liquid`, `liquid-flat`,
-  `liquid-dark`, `liquid-tint`, `liquid-pill` in `src/styles/tailwind.css`; tokens `--liquid-*`). Glass needs colour behind it, so every
+  `liquid-dark`, `liquid-tint`, `liquid-pill` in `apps/web/src/styles/tailwind.css`; tokens `--liquid-*`). Glass needs colour behind it, so every
   marketing page gets the drifting colour orbs of `Ambient`. Inner cards use `liquid-flat` (no second blur).
 - **GSAP for all motion.** Entrances, split-text headings, scroll-scrubbed scenes, parallax, magnetic buttons, the sticky one-by-one
   panel stack, and an interactive cursor. Everything goes through `useMotion`, which cleans up after itself and switches to a calm mode
@@ -194,4 +194,4 @@ The public site (`/`, `/how-it-works`, `/pricing`, …) is the most expressive p
   `docs/CURRENT_STATE.md`. No invented testimonials, numbers or security claims.
 - **The header bar stays transparent** (no scroll-triggered frost; a past commit removed it on purpose). The glass lives in the nav pill and menus.
 
-New dependency: `gsap` (3.15, includes `ScrollTrigger` and `SplitText`, free to use). It is used only under `src/components/landing/`.
+New dependency: `gsap` (3.15, includes `ScrollTrigger` and `SplitText`, free to use). It is used only under `apps/web/src/components/landing/`.

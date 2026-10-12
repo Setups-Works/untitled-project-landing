@@ -8,7 +8,7 @@ For every new developer (and the AI agent you'll work with). About 30 minutes.
 | ------- | ------------------------------------------------------------------------------------------------ | --------- |
 | GitHub  | Member of the **Setups-Works** org with write access to `untitled-project-landing`               | tech lead |
 | Jira    | Access to project **UNT** — https://setups-works.atlassian.net/jira/software/projects/UNT/boards | tech lead |
-| Docker  | Install Docker Desktop; `npm run docker:up` gives you Postgres, Redis, storage and mail locally  | you       |
+| Docker  | Install Docker Desktop; `corepack pnpm docker:up` gives you Postgres, Redis, storage and mail locally  | you       |
 | Vercel  | Read access to deployments / preview logs                                                        | tech lead |
 | Secrets | A `.env.local` for **dev** (shared securely, e.g. a password manager — never chat/email/git)     | tech lead |
 
@@ -17,9 +17,9 @@ For every new developer (and the AI agent you'll work with). About 30 minutes.
 ```bash
 git clone https://github.com/Setups-Works/untitled-project-landing.git
 cd untitled-project-landing
-npm install
-cp .env.example .env.local     # fill in the dev values you were given
-npm run dev                    # http://localhost:3000
+corepack pnpm install
+cp .env.example apps/web/.env.local  # fill in the dev values you were given
+corepack pnpm dev:web                         # http://localhost:3000
 ```
 
 Sign up with your own email on the local site. To get the admin panel, ask the tech lead to add your email to `ADMIN_EMAILS` in _your_ `.env.local` (or to promote you from `/admin/users`).
@@ -27,7 +27,7 @@ Sign up with your own email on the local site. To get the admin panel, ask the t
 Useful checks before every push:
 
 ```bash
-npx tsc --noEmit && npx next build   # don't run `next build` while `npm run dev` is running
+corepack pnpm typecheck && corepack pnpm build        # don't build while the web dev server is running
 ```
 
 ## 3. Read (in this order, ~20 min)

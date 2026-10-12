@@ -25,7 +25,7 @@ Rotation: change the value in `.env.selfhost` / your secret manager and recreate
 
 ## Auth and sessions
 
-- Better Auth with email+password and Google; sessions stored in PostgreSQL (cookie `better-auth.session_token`); `src/proxy.ts` only redirects, every page re-verifies the session.
+- Better Auth with email+password and Google; sessions stored in PostgreSQL (cookie `better-auth.session_token`); `apps/web/src/proxy.ts` only redirects, every page re-verifies the session.
 - Google One Tap runs on the login and signup pages through Better Auth. The public client ID is returned by `/api/v1/auth-config`; the secret stays server-side. Add each deployed site origin (including `http://localhost:3000` for local development) to the Google OAuth client's Authorized JavaScript origins. The standard Google button remains available if the prompt is unavailable or dismissed.
 - Better Auth's last-login-method plugin keeps only the most recently used method name in a readable, first-party cookie for 30 days, so the login form can show a “Last used” hint. It does not store this preference in the database.
 - Better Auth's admin plugin endpoints require the `admin` role. The app's `/admin` pages and server actions continue to enforce `requireAdmin`/`assertAdmin`, protect the acting admin and `ADMIN_EMAILS` accounts, and record admin-panel mutations in `admin_audit`.
@@ -83,4 +83,4 @@ Found a vulnerability or leaked secret? Tell the tech lead immediately, rotate f
 
 ### Service-role usage (keep this list current)
 
-`src/server/session.ts` `adminDb()` / `withOwner()` (admin panel, share page, announcements, audit) · `src/app/admin/actions.ts` · `src/app/dashboard/settings/actions.ts` (delete account) · `src/app/share/[token]/page.tsx`.
+`apps/web/src/server/session.ts` `adminDb()` / `withOwner()` (admin panel, share page, announcements, audit) · `apps/web/src/app/admin/actions.ts` · `apps/web/src/app/dashboard/settings/actions.ts` (delete account) · `apps/web/src/app/share/[token]/page.tsx`.

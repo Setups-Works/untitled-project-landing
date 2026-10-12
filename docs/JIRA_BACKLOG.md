@@ -12,11 +12,11 @@ Sizes: S ≈ 1 day · M ≈ 2–4 days · L ≈ 1 week or more.
 
 Make the repo ready for three developers (and their AI agents) to work in parallel without stepping on each other.
 
-_Exit: src/ architecture adopted, docs and AGENTS.md in place, CI green on every PR, route structure decided, shared UI primitives exist, env and secrets handled safely._
+_Exit: apps/web/src/ architecture adopted, docs and AGENTS.md in place, CI green on every PR, route structure decided, shared UI primitives exist, env and secrets handled safely._
 
 | Key                                                        | Task                                                           | Track          | Size | Depends on |
 | ---------------------------------------------------------- | -------------------------------------------------------------- | -------------- | ---- | ---------- |
-| [UNT-47](https://setups-works.atlassian.net/browse/UNT-47) | Adopt the src/ layout and architecture skeleton                | track-platform | S    | —          |
+| [UNT-47](https://setups-works.atlassian.net/browse/UNT-47) | Adopt the apps/web/src/ layout and architecture skeleton                | track-platform | S    | —          |
 | [UNT-48](https://setups-works.atlassian.net/browse/UNT-48) | Write AGENTS.md, per-folder guides and project docs            | track-platform | S    | —          |
 | [UNT-49](https://setups-works.atlassian.net/browse/UNT-49) | Decide and migrate the route structure                         | track-platform | M    | —          |
 | [UNT-50](https://setups-works.atlassian.net/browse/UNT-50) | Shared UI primitives in components/ui                          | track-platform | M    | —          |
@@ -44,13 +44,13 @@ _Exit: every table is workspace-scoped with RLS, notes run through API v1 -> ser
 
 Notes, Tasks, Journal and Search moved onto the new architecture and deepened.
 
-_Exit: each feature lives in src/features/<name> with service + repository + API v1, server-side search works, attachments and realtime are shared utilities._
+_Exit: each feature lives in apps/web/src/features/<name> with service + repository + API v1, server-side search works, attachments and realtime are shared utilities._
 
 | Key                                                        | Task                                                          | Track           | Size | Depends on |
 | ---------------------------------------------------------- | ------------------------------------------------------------- | --------------- | ---- | ---------- |
-| [UNT-60](https://setups-works.atlassian.net/browse/UNT-60) | Notes: migrate to src/features/notes                          | track-workspace | M    | UNT-57     |
-| [UNT-61](https://setups-works.atlassian.net/browse/UNT-61) | Tasks: migrate to src/features/tasks                          | track-workspace | M    | UNT-57     |
-| [UNT-62](https://setups-works.atlassian.net/browse/UNT-62) | Journal: migrate to src/features/journal                      | track-workspace | M    | UNT-57     |
+| [UNT-60](https://setups-works.atlassian.net/browse/UNT-60) | Notes: migrate to apps/web/src/features/notes                          | track-workspace | M    | UNT-57     |
+| [UNT-61](https://setups-works.atlassian.net/browse/UNT-61) | Tasks: migrate to apps/web/src/features/tasks                          | track-workspace | M    | UNT-57     |
+| [UNT-62](https://setups-works.atlassian.net/browse/UNT-62) | Journal: migrate to apps/web/src/features/journal                      | track-workspace | M    | UNT-57     |
 | [UNT-63](https://setups-works.atlassian.net/browse/UNT-63) | Server-side search: full-text index and /api/v1/search        | track-workspace | L    | UNT-54     |
 | [UNT-64](https://setups-works.atlassian.net/browse/UNT-64) | Notes v2: tags, backlinks, archive and trash                  | track-workspace | M    | UNT-60     |
 | [UNT-65](https://setups-works.atlassian.net/browse/UNT-65) | Tasks v2: subtasks, labels, reminders and board drag-and-drop | track-workspace | M    | UNT-61     |

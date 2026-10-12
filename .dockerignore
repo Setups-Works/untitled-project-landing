@@ -1,5 +1,7 @@
 node_modules
+.turbo
 .next
+apps/web/.next
 .git
 .github
 .env*

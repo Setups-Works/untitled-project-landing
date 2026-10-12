@@ -16,6 +16,6 @@ Start with the root **`AGENTS.md`** (rules for humans and AI agents), then:
 | [JIRA_GUIDE.md](JIRA_GUIDE.md)               | How tasks are written and worked                                    |
 | [JIRA_BACKLOG.md](JIRA_BACKLOG.md)           | The whole plan, offline                                             |
 
-Every `src/**` folder also has its own `AGENTS.md`.
+Every `apps/web/src/**` folder also has its own `AGENTS.md`.
 
 Keep these docs current — outdated docs are bugs, and AI agents will follow them literally.

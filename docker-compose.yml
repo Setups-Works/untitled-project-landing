@@ -1,7 +1,7 @@
 # Self-hosted stack: everything the app needs runs in Docker. No Supabase.
 #
 #   cp .env.selfhost.example .env.selfhost       # then change the passwords
-#   docker compose --env-file .env.selfhost up -d                 # data services only; run the app with `npm run dev`
+#   docker compose --env-file .env.selfhost up -d                 # data services only; run the app with `corepack pnpm dev:web`
 #   docker compose --env-file .env.selfhost --profile dev up -d           # data services + the app with live reload (edit and save)
 #   docker compose --env-file .env.selfhost --profile app up -d --build   # data services + the production image (rebuild to update)
 #
@@ -129,17 +129,17 @@ services:
       - sh
       - -c
       - |
-        [ node_modules/.package-lock.json -nt package-lock.json ] || npm ci --no-audit --no-fund
-        node scripts/db/migrate.mjs && exec npm run dev -- --hostname 0.0.0.0
+        corepack enable && pnpm install --frozen-lockfile && pnpm db:migrate && exec pnpm dev:web
     environment:
       <<: *app-env
+      HOSTNAME: "0.0.0.0"
       NEXT_TELEMETRY_DISABLED: "1"
       WATCHPACK_POLLING: "true" # file events don't cross the Docker Desktop mount, so poll for changes
     ports: ["127.0.0.1:${WEB_PORT:-3000}:3000"]
     volumes:
       - .:/app
       - devmodules:/app/node_modules
-      - devnext:/app/.next
+      - devnext:/app/apps/web/.next
     depends_on:
       postgres: { condition: service_healthy }
       redis: { condition: service_healthy }

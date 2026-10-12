@@ -1,10 +1,13 @@
 // Applies db/migrations/*.sql in order, once each, and records them in public.schema_migrations.
-//   npm run db:migrate
+//   pnpm db:migrate
 // DATABASE_URL comes from the environment, or from .env.local / .env.selfhost when run on your machine.
 import { readdirSync, readFileSync, existsSync } from "node:fs";
 import { join, dirname } from "node:path";
 import { fileURLToPath } from "node:url";
-import pg from "pg";
+import { createRequire } from "node:module";
+
+const requireWebPackage = createRequire(new URL("../../apps/web/package.json", import.meta.url));
+const pg = requireWebPackage("pg");
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 
@@ -16,6 +19,7 @@ function loadEnvFile(name) {
     if (m && process.env[m[1]] === undefined) process.env[m[1]] = m[2].replace(/^["']|["']$/g, "");
   }
 }
+loadEnvFile("apps/web/.env.local");
 loadEnvFile(".env.local");
 
 if (!process.env.DATABASE_URL) {
