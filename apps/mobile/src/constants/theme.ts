@@ -43,6 +43,13 @@ export const Tints: Record<Tone, { bg: string; line: string; fg: string }> = {
   clay: { bg: "#f6e3dc", line: "rgba(154,90,74,0.20)", fg: "#9a5a4a" },
 };
 
+/** The order tints are handed out in when a list of cards has no colour of its own (notes, journal days…). */
+export const TONE_CYCLE: Tone[] = ["violet", "mint", "amber", "blue", "clay", "gold", "green", "sand"];
+export const toneAt = (i: number): Tone => TONE_CYCLE[((i % TONE_CYCLE.length) + TONE_CYCLE.length) % TONE_CYCLE.length]!;
+
+/** A tint as a translucent colour for the glass effect (the pastel background at about 60% strength). */
+export const glassTint = (tone: Tone) => `${Tints[tone].bg}99`;
+
 /** Task priorities 1–4, coloured like the web's priority flags. */
 export const PriorityColor: Record<number, string> = {
   1: Palette.rec,

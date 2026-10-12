@@ -64,7 +64,7 @@ export function ProfileScreen() {
         </View>
       </Card>
 
-      <Card style={styles.list}>
+      <Card tone="blue" style={styles.list}>
         <Row label="Server" value={mobileEnv.apiBaseUrl ?? "—"} />
         <Row label="App version" value={Constants.expoConfig?.version ?? "—"} />
       </Card>

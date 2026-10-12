@@ -114,7 +114,7 @@ export function HomeScreen() {
         </AppText>
       </View>
       {next.length ? (
-        <Card>
+        <Card tone="blue">
           {next.map((t) => (
             <TaskRow
               key={t.id}
@@ -126,7 +126,7 @@ export function HomeScreen() {
           ))}
         </Card>
       ) : (
-        <Card>
+        <Card tone="blue">
           <AppText variant="body" color={Palette.fgMuted}>
             {tasks.length ? "You’re all caught up for today." : "No tasks yet. Add your first in the To-do tab."}
           </AppText>
@@ -143,6 +143,7 @@ export function HomeScreen() {
         entries.map((e) => (
           <Card
             key={e.id}
+            tone="violet"
             onPress={() => router.push({ pathname: "/journal/[id]", params: { id: e.id } })}
             accessibilityLabel="Open journal entry"
           >
@@ -156,7 +157,7 @@ export function HomeScreen() {
           </Card>
         ))
       ) : (
-        <Card onPress={() => router.navigate("/journal")} accessibilityLabel="Write today’s journal">
+        <Card tone="violet" onPress={() => router.navigate("/journal")} accessibilityLabel="Write today’s journal">
           <AppText variant="body" color={Palette.fgMuted}>
             Nothing written yet today. Tap to add an entry.
           </AppText>

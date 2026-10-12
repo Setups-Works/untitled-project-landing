@@ -29,7 +29,7 @@ export function TodoScreen() {
   const tasksQ = useTasks();
   const listsQ = useTaskLists();
   const toggle = useToggleTask();
-  const { add, archiveCompleted } = useTaskActions(today);
+  const { add, archiveCompleted, remove } = useTaskActions(today);
   const listActions = useListActions();
   const [view, setView] = useState<ViewKey>("today");
   const [opts, setOpts] = useState<ViewOpts>(DEFAULT_OPTS);
@@ -105,7 +105,13 @@ export function TodoScreen() {
     { key: NEW_LIST, label: "+ List" },
   ];
 
-  const ctx = { today, lists, onToggle: toggle, onOpen: openEditor };
+  const ctx = {
+    today,
+    lists,
+    onToggle: toggle,
+    onOpen: openEditor,
+    onDelete: (t: Task) => remove.mutate(t.id, { onError: (e) => Alert.alert("Couldn’t delete", errorMessage(e)) }),
+  };
   const shown = applyOpts(inThisView, opts);
 
   return (

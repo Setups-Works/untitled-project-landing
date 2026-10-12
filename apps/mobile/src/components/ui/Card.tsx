@@ -1,7 +1,8 @@
-import { Pressable, StyleSheet, View, type StyleProp, type ViewStyle } from "react-native";
 import type { Tone } from "@untitled/types";
+import { Pressable, StyleSheet, type StyleProp, type ViewStyle } from "react-native";
 
-import { Palette, Radius, Shadow, Tints } from "@/constants/theme";
+import { GlassSurface } from "./GlassSurface";
+import { Radius } from "@/constants/theme";
 
 type Props = {
   children: React.ReactNode;
@@ -11,23 +12,29 @@ type Props = {
   accessibilityLabel?: string;
 };
 
-/** Frosted-glass card (`ap-card`), optionally tinted like the web's `at-<tint>`. */
+/** Liquid-glass card, tinted like the web's `at-<tint>`. Tap targets keep their glass and just dim while pressed. */
 export function Card({ children, tone, onPress, style, accessibilityLabel }: Props) {
-  const t = tone ? Tints[tone] : null;
-  const look = [styles.card, { backgroundColor: t?.bg ?? Palette.glassHi, borderColor: t?.line ?? Palette.glassRing }, Shadow.e1, style];
-  if (!onPress) return <View style={look}>{children}</View>;
+  if (!onPress)
+    return (
+      <GlassSurface tone={tone} style={[styles.card, style]} accessibilityLabel={accessibilityLabel}>
+        {children}
+      </GlassSurface>
+    );
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
       onPress={onPress}
-      style={({ pressed }) => [look, pressed ? { opacity: 0.85 } : null]}
+      style={({ pressed }) => [styles.press, pressed ? { opacity: 0.85 } : null]}
     >
-      {children}
+      <GlassSurface tone={tone} style={[styles.card, style]}>
+        {children}
+      </GlassSurface>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
-  card: { borderRadius: Radius.r3, borderWidth: 1, padding: 16 },
+  card: { padding: 16 },
+  press: { borderRadius: Radius.r3 },
 });

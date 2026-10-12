@@ -1,10 +1,11 @@
 import type { JournalEntry } from "@untitled/types";
 import { router } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
-import { StyleSheet } from "react-native";
+import { Alert, StyleSheet } from "react-native";
 
 import { useJournal, useJournalActions } from "./queries";
 import { AppText } from "@/components/ui/AppText";
+import { SwipeToDelete } from "@/components/ui/SwipeToDelete";
 import { AttachmentGallery } from "@/components/ui/AttachmentGallery";
 import { Banner } from "@/components/ui/Banner";
 import { Button } from "@/components/ui/Button";
@@ -12,13 +13,13 @@ import { Card } from "@/components/ui/Card";
 import { Screen } from "@/components/ui/Screen";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/States";
 import { TextField } from "@/components/ui/TextField";
-import { Palette } from "@/constants/theme";
+import { Palette, toneAt } from "@/constants/theme";
 import { errorMessage } from "@/lib/api";
 import { dayLabel, isoDate, longDate, timeOf } from "@/lib/dates";
 
 export function JournalScreen() {
   const journalQ = useJournal();
-  const { create } = useJournalActions();
+  const { create, remove } = useJournalActions();
   const today = useMemo(() => isoDate(), []);
   const [draft, setDraft] = useState("");
   const [error, setError] = useState("");
@@ -52,7 +53,7 @@ export function JournalScreen() {
       <AppText variant="title" accessibilityRole="header">
         Journal
       </AppText>
-      <Card>
+      <Card tone="amber">
         <TextField
           label={`Today · ${longDate()}`}
           value={draft}
@@ -70,23 +71,30 @@ export function JournalScreen() {
       ) : journalQ.isError ? (
         <ErrorState message={errorMessage(journalQ.error)} onRetry={() => void journalQ.refetch()} />
       ) : days.length ? (
-        days.map(([date, entries]) => (
-          <Card key={date} style={styles.day}>
+        days.map(([date, entries], i) => (
+          <Card key={date} tone={toneAt(i)} style={styles.day}>
             <AppText variant="label">{dayLabel(date, today)}</AppText>
             {entries.map((e) => (
-              <Card
+              <SwipeToDelete
                 key={e.id}
-                onPress={() => router.push({ pathname: "/journal/[id]", params: { id: e.id } })}
-                accessibilityLabel={`Journal entry at ${timeOf(e.created_at)}`}
+                title="Delete this entry?"
+                message="This can’t be undone."
+                what="journal entry"
+                onDelete={() => remove.mutate(e.id, { onError: (err) => Alert.alert("Couldn’t delete", errorMessage(err)) })}
               >
-                <AppText variant="small" color={Palette.fgSubtle}>
-                  {timeOf(e.created_at)}
-                </AppText>
-                <AppText variant="body" numberOfLines={4}>
-                  {e.body || (e.attachments.length ? "" : "Empty entry")}
-                </AppText>
-                <AttachmentGallery attachments={e.attachments} />
-              </Card>
+                <Card
+                  onPress={() => router.push({ pathname: "/journal/[id]", params: { id: e.id } })}
+                  accessibilityLabel={`Journal entry at ${timeOf(e.created_at)}`}
+                >
+                  <AppText variant="small" color={Palette.fgSubtle}>
+                    {timeOf(e.created_at)}
+                  </AppText>
+                  <AppText variant="body" numberOfLines={4}>
+                    {e.body || (e.attachments.length ? "" : "Empty entry")}
+                  </AppText>
+                  <AttachmentGallery attachments={e.attachments} />
+                </Card>
+              </SwipeToDelete>
             ))}
           </Card>
         ))

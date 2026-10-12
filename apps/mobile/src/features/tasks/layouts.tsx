@@ -10,14 +10,14 @@ import { Card } from "@/components/ui/Card";
 import { CalendarGrid } from "@/components/ui/DatePicker";
 import { Palette } from "@/constants/theme";
 
-type Ctx = { today: string; lists: TaskList[]; onToggle: (t: Task) => void; onOpen: (t: Task) => void };
+type Ctx = { today: string; lists: TaskList[]; onToggle: (t: Task) => void; onOpen: (t: Task) => void; onDelete: (t: Task) => void };
 
 const toneOf = (g: Group) =>
   g.tone && ["violet", "blue", "green", "amber", "clay", "sand", "mint", "gold"].includes(g.tone) ? (g.tone as "violet") : "sand";
 
 function GroupCard({ group, ctx, showList }: { group: Group; ctx: Ctx; showList: boolean }) {
   return (
-    <Card tone={group.title ? toneOf(group) : null} style={styles.group}>
+    <Card tone={group.title ? toneOf(group) : "blue"} style={styles.group}>
       {group.title ? (
         <View style={styles.head}>
           <AppText variant="label" color={Palette.fgMuted}>
@@ -34,6 +34,7 @@ function GroupCard({ group, ctx, showList }: { group: Group; ctx: Ctx; showList:
           list={showList ? ctx.lists.find((l) => l.id === t.list_id) : null}
           onToggle={ctx.onToggle}
           onOpen={ctx.onOpen}
+          onDelete={ctx.onDelete}
         />
       ))}
     </Card>
@@ -109,7 +110,7 @@ export function CalendarLayout({
       <Card tone="violet">
         <CalendarGrid value={day} onPick={setDay} marks={marks} />
       </Card>
-      <Card style={styles.group}>
+      <Card tone="mint" style={styles.group}>
         <View style={styles.head}>
           <AppText variant="label">{day === ctx.today ? "Today" : day}</AppText>
           <AppText variant="small">{dayTasks.length}</AppText>
@@ -123,6 +124,7 @@ export function CalendarLayout({
               list={ctx.lists.find((l) => l.id === t.list_id)}
               onToggle={ctx.onToggle}
               onOpen={ctx.onOpen}
+              onDelete={ctx.onDelete}
             />
           ))
         ) : (

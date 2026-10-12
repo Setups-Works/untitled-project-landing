@@ -16,6 +16,7 @@ import type { Attachment } from "@untitled/types";
 import { AppText } from "@/components/ui/AppText";
 import { AttachmentGallery } from "@/components/ui/AttachmentGallery";
 import { Banner } from "@/components/ui/Banner";
+import { GlassSurface } from "@/components/ui/GlassSurface";
 import { Markdown } from "@/components/ui/Markdown";
 import { Icon } from "@/components/ui/Icon";
 import { ErrorState, LoadingState } from "@/components/ui/States";
@@ -205,7 +206,7 @@ function Bubble({
   const { body, proposals } = mine ? { body: text, proposals: [] as ChatProposal[] } : parseChatActions(text);
   return (
     <View style={[styles.bubbleRow, mine ? styles.mine : styles.theirs]}>
-      <View style={[styles.bubble, mine ? styles.bubbleMine : styles.bubbleTheirs, proposals.length ? styles.bubbleWide : null]}>
+      <Surface mine={mine} wide={proposals.length > 0}>
         {body && !(attachments.length && body === "Attachment") ? (
           mine ? (
             <AppText variant="body" color={Palette.onDark} selectable>
@@ -217,8 +218,18 @@ function Bubble({
         ) : null}
         {attachments.length ? <AttachmentGallery attachments={attachments} /> : null}
         {proposals.length && messageId && chatId ? <Drafts proposals={proposals} messageId={messageId} chatId={chatId} /> : null}
-      </View>
+      </Surface>
     </View>
+  );
+}
+
+/** Your messages are solid ink; the assistant's are liquid glass. */
+function Surface({ mine, wide, children }: { mine: boolean; wide: boolean; children: React.ReactNode }) {
+  if (mine) return <View style={[styles.bubble, styles.bubbleMine, wide ? styles.bubbleWide : null]}>{children}</View>;
+  return (
+    <GlassSurface tone="blue" style={[styles.bubble, styles.bubbleTheirs, wide ? styles.bubbleWide : null]}>
+      {children}
+    </GlassSurface>
   );
 }
 
@@ -357,7 +368,7 @@ const styles = StyleSheet.create({
   },
   draftBtn: { alignSelf: "flex-start", minHeight: 40, marginTop: 4 },
   bubbleMine: { backgroundColor: Palette.fillDark, borderBottomRightRadius: 6 },
-  bubbleTheirs: { backgroundColor: Palette.glassHi, borderWidth: 1, borderColor: Palette.glassRing, borderBottomLeftRadius: 6 },
+  bubbleTheirs: { borderBottomLeftRadius: 6 },
   pad: { paddingHorizontal: 14, paddingTop: 8 },
   send: {
     width: 44,

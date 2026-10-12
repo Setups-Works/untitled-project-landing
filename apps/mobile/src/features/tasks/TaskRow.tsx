@@ -4,12 +4,30 @@ import { Pressable, StyleSheet, View } from "react-native";
 
 import { AppText } from "@/components/ui/AppText";
 import { Icon } from "@/components/ui/Icon";
+import { SwipeToDelete } from "@/components/ui/SwipeToDelete";
 import { Palette, PriorityColor, Radius, Tints } from "@/constants/theme";
 
-type Props = { task: Task; today: string; list?: TaskList | null; onToggle: (t: Task) => void; onOpen?: (t: Task) => void };
+type Props = {
+  task: Task;
+  today: string;
+  list?: TaskList | null;
+  onToggle: (t: Task) => void;
+  onOpen?: (t: Task) => void;
+  onDelete?: (t: Task) => void;
+};
 
 /** The checkbox ticks the task; the rest of the row opens it for editing. */
-export function TaskRow({ task, today, list, onToggle, onOpen }: Props) {
+export function TaskRow({ task, today, list, onToggle, onOpen, onDelete }: Props) {
+  const row = <Row task={task} today={today} list={list} onToggle={onToggle} onOpen={onOpen} />;
+  if (!onDelete) return row;
+  return (
+    <SwipeToDelete title="Delete this task?" message={task.title} what={task.title} onDelete={() => onDelete(task)}>
+      {row}
+    </SwipeToDelete>
+  );
+}
+
+function Row({ task, today, list, onToggle, onOpen }: Omit<Props, "onDelete">) {
   const overdue = !task.done && !!task.due_date && task.due_date < today;
   const tint = list ? Tints[list.color as keyof typeof Tints] : undefined;
   return (

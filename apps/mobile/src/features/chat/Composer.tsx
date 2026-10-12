@@ -5,9 +5,10 @@ import { pickFiles, type PendingFile } from "./files";
 import type { AiProvider } from "./types";
 import { useRecorder } from "./useRecorder";
 import { AppText } from "@/components/ui/AppText";
+import { GlassSurface } from "@/components/ui/GlassSurface";
 import { Icon } from "@/components/ui/Icon";
 import { Sheet } from "@/components/ui/Sheet";
-import { Font, Palette, Radius, Shadow } from "@/constants/theme";
+import { Font, Palette, Radius } from "@/constants/theme";
 
 type Props = {
   busy: boolean;
@@ -55,7 +56,7 @@ export function Composer({ busy, providers, provider, onProvider, onSend, onErro
 
   return (
     <View style={[styles.wrap, { paddingBottom: bottomInset }]}>
-      <View style={[styles.card, Shadow.e1]}>
+      <GlassSurface tone="violet" style={styles.card}>
         {files.length ? (
           <View style={styles.files}>
             {files.map((f, i) => (
@@ -144,7 +145,7 @@ export function Composer({ busy, providers, provider, onProvider, onSend, onErro
             <Icon name="arrow-up" size={18} color={canSend ? Palette.onDark : Palette.fgFaint} />
           </Pressable>
         </View>
-      </View>
+      </GlassSurface>
 
       <Sheet visible={menu} onClose={() => setMenu(false)} title="AI">
         {providers.map((p) => {
@@ -177,10 +178,7 @@ export function Composer({ busy, providers, provider, onProvider, onSend, onErro
 const styles = StyleSheet.create({
   wrap: { paddingHorizontal: 14, paddingTop: 8 },
   card: {
-    backgroundColor: Palette.glassHi,
     borderRadius: Radius.r4,
-    borderWidth: 1,
-    borderColor: Palette.glassRing,
     paddingHorizontal: 18,
     paddingTop: 14,
     paddingBottom: 10,

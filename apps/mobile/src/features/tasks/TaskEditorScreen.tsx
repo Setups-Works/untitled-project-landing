@@ -90,7 +90,7 @@ function TaskScreen({ task, lists }: { task: Task; lists: TaskList[] }) {
           {status}
         </AppText>
       ) : null}
-      <Card style={{ gap: 12 }}>
+      <Card tone="violet" style={{ gap: 12 }}>
         <Detail
           label="Due"
           value={task.due_date ? dayLabel(task.due_date, today) : "No date"}

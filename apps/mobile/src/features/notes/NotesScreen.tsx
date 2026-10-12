@@ -1,18 +1,19 @@
 import type { Note } from "@untitled/types";
 import { router } from "expo-router";
 import { useCallback, useMemo, useState } from "react";
-import { StyleSheet, View } from "react-native";
+import { Alert, StyleSheet, View } from "react-native";
 
-import { useNotes } from "./queries";
+import { useNoteActions, useNotes } from "./queries";
 import { AppText } from "@/components/ui/AppText";
 import { AttachmentGallery } from "@/components/ui/AttachmentGallery";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Icon } from "@/components/ui/Icon";
+import { SwipeToDelete } from "@/components/ui/SwipeToDelete";
 import { Screen } from "@/components/ui/Screen";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/States";
 import { TextField } from "@/components/ui/TextField";
-import { Palette, Tints } from "@/constants/theme";
+import { Palette, Tints, toneAt } from "@/constants/theme";
 import { errorMessage } from "@/lib/api";
 
 const open = (id: string) => router.push({ pathname: "/note/[id]", params: { id } });
@@ -51,7 +52,7 @@ export function NotesScreen() {
       ) : notesQ.isError ? (
         <ErrorState message={errorMessage(notesQ.error)} onRetry={() => void notesQ.refetch()} />
       ) : notes.length ? (
-        notes.map((n) => <NoteCard key={n.id} note={n} />)
+        notes.map((n, i) => <NoteCard key={n.id} note={n} index={i} />)
       ) : query ? (
         <EmptyState icon="magnifying-glass" title="No matches" hint="Try a different search." />
       ) : (
@@ -66,23 +67,31 @@ export function NotesScreen() {
   );
 }
 
-function NoteCard({ note }: { note: Note }) {
+function NoteCard({ note, index }: { note: Note; index: number }) {
+  const { remove } = useNoteActions();
   return (
-    <Card tone={note.color} onPress={() => open(note.id)} accessibilityLabel={`Note: ${note.title || "Untitled"}`}>
-      <View style={styles.cardTop}>
-        <AppText variant="heading" numberOfLines={1} style={styles.flex}>
-          {note.title || "Untitled"}
-        </AppText>
-        {note.pinned ? <Icon name="thumbtack" size={13} color={note.color ? Tints[note.color].fg : Palette.fgSubtle} /> : null}
-      </View>
-      {note.body ? (
-        <AppText variant="small" numberOfLines={3} color={Palette.fgMuted}>
-          {note.body}
-        </AppText>
-      ) : null}
-      {/* One preview keeps the list light; the editor shows them all. */}
-      <AttachmentGallery attachments={note.attachments.slice(0, 1)} />
-    </Card>
+    <SwipeToDelete
+      title="Delete this note?"
+      message="This can’t be undone."
+      what={note.title || "note"}
+      onDelete={() => remove.mutate(note.id, { onError: (e) => Alert.alert("Couldn’t delete", errorMessage(e)) })}
+    >
+      <Card tone={note.color ?? toneAt(index)} onPress={() => open(note.id)} accessibilityLabel={`Note: ${note.title || "Untitled"}`}>
+        <View style={styles.cardTop}>
+          <AppText variant="heading" numberOfLines={1} style={styles.flex}>
+            {note.title || "Untitled"}
+          </AppText>
+          {note.pinned ? <Icon name="thumbtack" size={13} color={note.color ? Tints[note.color].fg : Palette.fgSubtle} /> : null}
+        </View>
+        {note.body ? (
+          <AppText variant="small" numberOfLines={3} color={Palette.fgMuted}>
+            {note.body}
+          </AppText>
+        ) : null}
+        {/* One preview keeps the list light; the editor shows them all. */}
+        <AttachmentGallery attachments={note.attachments.slice(0, 1)} />
+      </Card>
+    </SwipeToDelete>
   );
 }
 
