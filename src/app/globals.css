@@ -71,59 +71,13 @@
     --sans: var(--font-geist), system-ui, sans-serif;
     --mono: var(--font-geist-mono), ui-monospace, monospace;
   }
-  /*
-   * MARKETING THEME. The public site (every route except /dashboard and /admin) is rose-pink; the signed-in app keeps the forest-green
-   * accent. `MarketingScope` (src/components/landing/MarketingScope.tsx) puts `data-accent="pink"` on the wrapper around the marketing
-   * pages, so these overrides only ever apply inside it: they swap the `--green-*` accent for pink, turn every card tint (`at-<tone>`)
-   * into a light shade of pink, and recolour the orbs behind the glass.
-   */
-  /* The colour orbs behind the marketing glass. By default they use the product tints; the marketing theme gives them its own hues. */
+  /* The colour orbs behind the marketing glass (and the Pro plan's moving edge): the product's own tints. */
   :root {
     --orb-1: var(--green-fg);
     --orb-2: var(--violet-fg);
     --orb-3: var(--amber-fg);
     --orb-4: var(--blue-fg);
     --orb-5: var(--clay-fg);
-  }
-  [data-accent="pink"] {
-    --green-fg: #b4426f;
-    --green-bg: #f8e1ea;
-    --green-line: #b4426f42;
-    --surface-accent: #f8e8ee;
-    --orb-1: #b4426f;
-    --orb-2: #d96a96;
-    --orb-3: #e8a0b8;
-    --orb-4: #c25a85;
-    --orb-5: #f0b8cb;
-  }
-  /* Every card tint becomes a light shade of pink (a little different per tone, so cards still read as separate). */
-  [data-accent="pink"] :is(.at-violet, .at-blue, .at-green, .at-amber, .at-clay, .at-mint, .at-gold, .at-sand) {
-    --abl: #b4426f33;
-    --abf: #b4426f;
-  }
-  [data-accent="pink"] .at-violet {
-    --ab: #f8e4ec;
-  }
-  [data-accent="pink"] .at-blue {
-    --ab: #f6dde7;
-  }
-  [data-accent="pink"] .at-green {
-    --ab: #fae9ef;
-  }
-  [data-accent="pink"] .at-amber {
-    --ab: #f4d8e3;
-  }
-  [data-accent="pink"] .at-clay {
-    --ab: #f9e6ed;
-  }
-  [data-accent="pink"] .at-mint {
-    --ab: #f5dfe8;
-  }
-  [data-accent="pink"] .at-gold {
-    --ab: #fbeaf0;
-  }
-  [data-accent="pink"] .at-sand {
-    --ab: #f3d9e4;
   }
   * {
     box-sizing: border-box;
