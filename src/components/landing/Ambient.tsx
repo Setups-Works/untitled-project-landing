@@ -24,19 +24,19 @@ export default function Ambient() {
   return (
     <div ref={ref} aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
       <div data-depth="0.06" className="absolute -top-[22vh] -left-[14vw]">
-        <span className={`${orb} size-[64vmax] animate-drift-a bg-green-fg/[0.12] blur-[120px]`} />
+        <span className={`${orb} size-[64vmax] animate-drift-a bg-(--orb-1)/[0.14] blur-[120px]`} />
       </div>
       <div data-depth="0.1" className="absolute top-[4vh] -right-[18vw]">
-        <span className={`${orb} size-[56vmax] animate-drift-b bg-violet-fg/[0.11] blur-[120px]`} />
+        <span className={`${orb} size-[56vmax] animate-drift-b bg-(--orb-2)/[0.13] blur-[120px]`} />
       </div>
       <div data-depth="0.14" className="absolute top-[46vh] -left-[10vw]">
-        <span className={`${orb} size-[48vmax] animate-drift-c bg-amber-fg/[0.2] blur-[120px]`} />
+        <span className={`${orb} size-[48vmax] animate-drift-c bg-(--orb-3)/[0.2] blur-[120px]`} />
       </div>
       <div data-depth="0.08" className="absolute -bottom-[24vh] left-[30vw]">
-        <span className={`${orb} size-[52vmax] animate-drift-a bg-blue-fg/[0.1] blur-[120px]`} />
+        <span className={`${orb} size-[52vmax] animate-drift-a bg-(--orb-4)/[0.12] blur-[120px]`} />
       </div>
       <div data-depth="0.12" className="absolute -right-[10vw] -bottom-[16vh]">
-        <span className={`${orb} size-[40vmax] animate-drift-b bg-clay-fg/[0.16] blur-[110px]`} />
+        <span className={`${orb} size-[40vmax] animate-drift-b bg-(--orb-5)/[0.18] blur-[110px]`} />
       </div>
     </div>
   );

@@ -6,6 +6,7 @@ import "./globals.css";
 import { SiteHeader, SiteFooter } from "../components/SiteChrome";
 import HideInApp from "../components/HideInApp";
 import Ambient from "../components/landing/Ambient";
+import MarketingScope from "../components/landing/MarketingScope";
 import MotionRoot from "../components/landing/MotionRoot";
 import ContextMenu from "../components/app/ContextMenu";
 
@@ -39,8 +40,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <noscript>
           <style>{"[data-reveal]{opacity:1!important}"}</style>
         </noscript>
-        {/* `clip` (not `hidden`) so animated elements that start off to the side can't widen the page on a phone, and sticky still works. */}
-        <div className="overflow-x-clip">
+        <MarketingScope>
           <HideInApp>
             <Ambient />
             <MotionRoot />
@@ -50,7 +50,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <HideInApp>
             <SiteFooter />
           </HideInApp>
-        </div>
+        </MarketingScope>
         <ContextMenu />
       </body>
     </html>

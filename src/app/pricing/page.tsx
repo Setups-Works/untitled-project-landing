@@ -79,7 +79,7 @@ function Plan({
   );
   // The emphasised plan gets a slowly shifting gradient edge.
   return emphasis ? (
-    <div className="h-full animate-sheen rounded-r4 bg-[linear-gradient(120deg,var(--green-fg),var(--violet-fg),var(--amber-fg),var(--green-fg))] bg-[length:300%_100%] p-px motion-reduce:animate-none">
+    <div className="h-full animate-sheen rounded-r4 bg-[linear-gradient(120deg,var(--orb-1),var(--orb-2),var(--orb-3),var(--orb-1))] bg-[length:300%_100%] p-px motion-reduce:animate-none">
       {body}
     </div>
   ) : (

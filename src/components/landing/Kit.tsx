@@ -21,7 +21,10 @@ export function Section({
   tight?: boolean;
 }) {
   return (
-    <section id={id} className={`relative scroll-mt-24 ${tight ? "pb-[clamp(40px,5vw,72px)]" : "py-[clamp(44px,6vw,88px)]"} ${className}`}>
+    <section
+      id={id}
+      className={`relative scroll-mt-24 ${tight ? "pb-[clamp(24px,3.5vw,48px)]" : "py-[clamp(28px,4vw,56px)]"} ${className}`}
+    >
       <div className={WRAP}>{children}</div>
     </section>
   );

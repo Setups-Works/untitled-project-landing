@@ -48,7 +48,7 @@ export default function Hero() {
   });
 
   return (
-    <section className="relative overflow-hidden pt-[clamp(48px,8vw,112px)] pb-[clamp(24px,4vw,56px)]">
+    <section className="relative overflow-hidden pt-[clamp(32px,5vw,72px)] pb-[clamp(20px,3vw,40px)]">
       <div className={`${WRAP} flex flex-col items-center text-center`}>
         <Reveal>
           <Eyebrow icon={faWandMagicSparkles}>Your AI can change. Your workspace shouldn’t.</Eyebrow>

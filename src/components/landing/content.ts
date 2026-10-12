@@ -167,36 +167,6 @@ export const TRUST: { icon: IconDefinition; t: string; d: string; tip: string; t
   },
 ];
 
-export type Milestone = { t: string; d: string; status: Status; when: string };
-export const ROADMAP: Milestone[] = [
-  { t: "Your core workspace", d: "Notes, tasks, journal, calendar, chat and search, working together.", status: "live", when: "Today" },
-  {
-    t: "Safer, shared foundations",
-    d: "Workspaces and teams, roles and permissions, and a proper API.",
-    status: "building",
-    when: "Building now",
-  },
-  {
-    t: "Your accounts, connected",
-    d: "Gmail and Google Calendar in your workspace, with sync that works with or without AI.",
-    status: "building",
-    when: "Building now",
-  },
-  {
-    t: "AI that can act, with your OK",
-    d: "More actions the assistant can take, each one previewed and confirmed first.",
-    status: "building",
-    when: "Building now",
-  },
-  {
-    t: "Meetings and automations",
-    d: "Transcripts, summaries and follow-ups, plus rules for the repetitive work.",
-    status: "soon",
-    when: "Next",
-  },
-  { t: "Notifications and billing", d: "Notifications you control, and plans for Pro.", status: "soon", when: "Later" },
-];
-
 export const FAQS: [string, string][] = [
   ["Do I have to use AI?", "No. Use AI when it helps, or keep your workspace fully AI-free. The workspace works the same either way."],
   [
@@ -205,7 +175,7 @@ export const FAQS: [string, string][] = [
   ],
   [
     "What can I use today, and what is still coming?",
-    "Notes, tasks, journal, calendar, chat with AI and universal search are live. Email, meetings and automations are on the roadmap, and the page says so wherever they appear.",
+    "Notes, tasks, journal, calendar, chat with AI and universal search are live. Email, meetings and automations are still being built, and the page says so wherever they appear.",
   ],
   [
     "Can the AI change my things without asking?",

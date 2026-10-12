@@ -15,7 +15,7 @@ export default function HeaderAuth() {
     <>
       <Link
         href="/login"
-        className="liquid-pill inline-flex h-11 items-center rounded-pill px-5 text-[14px] whitespace-nowrap text-fg transition-[transform,box-shadow] duration-300 hover:-translate-y-px active:scale-95 max-sm:hidden"
+        className="liquid-bar inline-flex h-11 items-center rounded-pill px-5 text-[14px] whitespace-nowrap text-fg transition-[transform,box-shadow] duration-300 hover:-translate-y-px active:scale-95 max-sm:hidden"
       >
         Log in
       </Link>

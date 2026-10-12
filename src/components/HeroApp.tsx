@@ -1,309 +1,459 @@
 "use client";
-import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { FontAwesomeIcon as FA } from "@fortawesome/react-fontawesome";
 import {
-  faHouse,
   faBookOpen,
-  faPenToSquare,
-  faListCheck,
-  faEnvelope,
   faCalendarDays,
-  faMicrophone,
-  faDiagramProject,
   faCheck,
-  faReply,
-  faPaperclip,
-  faCircleDot,
-  faBolt,
+  faComments,
+  faHouse,
+  faListCheck,
+  faMagnifyingGlass,
+  faMessage,
+  faPenToSquare,
+  faPlus,
+  faWandMagicSparkles,
 } from "@fortawesome/free-solid-svg-icons";
 
-const NAV = [
-  { id: "home", t: "Home", i: faHouse },
-  { id: "journal", t: "Journal", i: faBookOpen },
-  { id: "notes", t: "Notes", i: faPenToSquare },
-  { id: "todo", t: "To-do", i: faListCheck },
-  { id: "email", t: "Email", i: faEnvelope },
-  { id: "calendar", t: "Calendar", i: faCalendarDays },
-  { id: "meetings", t: "Meetings", i: faMicrophone },
-  { id: "automations", t: "Automations", i: faDiagramProject },
-] as const;
-type Id = (typeof NAV)[number]["id"];
+/**
+ * A miniature of the real signed-in dashboard for the landing hero: the same top bar (logo, glass section switcher with its sliding
+ * lens, search, avatar) and the same cards, built from the app's own classes (`ap-card`, `ap-task`, `ap-greet`…) so it looks like
+ * the product because it is styled by the same CSS. The data is sample data. The tabs switch between six views; it plays through
+ * them on its own until you touch it.
+ */
 
-const TODAY = [
-  { t: "Stand-up", s: "9:30 · Google Meet", c: "green" },
-  { t: "Launch review", s: "11:00 · Zoom", c: "amber" },
-  { t: "Personal · Dentist", s: "16:30", c: "violet" },
-];
+const TABS = [
+  { id: "home", t: "Home", icon: faHouse },
+  { id: "calendar", t: "Calendar", icon: faCalendarDays },
+  { id: "journal", t: "Journal", icon: faBookOpen },
+  { id: "chat", t: "Chat", icon: faComments },
+  { id: "notes", t: "Notes", icon: faPenToSquare },
+  { id: "todo", t: "To-do", icon: faListCheck },
+] as const;
+type Id = (typeof TABS)[number]["id"];
+
+const TOUR: Id[] = ["home", "todo", "journal", "chat", "calendar", "notes"];
+const SPRING = "ease-[cubic-bezier(0.34,1.45,0.5,1)]";
+
+type Task = { t: string; d: boolean; when?: string };
+
+function Row({ task, mode, onToggle }: { task: Task; mode: "overdue" | "today" | "upcoming"; onToggle: () => void }) {
+  return (
+    <li className="ap-task" data-done={task.d} data-mode={mode}>
+      <button
+        type="button"
+        className="ap-check"
+        role="checkbox"
+        aria-checked={task.d}
+        aria-label={`Mark “${task.t}” ${task.d ? "not done" : "done"}`}
+        onClick={onToggle}
+      >
+        {task.d && <FA icon={faCheck} />}
+      </button>
+      <span className="ap-task-t">{task.t}</span>
+      {task.when && <small className="ap-task-d">{task.when}</small>}
+    </li>
+  );
+}
+
+function TopBar({ view, onGo }: { view: Id; onGo: (id: Id) => void }) {
+  const nav = useRef<HTMLElement>(null);
+  const lens = useRef<HTMLSpanElement>(null);
+  // The glass lens slides under whichever tab is active, like the one in the real app.
+  useLayoutEffect(() => {
+    const place = () => {
+      const el = nav.current?.querySelector<HTMLElement>("[aria-current=page]");
+      const l = lens.current;
+      if (!el || !l) return;
+      l.style.width = `${el.offsetWidth}px`;
+      l.style.height = `${el.offsetHeight}px`;
+      l.style.transform = `translate(${el.offsetLeft}px, ${el.offsetTop}px)`;
+      l.style.opacity = "1";
+    };
+    place();
+    window.addEventListener("resize", place);
+    return () => window.removeEventListener("resize", place);
+  }, [view]);
+
+  return (
+    <div className="relative flex items-center justify-center px-3 py-3 sm:px-5">
+      <span className="absolute left-4 hidden items-center gap-2 font-serif text-[20px] tracking-[-0.02em] xl:flex">
+        <i className="size-2.5 rounded-full bg-green-fg" aria-hidden />
+        untitled project
+      </span>
+      <div className="flex items-center gap-2">
+        <nav
+          ref={nav}
+          aria-label="App preview"
+          className="relative flex gap-1 rounded-pill bg-white/60 p-[5px] shadow-glass backdrop-blur-xl backdrop-saturate-150"
+        >
+          <span
+            ref={lens}
+            aria-hidden
+            className={`pointer-events-none absolute top-0 left-0 rounded-pill bg-linear-to-b from-white/95 via-white/70 to-white/50 opacity-0 shadow-jelly transition-[transform,width] duration-500 ${SPRING} motion-reduce:transition-none`}
+          />
+          {TABS.map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              aria-current={view === t.id ? "page" : undefined}
+              onClick={() => onGo(t.id)}
+              className="relative z-10 inline-flex h-[38px] items-center gap-2 rounded-pill px-3 text-[14px] text-fg-muted transition-colors hover:text-fg aria-[current=page]:font-semibold aria-[current=page]:text-fg md:px-4"
+            >
+              <FA icon={t.icon} />
+              <span className="max-md:hidden">{t.t}</span>
+            </button>
+          ))}
+        </nav>
+        <span
+          aria-hidden
+          className="grid size-12 shrink-0 place-items-center rounded-full bg-white/60 text-[15px] text-fg-muted shadow-glass backdrop-blur-xl max-sm:hidden"
+        >
+          <FA icon={faMagnifyingGlass} />
+        </span>
+      </div>
+      <span aria-hidden className="ap-avatar absolute right-4 grid place-items-center max-sm:hidden">
+        A
+      </span>
+    </div>
+  );
+}
+
+function Home({
+  overdue,
+  today,
+  upcoming,
+  toggle,
+}: {
+  overdue: Task[];
+  today: Task[];
+  upcoming: Task[];
+  toggle: (g: "o" | "t" | "u", i: number) => void;
+}) {
+  const done = today.filter((t) => t.d).length;
+  const pct = Math.round((done / today.length) * 100);
+  return (
+    <div className="ap-home">
+      <div className="ap-greet">
+        <h1 className="h2">
+          Good morning, <span className="quiet">Ada</span> <em className="ap-plan">free</em>
+        </h1>
+        <small className="meta">Monday, 12 October</small>
+      </div>
+      <div className="ap-quick">
+        {[
+          [faListCheck, "Plan my day"],
+          [faBookOpen, "Write today’s journal"],
+          [faPenToSquare, "Capture a note"],
+          [faComments, "Start a chat"],
+        ].map(([icon, t]) => (
+          <Link key={t as string} href="/signup" tabIndex={-1}>
+            <FA icon={icon as typeof faHouse} /> {t as string}
+          </Link>
+        ))}
+      </div>
+      <div className="ap-grid">
+        <div className="ap-col">
+          <section aria-label="Today’s progress">
+            <div className="ap-prog">
+              <span>
+                {done} of {today.length} tasks done today
+              </span>
+              <b>{pct}%</b>
+            </div>
+            <div className="ap-bar-track" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}>
+              <i style={{ width: `${pct}%`, transition: "width .5s" }} />
+            </div>
+            <div className="ap-add">
+              <FA icon={faPlus} />
+              <span>Add a task for today…</span>
+            </div>
+          </section>
+          <section className="ap-card at-amber">
+            <div className="ap-card-h">
+              <span>Focus</span>
+              <small>
+                {overdue.length} overdue · {today.filter((t) => !t.d).length} today
+              </small>
+            </div>
+            <div className="ap-sec" data-k="overdue">
+              Overdue
+            </div>
+            <ul>
+              {overdue.map((t, i) => (
+                <Row key={t.t} task={t} mode="overdue" onToggle={() => toggle("o", i)} />
+              ))}
+            </ul>
+            <div className="ap-sec">Today</div>
+            <ul>
+              {today.map((t, i) => (
+                <Row key={t.t} task={t} mode="today" onToggle={() => toggle("t", i)} />
+              ))}
+            </ul>
+          </section>
+          <div className="ap-two">
+            <JournalCard />
+            <ChatsCard />
+          </div>
+        </div>
+        <div className="ap-col">
+          <section className="ap-card at-mint">
+            <div className="ap-card-h">
+              <span>Upcoming</span>
+            </div>
+            <ul>
+              {upcoming.map((t, i) => (
+                <Row key={t.t} task={t} mode="upcoming" onToggle={() => toggle("u", i)} />
+              ))}
+            </ul>
+          </section>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function JournalCard() {
+  return (
+    <section className="ap-card at-violet">
+      <div className="ap-card-h">
+        <span>Today’s journal</span>
+        <small>2 entries</small>
+      </div>
+      <ul className="ap-jlist">
+        <li>
+          <time>7:42 am</time>
+          <span>Shipped the first draft of the launch plan.</span>
+        </li>
+        <li>
+          <time>6:15 pm</time>
+          <span>Stand-up went long, but the pricing discussion unblocked everyone.</span>
+        </li>
+      </ul>
+      <span className="ap-foot">Open journal →</span>
+    </section>
+  );
+}
+
+function ChatsCard() {
+  return (
+    <section className="ap-card at-blue">
+      <div className="ap-card-h">
+        <span>
+          <FA icon={faMessage} /> Recent chats
+        </span>
+      </div>
+      <ul className="ap-chats">
+        {[
+          ["Launch notes", "2h ago"],
+          ["Pricing page copy", "yesterday"],
+          ["Weekly recap", "3d ago"],
+        ].map(([t, a]) => (
+          <li key={t}>
+            <a>
+              <span>{t}</span>
+              <small>{a}</small>
+            </a>
+          </li>
+        ))}
+      </ul>
+      <span className="ap-foot">+ New chat</span>
+    </section>
+  );
+}
+
+function TodoView({ today, toggle }: { today: Task[]; toggle: (g: "o" | "t" | "u", i: number) => void }) {
+  return (
+    <div className="ap-home">
+      <div className="ap-greet">
+        <h1 className="h2">Today</h1>
+        <small className="meta">{today.filter((t) => !t.d).length} tasks</small>
+      </div>
+      <section className="ap-card at-violet">
+        <div className="ap-card-h">
+          <span>Plan next to the work</span>
+          <small>List · Board · Calendar</small>
+        </div>
+        <ul>
+          {today.map((t, i) => (
+            <Row key={t.t} task={t} mode="today" onToggle={() => toggle("t", i)} />
+          ))}
+        </ul>
+      </section>
+    </div>
+  );
+}
+
+function JournalView() {
+  return (
+    <div className="ap-home">
+      <div className="ap-greet">
+        <h1 className="h2">
+          Your <span className="quiet">journal</span>
+        </h1>
+        <small className="meta">Friday, 2 October</small>
+      </div>
+      <div className="ap-two">
+        <JournalCard />
+        <section className="ap-card at-sand">
+          <div className="ap-card-h">
+            <span>Earlier</span>
+          </div>
+          <ul className="ap-jlist">
+            {[
+              ["Thu", "Quiet day. Wrote most of the pricing page copy."],
+              ["Wed", "Dentist at 4:30, then a long walk."],
+              ["Tue", "Planning went well. Everyone left with an owner."],
+            ].map(([d, b]) => (
+              <li key={d}>
+                <time>{d}</time>
+                <span>{b}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      </div>
+    </div>
+  );
+}
+
+function ChatView() {
+  return (
+    <div className="ap-home">
+      <div className="ap-greet">
+        <h1 className="h2">
+          Launch <span className="quiet">notes</span>
+        </h1>
+        <small className="meta">Chat with AI</small>
+      </div>
+      <section className="ap-card at-mint">
+        <div className="flex flex-col gap-3 p-5">
+          <div className="ml-auto max-w-[75%] rounded-r3 rounded-br-r1 bg-fg px-4 py-2.5 text-[14px] text-on-dark">
+            Turn that into a task for Friday.
+          </div>
+          <div className="max-w-[85%] rounded-r3 rounded-bl-r1 bg-white/85 px-4 py-3 text-[14px] text-fg shadow-e1">
+            <span className="mb-1.5 flex items-center gap-1.5 text-[12px] text-green-fg">
+              <FA icon={faWandMagicSparkles} /> Draft task
+            </span>
+            Send the recap to the team
+            <span className="mt-2.5 flex gap-2">
+              <span className="rounded-pill bg-surface-sunken px-3.5 py-1.5 text-[12.5px] text-fg-muted">Not now</span>
+              <span className="rounded-pill bg-fg px-3.5 py-1.5 text-[12.5px] text-on-dark">Confirm and save</span>
+            </span>
+          </div>
+          <p className="text-center text-[12px] text-fg-faint">Nothing is saved until you confirm.</p>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function CalendarView() {
+  const week: [string, string, string][] = [
+    ["Mon", "Planning", "at-green"],
+    ["Tue", "1:1 with Sam", "at-blue"],
+    ["Wed", "Gym", "at-violet"],
+    ["Thu", "Launch review", "at-amber"],
+    ["Fri", "Team lunch", "at-clay"],
+  ];
+  return (
+    <div className="ap-home">
+      <div className="ap-greet">
+        <h1 className="h2">
+          This <span className="quiet">week</span>
+        </h1>
+        <small className="meta">Month · Week · Day · Agenda</small>
+      </div>
+      <section className="ap-card at-green">
+        <ul>
+          {week.map(([d, e, c]) => (
+            <li key={d} className="ap-task">
+              <small className="w-9 text-[12.5px] text-fg-subtle">{d}</small>
+              <span className={`${c} tint flex-1 rounded-[7px] px-3 py-1 text-[13.5px]`}>{e}</span>
+            </li>
+          ))}
+        </ul>
+      </section>
+    </div>
+  );
+}
+
+function NotesView() {
+  const notes: [string, string, string][] = [
+    ["Launch plan, v3", "Owners, dates and the pricing decision.", "at-blue"],
+    ["Ideas", "Weekly recap digest. A calmer inbox.", "at-violet"],
+    ["Pricing", "Compare Workspace and Pro limits.", "at-amber"],
+  ];
+  return (
+    <div className="ap-home">
+      <div className="ap-greet">
+        <h1 className="h2">
+          Your <span className="quiet">notes</span>
+        </h1>
+        <small className="meta">3 notes</small>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-3">
+        {notes.map(([t, d, c]) => (
+          <section key={t} className={`ap-card ${c}`}>
+            <div className="ap-card-h">
+              <span>{t}</span>
+            </div>
+            <p className="ap-none">{d}</p>
+          </section>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 export default function HeroApp() {
-  const [view, setView] = useState<Id>("notes");
+  const [view, setView] = useState<Id>("home");
   const [auto, setAuto] = useState(true);
-  const [tasks, setTasks] = useState([
+  const [overdue, setOverdue] = useState<Task[]>([{ t: "Send invoice to Dev", d: false, when: "2d ago" }]);
+  const [today, setToday] = useState<Task[]>([
     { t: "Draft announcement", d: true },
     { t: "Review pricing page with team", d: false },
     { t: "Send recap to #launch on Slack", d: false },
   ]);
-  const [rules, setRules] = useState([
-    { t: "Post meeting recap to Slack", s: "When a meeting ends", on: true },
-    {
-      t: "Draft follow-up in Outlook",
-      s: "When a meeting has action items",
-      on: true,
-    },
-    {
-      t: "Log CRM activity in HubSpot",
-      s: "When a deal email arrives",
-      on: false,
-    },
+  const [upcoming, setUpcoming] = useState<Task[]>([
+    { t: "Book the venue", d: false, when: "Tomorrow" },
+    { t: "Pricing sign-off", d: false, when: "Wed, 14 Oct" },
+    { t: "Quarterly review", d: false, when: "Fri, 16 Oct" },
   ]);
-  const [mail, setMail] = useState(0);
 
   useEffect(() => {
     if (!auto || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
-    const order: Id[] = ["notes", "todo", "email", "calendar", "meetings", "automations", "journal", "home"];
-    const t = setInterval(() => setView((v) => order[(order.indexOf(v) + 1) % order.length]), 4200);
+    const t = setInterval(() => setView((v) => TOUR[(TOUR.indexOf(v) + 1) % TOUR.length]), 5200);
     return () => clearInterval(t);
   }, [auto]);
 
-  const toggleTask = (k: number) => setTasks((a) => a.map((x, n) => (n === k ? { ...x, d: !x.d } : x)));
-  const done = tasks.filter((x) => x.d).length;
-  const Tasks = ({ title }: { title: string }) => (
-    <>
-      <div className="eyebrow app-sec">
-        {title} · {done}/{tasks.length}
-      </div>
-      {tasks.map((x, k) => (
-        <button key={x.t} className={`app-todo${x.d ? " done" : ""}`} onClick={() => toggleTask(k)} aria-pressed={x.d}>
-          <b>{x.d && <FA icon={faCheck} />}</b>
-          <span>{x.t}</span>
-        </button>
-      ))}
-    </>
-  );
-
-  const MAILS = [
-    {
-      f: "Maya",
-      s: "Re: Q3 roadmap review",
-      p: "Shared the draft — thoughts on scope?",
-      a: "Gmail",
-    },
-    {
-      f: "Dev",
-      s: "Launch checklist",
-      p: "Can we move the review to Thursday?",
-      a: "Gmail",
-    },
-    {
-      f: "Priya",
-      s: "Pricing page copy",
-      p: "Attached the revised copy for sign-off.",
-      a: "Outlook",
-    },
-  ];
+  const toggle = (g: "o" | "t" | "u", i: number) => {
+    const flip = (list: Task[]) => list.map((x, k) => (k === i ? { ...x, d: !x.d } : x));
+    if (g === "o") setOverdue(flip);
+    else if (g === "t") setToday(flip);
+    else setUpcoming(flip);
+  };
 
   return (
-    <div className="app" onPointerDown={() => setAuto(false)}>
-      <div className="app-bar">
-        <i />
-        <i />
-        <i />
-        <span>untitled project</span>
-      </div>
-      <div className="app-body">
-        <nav className="app-side" aria-label="App preview">
-          {NAV.map((n) => (
-            <button
-              key={n.id}
-              className={view === n.id ? "on" : ""}
-              onClick={() => {
-                setView(n.id);
-                setAuto(false);
-              }}
-              aria-pressed={view === n.id}
-            >
-              <FA icon={n.i} />
-              <span>{n.t}</span>
-            </button>
-          ))}
-        </nav>
-
-        <div className="app-main" key={view}>
-          {view === "home" && (
-            <>
-              <div className="eyebrow">Home</div>
-              <h4>Good morning</h4>
-              <p className="app-p">Here’s your workspace at a glance.</p>
-              <div className="app-stats">
-                {[
-                  ["3", "events today"],
-                  [`${tasks.length - done}`, "open tasks"],
-                  ["4", "unread threads"],
-                ].map(([n, l]) => (
-                  <div key={l}>
-                    <b>{n}</b>
-                    <span>{l}</span>
-                  </div>
-                ))}
-              </div>
-              <div className="app-line" style={{ width: "88%" }} />
-              <div className="app-line" style={{ width: "64%" }} />
-            </>
-          )}
-          {view === "journal" && (
-            <>
-              <div className="eyebrow">Journal · Fri 2 Oct</div>
-              <h4>A good, busy day</h4>
-              <p className="app-p">
-                Shipped the first draft of the launch plan. Stand-up went long, but the pricing discussion unblocked everyone.
-              </p>
-              <div className="app-line" style={{ width: "92%" }} />
-              <div className="app-line" style={{ width: "70%" }} />
-              <div className="app-chips">
-                <span>focused</span>
-                <span>grateful</span>
-                <span>tired</span>
-              </div>
-            </>
-          )}
-          {view === "notes" && (
-            <>
-              <div className="eyebrow">Notes · Product launch</div>
-              <h4>Launch plan, v3</h4>
-              <div className="app-line" style={{ width: "92%" }} />
-              <div className="app-line" style={{ width: "78%" }} />
-              <div className="app-line" style={{ width: "86%" }} />
-              <Tasks title="Linked tasks" />
-            </>
-          )}
-          {view === "todo" && (
-            <>
-              <div className="eyebrow">To-do</div>
-              <h4>Plan next to the work</h4>
-              <Tasks title="This week" />
-            </>
-          )}
-          {view === "email" && (
-            <div className="app-mail">
-              <div className="app-mlist">
-                {MAILS.map((m, k) => (
-                  <button key={m.s} className={mail === k ? "on" : ""} onClick={() => setMail(k)}>
-                    <b>{m.f}</b>
-                    <span>{m.s}</span>
-                    <small>{m.a}</small>
-                  </button>
-                ))}
-              </div>
-              <div className="app-mview">
-                <div className="eyebrow">{MAILS[mail].a} · full thread</div>
-                <h4 style={{ fontSize: 24 }}>{MAILS[mail].s}</h4>
-                <p className="app-p">{MAILS[mail].p}</p>
-                <div className="app-chips">
-                  <span>
-                    <FA icon={faReply} /> Reply
-                  </span>
-                  <span>Reply all</span>
-                  <span>
-                    <FA icon={faPaperclip} /> 1 file
-                  </span>
-                </div>
-              </div>
-            </div>
-          )}
-          {view === "calendar" && (
-            <>
-              <div className="eyebrow">Calendar · Work + Personal</div>
-              <div className="app-week">
-                {[
-                  ["Mon", "Planning", "green"],
-                  ["Tue", "1:1 Sam", "amber"],
-                  ["Wed", "Gym", "violet"],
-                  ["Thu", "Launch", "green"],
-                  ["Fri", "Lunch", "clay"],
-                ].map(([d, e, c]) => (
-                  <div key={d}>
-                    <small>{d}</small>
-                    <span
-                      style={{
-                        background: `var(--${c}-bg)`,
-                        color: `var(--${c}-fg)`,
-                      }}
-                    >
-                      {e}
-                    </span>
-                  </div>
-                ))}
-              </div>
-              <div className="app-line" style={{ width: "80%" }} />
-            </>
-          )}
-          {view === "meetings" && (
-            <>
-              <div className="eyebrow">
-                <FA icon={faCircleDot} className="text-rec" /> Recording · Launch review
-              </div>
-              <h4>Capture, transcribe, follow through</h4>
-              <div className="app-wave" aria-hidden>
-                {Array.from({ length: 28 }).map((_, k) => (
-                  <i key={k} style={{ animationDelay: `${k * 60}ms` }} />
-                ))}
-              </div>
-              <p className="app-p">
-                <b>Maya:</b> Let’s lock pricing by Thursday.
-              </p>
-              <div className="app-chips">
-                <span>Action: update pricing page</span>
-                <span>Action: send recap</span>
-              </div>
-            </>
-          )}
-          {view === "automations" && (
-            <>
-              <div className="eyebrow">Automations</div>
-              {rules.map((r, k) => (
-                <div className="app-rule" key={r.t}>
-                  <FA icon={faBolt} />
-                  <div>
-                    <b>{r.t}</b>
-                    <small>{r.s}</small>
-                  </div>
-                  <button
-                    role="switch"
-                    aria-checked={r.on}
-                    aria-label={r.t}
-                    className="app-sw"
-                    onClick={() => setRules((a) => a.map((x, n) => (n === k ? { ...x, on: !x.on } : x)))}
-                  >
-                    <i />
-                  </button>
-                </div>
-              ))}
-            </>
-          )}
+    <div className="relative bg-page text-fg" onPointerDown={() => setAuto(false)}>
+      <TopBar
+        view={view}
+        onGo={(id) => {
+          setView(id);
+          setAuto(false);
+        }}
+      />
+      <div className="relative h-[clamp(430px,46vw,580px)] overflow-hidden px-4 pt-2 sm:px-6">
+        <div key={view} className="animate-glass-fade motion-reduce:animate-none">
+          {view === "home" && <Home overdue={overdue} today={today} upcoming={upcoming} toggle={toggle} />}
+          {view === "todo" && <TodoView today={today} toggle={toggle} />}
+          {view === "journal" && <JournalView />}
+          {view === "chat" && <ChatView />}
+          {view === "calendar" && <CalendarView />}
+          {view === "notes" && <NotesView />}
         </div>
-
-        <aside className="app-rail">
-          <div className="eyebrow app-sec" style={{ marginTop: 0 }}>
-            Today
-          </div>
-          {TODAY.map((e) => (
-            <div
-              className="app-ev"
-              key={e.t}
-              style={{
-                background: `var(--${e.c}-bg)`,
-                color: `var(--${e.c}-fg)`,
-              }}
-            >
-              {e.t}
-              <small>{e.s}</small>
-            </div>
-          ))}
-          <div className="eyebrow app-sec">Inbox</div>
-          <div className="app-ev bg-surface-sunken">
-            Re: Q3 roadmap<small>Gmail · full thread</small>
-          </div>
-        </aside>
+        <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 h-28 bg-linear-to-t from-page to-transparent" />
       </div>
     </div>
   );

@@ -22,7 +22,10 @@ export function SiteHeaderBar({ mega, links, menu }: { mega: Mega; links: { href
   return (
     <header className="sticky top-0 z-50 pt-3">
       <div className={`${WRAP} flex items-center justify-between gap-4`}>
-        <Link href="/" className="flex shrink-0 items-center gap-2.5 font-serif text-[25px] tracking-[-0.02em]">
+        <Link
+          href="/"
+          className="liquid-bar flex shrink-0 items-center gap-2.5 rounded-pill py-2 pr-5 pl-3.5 font-serif text-[23px] tracking-[-0.02em]"
+        >
           <i className="size-2.5 rounded-full bg-green-fg shadow-[0_0_0_4px_var(--green-bg)]" aria-hidden />
           untitled project
         </Link>
@@ -69,7 +72,7 @@ function NavMenu({ mega, links }: { mega: Mega; links: { href: string; t: string
   const inFeatures = mega.featured.some((f) => f.href === path);
   const [first, ...rest] = links;
   return (
-    <nav aria-label="Primary" className="liquid-pill hidden items-center gap-0.5 rounded-pill p-1 lg:flex">
+    <nav aria-label="Primary" className="liquid-bar hidden items-center gap-0.5 rounded-pill p-1 lg:flex">
       <Link href={first.href} className={linkCls} aria-current={path === first.href ? "page" : undefined}>
         {first.t}
       </Link>
@@ -88,7 +91,7 @@ function NavMenu({ mega, links }: { mega: Mega; links: { href: string; t: string
           <div
             id="mega"
             onMouseEnter={show}
-            className="liquid fixed top-[72px] left-1/2 w-[min(1080px,calc(100vw-32px))] -translate-x-1/2 animate-glass-in rounded-r4 p-5 motion-reduce:animate-none"
+            className="liquid-menu fixed top-[72px] left-1/2 w-[min(1080px,calc(100vw-32px))] -translate-x-1/2 animate-glass-in rounded-r4 p-5 motion-reduce:animate-none"
           >
             <div className="grid grid-cols-[1.25fr_1fr_1fr] gap-6">
               <div>
@@ -205,7 +208,7 @@ function MobileMenu({ links }: { links: string[][] }) {
     <>
       <button
         type="button"
-        className="liquid-pill relative z-[60] grid size-11 place-items-center rounded-full text-[15px] text-fg lg:hidden"
+        className="liquid-bar relative z-[60] grid size-11 place-items-center rounded-full text-[15px] text-fg lg:hidden"
         aria-label={open ? "Close menu" : "Open menu"}
         aria-expanded={open}
         aria-controls="mobile-menu"
@@ -225,7 +228,7 @@ function MobileMenu({ links }: { links: string[][] }) {
         hidden={!open}
         className="fixed inset-0 z-[55] overflow-y-auto bg-page/70 px-4 pt-20 pb-8 backdrop-blur-xl lg:hidden"
       >
-        <div className="liquid mx-auto flex max-w-lg animate-glass-in flex-col gap-1 rounded-r4 p-3 motion-reduce:animate-none">
+        <div className="liquid-menu mx-auto flex max-w-lg animate-glass-in flex-col gap-1 rounded-r4 p-3 motion-reduce:animate-none">
           {links.map(([l, h]) => (
             <Link key={h} href={h} onClick={() => setOpen(false)} className={item}>
               {l}

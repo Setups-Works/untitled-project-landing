@@ -31,7 +31,7 @@ export function PageHero({
   children?: ReactNode;
 }) {
   return (
-    <section className="relative overflow-hidden pt-[clamp(56px,9vw,128px)] pb-[clamp(36px,5vw,64px)] text-center">
+    <section className="relative overflow-hidden pt-[clamp(36px,6vw,88px)] pb-[clamp(24px,3.5vw,48px)] text-center">
       {/* Two glass lenses drifting at different depths — decoration only. */}
       <Parallax speed={-90} className="pointer-events-none absolute top-[14%] left-[7%] hidden lg:block">
         <Glass radius="pill" className="size-28 animate-float opacity-80 motion-reduce:animate-none" />

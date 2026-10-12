@@ -12,7 +12,6 @@ import {
 import AuthLink from "../../components/auth/AuthLink";
 import { StepCards } from "../../components/landing/Blocks";
 import Glass from "../../components/landing/Glass";
-import Roadmap from "../../components/landing/home/Roadmap";
 import { Section } from "../../components/landing/Kit";
 import { Magnetic } from "../../components/landing/Magnetic";
 import { R, Reveal } from "../../components/landing/Reveal";
@@ -52,8 +51,8 @@ const involve = [
     icon: faWandMagicSparkles,
     tone: "amber",
     t: "Watch it change",
-    d: "What you tell us shapes the roadmap, and you’ll see it move.",
-    pts: ["Roadmap statuses stay honest", "New features arrive marked live"],
+    d: "What you tell us shapes what we build next, and you’ll see it move.",
+    pts: ["Status labels on this site stay honest", "New features arrive marked live"],
   },
 ] as const;
 
@@ -127,8 +126,6 @@ export default function Page() {
           ]}
         />
       </Section>
-
-      <Roadmap />
 
       <CtaPanel
         title="Be one of"

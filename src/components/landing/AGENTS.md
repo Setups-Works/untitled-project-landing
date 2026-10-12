@@ -9,14 +9,15 @@ over the product's colour tints. It only reads as glass when there is colour beh
 marketing page. The CSS lives in `src/styles/tailwind.css` (`liquid`, `liquid-flat`, `liquid-dark`, `liquid-tint`, `liquid-pill`,
 `liquid-lift`) with its tokens (`--liquid-*`) in `:root` in `globals.css`. Never write the gradients or shadows inline.
 
-| Use                                          | Component / class                                                       |
-| -------------------------------------------- | ----------------------------------------------------------------------- |
-| A big panel                                  | `<Glass>` (`variant="panel"`, `glare`, `tilt`, `lift`, `tone`)          |
-| A card that sits on a panel (no second blur) | `<Glass variant="flat">`                                                |
-| Smoked glass for the dark hero/CTA panels    | `<Glass variant="dark">` and the `BTN_LIGHT` / `BTN_GHOST_DARK` buttons |
-| Small pills and chips                        | `liquid-pill`                                                           |
-| A section, its heading, label, lead          | `Section`, `SectionHead`, `Eyebrow`, `Title`, `Lead` (`Kit.tsx`)        |
-| An honest status                             | `StatusChip` (`live` / `building` / `soon`)                             |
+| Use                                          | Component / class                                                                                 |
+| -------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| A big panel                                  | `<Glass>` (`variant="panel"`, `glare`, `tilt`, `lift`, `tone`)                                    |
+| A card that sits on a panel (no second blur) | `<Glass variant="flat">`                                                                          |
+| Smoked glass for the dark hero/CTA panels    | `<Glass variant="dark">` and the `BTN_LIGHT` / `BTN_GHOST_DARK` buttons                           |
+| Small pills and chips                        | `liquid-pill`                                                                                     |
+| Anything fixed over scrolling content        | `liquid-bar` (dense; the header's logo, nav and buttons). `liquid-pill` is too see-through there. |
+| A section, its heading, label, lead          | `Section`, `SectionHead`, `Eyebrow`, `Title`, `Lead` (`Kit.tsx`)                                  |
+| An honest status                             | `StatusChip` (`live` / `building` / `soon`)                                                       |
 
 ## Motion (GSAP) — the rules
 
@@ -37,7 +38,11 @@ numbers that the docs and code don't support, and don't invent testimonials.
 
 ## Structure
 
-- `home/` — the sections of the home page (`Hero`, `Why`, `Bento`, `DeepDives` (sticky stack), `Speed`, `AiSection`, `Trust`, `Pro`, `Roadmap`) and `Mocks`.
+- `home/` — the sections of the home page (`Hero`, `Why`, `Bento`, `DeepDives` (sticky stack), `Speed`, `AiSection`, `Trust`, `Pro`) and `Mocks`.
+  `Bento` presents the capabilities as a `GlassCarousel` (scroll-snap, drag, arrows, dots, ← →; edge to edge but aligned to the page
+  column; the slide nearest the left edge is active and the rest recede). The playable miniatures inside its cards (slash menu, tickable tasks, recording, calendar overlay,
+  ask → preview → confirm, ⌘K search) live in `BentoTiles.tsx`. Built features get a live tile; anything not built goes in the dashed
+  "On the way" strip. Tile scenes are looping GSAP timelines: always `kill()` them in the cleanup and show a still state when `calm`.
 - `Blocks.tsx` — step cards, day timeline, access matrix, plan comparison. `Faq.tsx`, `IntegrationsTabs.tsx`, `Nav.tsx`, `Logo.tsx`.
 
 ## Gotchas

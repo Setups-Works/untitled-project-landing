@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ALL_INTEGRATIONS, CAPABILITIES, FAQS, GROUPS, ROADMAP, SHORTCUTS, TRUST } from "../../src/components/landing/content";
+import { ALL_INTEGRATIONS, CAPABILITIES, FAQS, GROUPS, SHORTCUTS, TRUST } from "../../src/components/landing/content";
 import { isTone, toneClass } from "../../src/lib/tones";
 import { isLive } from "../../src/lib/logos";
 
@@ -19,12 +19,6 @@ describe("landing content stays honest", () => {
     expect(toneClass("blue")).toBe("at-blue");
     expect(toneClass("not-a-tone")).toBe("");
     expect(toneClass(undefined)).toBe("");
-  });
-
-  it("starts the roadmap with what is live and ends with what is not", () => {
-    expect(ROADMAP[0].status).toBe("live");
-    expect(ROADMAP.at(-1)?.status).toBe("soon");
-    expect(ROADMAP.filter((m) => m.status === "live").length).toBeGreaterThan(0);
   });
 
   it("has complete copy (no empty titles, answers or tips)", () => {

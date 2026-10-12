@@ -13,7 +13,6 @@ import Bento from "../components/landing/home/Bento";
 import DeepDives from "../components/landing/home/DeepDives";
 import Hero from "../components/landing/home/Hero";
 import Pro from "../components/landing/home/Pro";
-import Roadmap from "../components/landing/home/Roadmap";
 import Speed from "../components/landing/home/Speed";
 import Trust from "../components/landing/home/Trust";
 import Why from "../components/landing/home/Why";
@@ -44,8 +43,6 @@ export default function Page() {
       <Why />
       <Bento />
       <DeepDives />
-      <Speed />
-      <AiSection />
 
       <Section id="integrations">
         <SectionHead
@@ -59,9 +56,11 @@ export default function Page() {
         </Reveal>
       </Section>
 
+      <Speed />
+      <AiSection />
+
       <Trust />
       <Pro />
-      <Roadmap />
 
       <Section id="faq">
         <div className="grid items-start gap-[clamp(28px,5vw,72px)] lg:grid-cols-[0.8fr_1.2fr]">
