@@ -10,6 +10,7 @@ import { useToggleTask } from "./useToggleTask";
 import { ViewOptionsSheet } from "./ViewOptionsSheet";
 import { AppText } from "@/components/ui/AppText";
 import { Button } from "@/components/ui/Button";
+import { useConfirm } from "@/components/ui/Confirm";
 import { Icon, type IconName } from "@/components/ui/Icon";
 import { Screen } from "@/components/ui/Screen";
 import { Segmented } from "@/components/ui/Segmented";
@@ -33,6 +34,7 @@ export function TodoScreen() {
   const toggle = useToggleTask();
   const { add, archiveCompleted, remove } = useTaskActions(today);
   const listActions = useListActions();
+  const { ask, dialog } = useConfirm();
   const [view, setView] = useState<ViewKey>("today");
   const [opts, setOpts] = useState<ViewOpts>(DEFAULT_OPTS);
   const [title, setTitle] = useState("");
@@ -80,23 +82,22 @@ export function TodoScreen() {
     });
   }
 
-  function confirmDeleteList() {
+  async function confirmDeleteList() {
     if (!activeList) return;
-    Alert.alert("Delete this list?", `${activeList.name}. Its tasks move to the Inbox.`, [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: () =>
-          listActions.remove.mutate(activeList.id, {
-            onSuccess: () => {
-              setSheet(null);
-              setView("inbox");
-            },
-            onError: (e) => Alert.alert("Couldn’t delete", errorMessage(e)),
-          }),
+    const ok = await ask({
+      title: "Delete this list?",
+      body: `${activeList.name}. Its tasks move to the Inbox.`,
+      confirmLabel: "Delete list",
+      danger: true,
+    });
+    if (!ok) return;
+    listActions.remove.mutate(activeList.id, {
+      onSuccess: () => {
+        setSheet(null);
+        setView("inbox");
       },
-    ]);
+      onError: (e) => setError(errorMessage(e, "Couldn’t delete that list.")),
+    });
   }
 
   const options = [
@@ -251,6 +252,7 @@ export function TodoScreen() {
           )
         }
       />
+      {dialog}
     </Screen>
   );
 }

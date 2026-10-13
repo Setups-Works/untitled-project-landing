@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import * as ExpoLinking from "expo-linking";
 import { TextInput, View } from "react-native";
 import { Link } from "expo-router";
 
@@ -54,8 +55,8 @@ export default function LoginScreen() {
     setError("");
     setGoogleBusy(true);
     try {
-      // The Expo client turns this into a deep link (untitled://) and runs the OAuth flow in a system browser session.
-      const res = await auth.signIn.social({ provider: "google", callbackURL: "/" });
+      // Give Better Auth's Expo browser session an explicit app deep link to return to after Google signs in.
+      const res = await auth.signIn.social({ provider: "google", callbackURL: ExpoLinking.createURL("/") });
       if (res?.error) setError(friendlyAuthError(res.error.message ?? "Couldn’t start Google sign-in."));
     } catch {
       setError("Google sign-in was cancelled or couldn’t finish. Please try again.");

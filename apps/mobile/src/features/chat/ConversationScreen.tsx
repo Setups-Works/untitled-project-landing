@@ -54,9 +54,8 @@ export function Conversation({ chatId: initialId, onCreated }: { chatId: string 
       hide.remove();
     };
   }, []);
-  // The floating iOS tab bar covers the bottom of non-scrolling content, so the composer keeps the home-indicator inset plus a
-  // small gap above it; while the keyboard is up the bar is covered and only a small gap remains. Android lays content out above its bar.
-  const lift = Platform.OS === "ios" && !keyboard ? insets.bottom + 10 : 8;
+  // The floating tab bar covers the bottom of the screen when keyboard is not visible.
+  const lift = !keyboard ? insets.bottom + (Platform.OS === "android" ? 78 : 10) : 8;
 
   // Leaving the screen stops any reply still streaming.
   useEffect(() => () => abort.current?.abort(), []);

@@ -2,7 +2,7 @@ import { dayLabel, emptyDraft, firstDue, PRIORITIES, recurrenceChoices, recurren
 import type { Task, TaskList } from "@untitled/types";
 import { router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
-import { Alert, Pressable, StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 
 import { useTaskActions, useTaskLists, useTasks } from "./queries";
 import { useToggleTask } from "./useToggleTask";
@@ -11,6 +11,7 @@ import { Banner } from "@/components/ui/Banner";
 import { BarButton, DetailBar } from "@/components/ui/DetailBar";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { useConfirm } from "@/components/ui/Confirm";
 import { Markdown } from "@/components/ui/Markdown";
 import { DateField } from "@/components/ui/DatePicker";
 import { PickerField } from "@/components/ui/PickerField";
@@ -139,6 +140,7 @@ function Form({
 }) {
   const today = isoDate();
   const { add, patch, remove } = useTaskActions(today);
+  const { ask, dialog } = useConfirm();
   const [d, setD] = useState<Draft>(initial);
   const [error, setError] = useState("");
   const set = (p: Partial<Draft>) => setD((x) => ({ ...x, ...p }));
@@ -156,12 +158,16 @@ function Form({
     else add.mutate(values, done);
   }
 
-  function confirmDelete() {
+  async function confirmDelete() {
     if (!task) return;
-    Alert.alert("Delete this task?", task.title, [
-      { text: "Cancel", style: "cancel" },
-      { text: "Delete", style: "destructive", onPress: () => remove.mutate(task.id, done) },
-    ]);
+    const ok = await ask({
+      title: "Delete this task?",
+      body: task.title,
+      confirmLabel: "Delete task",
+      danger: true,
+    });
+    if (!ok) return;
+    remove.mutate(task.id, done);
   }
 
   const repeat = recurrenceChoices(d.due_date, d.recurrence);
@@ -237,6 +243,7 @@ function Form({
       {task ? (
         <Button title="Delete task" kind="danger" icon="trash" loading={remove.isPending} disabled={busy} onPress={confirmDelete} />
       ) : null}
+      {dialog}
     </Screen>
   );
 }

@@ -1,4 +1,5 @@
 import { useRef, useState } from "react";
+import * as ExpoLinking from "expo-linking";
 import { Linking, StyleSheet, TextInput, View } from "react-native";
 
 import { AuthLink, AuthShell } from "@/features/auth/AuthShell";
@@ -54,7 +55,7 @@ export default function SignupScreen() {
     setError("");
     setGoogleBusy(true);
     try {
-      const res = await auth.signIn.social({ provider: "google", callbackURL: "/" });
+      const res = await auth.signIn.social({ provider: "google", callbackURL: ExpoLinking.createURL("/") });
       if (res?.error) setError(friendlyAuthError(res.error.message ?? "Couldn’t start Google sign-in."));
     } catch {
       setError("Google sign-in was cancelled or couldn’t finish. Please try again.");

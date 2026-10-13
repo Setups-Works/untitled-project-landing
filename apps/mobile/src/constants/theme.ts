@@ -29,6 +29,9 @@ export const Palette = {
   rec: "#d64545",
   shadow: "#28230a",
   scrim: "rgba(27,28,20,0.45)",
+  scrimLight: "rgba(245,244,235,0.82)",
+  glassAndroid: "rgba(255,255,255,0.42)",
+  activeTabPill: "rgba(27,28,20,0.08)",
 } as const;
 
 /** The `at-<tint>` pairs from the web: soft background, hairline, foreground. */

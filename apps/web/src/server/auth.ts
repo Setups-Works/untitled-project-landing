@@ -30,6 +30,7 @@ function create() {
     trustedOrigins: [
       env.authUrl,
       "untitled://",
+      ...env.authTrustedOrigins,
       ...(process.env.NODE_ENV === "development" ? ["exp://", "exp://**", "exp://192.168.*.*:*/**"] : []),
     ],
 
@@ -193,7 +194,7 @@ function create() {
       passkey({
         rpID: new URL(env.authUrl).hostname,
         rpName: "untitled project",
-        origin: env.authUrl,
+        origin: [env.authUrl, ...env.passkeyOrigins],
         schema: {
           passkey: {
             modelName: "passkeys",

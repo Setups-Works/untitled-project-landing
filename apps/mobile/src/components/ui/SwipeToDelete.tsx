@@ -1,9 +1,10 @@
 import type { ReactNode } from "react";
 import { useRef } from "react";
-import { Alert, Pressable, StyleSheet } from "react-native";
+import { Pressable, StyleSheet } from "react-native";
 import ReanimatedSwipeable, { type SwipeableMethods } from "react-native-gesture-handler/ReanimatedSwipeable";
 
 import { AppText } from "./AppText";
+import { useConfirm } from "./Confirm";
 import { Icon } from "./Icon";
 import { Palette, Radius } from "@/constants/theme";
 
@@ -23,31 +24,42 @@ type Props = {
  */
 export function SwipeToDelete({ children, onDelete, title, message, what }: Props) {
   const ref = useRef<SwipeableMethods>(null);
+  const { ask, dialog } = useConfirm();
 
-  function ask() {
-    Alert.alert(title, message, [
-      { text: "Cancel", style: "cancel", onPress: () => ref.current?.close() },
-      { text: "Delete", style: "destructive", onPress: onDelete },
-    ]);
+  async function handlePress() {
+    const ok = await ask({
+      title,
+      body: message,
+      confirmLabel: "Delete",
+      danger: true,
+    });
+    if (ok) {
+      onDelete();
+    } else {
+      ref.current?.close();
+    }
   }
 
   return (
-    <ReanimatedSwipeable
-      ref={ref}
-      friction={2}
-      rightThreshold={48}
-      overshootRight={false}
-      renderRightActions={() => (
-        <Pressable accessibilityRole="button" accessibilityLabel={`Delete ${what}`} onPress={ask} style={styles.action}>
-          <Icon name="trash" size={16} color={Palette.onDark} />
-          <AppText variant="small" color={Palette.onDark}>
-            Delete
-          </AppText>
-        </Pressable>
-      )}
-    >
-      {children}
-    </ReanimatedSwipeable>
+    <>
+      <ReanimatedSwipeable
+        ref={ref}
+        friction={2}
+        rightThreshold={48}
+        overshootRight={false}
+        renderRightActions={() => (
+          <Pressable accessibilityRole="button" accessibilityLabel={`Delete ${what}`} onPress={() => void handlePress()} style={styles.action}>
+            <Icon name="trash" size={16} color={Palette.onDark} />
+            <AppText variant="small" color={Palette.onDark}>
+              Delete
+            </AppText>
+          </Pressable>
+        )}
+      >
+        {children}
+      </ReanimatedSwipeable>
+      {dialog}
+    </>
   );
 }
 

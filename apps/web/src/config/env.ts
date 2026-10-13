@@ -52,6 +52,15 @@ export function serverEnv() {
     smtpUrl: optional("SMTP_URL"),
     authSecret: optional("BETTER_AUTH_SECRET"),
     authUrl: optional("BETTER_AUTH_URL") ?? optional("NEXT_PUBLIC_SITE_URL") ?? "http://localhost:3000",
+    authTrustedOrigins: (optional("BETTER_AUTH_TRUSTED_ORIGINS") ?? "")
+      .split(",")
+      .map((origin) => origin.trim())
+      .filter(Boolean)
+      .map((origin) => (origin === "exp://" ? "exp://**" : origin)),
+    passkeyOrigins: (optional("PASSKEY_ORIGINS") ?? "")
+      .split(",")
+      .map((origin) => origin.trim())
+      .filter(Boolean),
     google: { clientId: optional("GOOGLE_CLIENT_ID"), clientSecret: optional("GOOGLE_CLIENT_SECRET") },
     adminEmails: (optional("ADMIN_EMAILS") ?? "")
       .split(",")

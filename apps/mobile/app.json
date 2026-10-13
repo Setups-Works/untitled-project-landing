@@ -13,6 +13,7 @@
     },
     "android": {
       "package": "com.setupsworks.workspace",
+      "softwareKeyboardLayoutMode": "pan",
       "adaptiveIcon": {
         "backgroundColor": "#f5f4eb",
         "foregroundImage": "./assets/images/android-icon-foreground.png",

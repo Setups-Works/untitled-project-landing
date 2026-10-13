@@ -1,7 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { Attachment, JournalEntry } from "@untitled/types";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Alert, Pressable, StyleSheet, View } from "react-native";
+import { Platform, Pressable, StyleSheet, View } from "react-native";
 
 import { useJournal, useJournalActions, useJournalDay } from "./queries";
 import { MAX_UPLOAD_BYTES, uploadJournalFile } from "./files";
@@ -13,6 +13,7 @@ import { Banner } from "@/components/ui/Banner";
 import { Button } from "@/components/ui/Button";
 import { CalendarGrid } from "@/components/ui/DatePicker";
 import { Card } from "@/components/ui/Card";
+import { useConfirm } from "@/components/ui/Confirm";
 import { Icon } from "@/components/ui/Icon";
 import { Markdown } from "@/components/ui/Markdown";
 import { Sheet } from "@/components/ui/Sheet";
@@ -58,6 +59,7 @@ export function JournalScreen() {
   const today = isoDate();
   const dayQ = useJournalDay(date);
   const { create, update, remove } = useJournalActions();
+  const { ask, dialog } = useConfirm();
   const [draft, setDraft] = useState("");
   const [files, setFiles] = useState<PendingFile[]>([]);
   const [error, setError] = useState("");
@@ -196,15 +198,17 @@ export function JournalScreen() {
     }
   }
 
-  function removeEntry(entry: JournalEntry) {
-    Alert.alert("Delete this entry?", `The entry from ${timeOf(entry.created_at)} and its attachments will be permanently deleted.`, [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: () => remove.mutate(entry.id, { onError: (e) => Alert.alert("Couldn’t delete", errorMessage(e)) }),
-      },
-    ]);
+  async function removeEntry(entry: JournalEntry) {
+    const ok = await ask({
+      title: "Delete this entry?",
+      body: `The entry from ${timeOf(entry.created_at)} and its attachments will be permanently deleted.`,
+      confirmLabel: "Delete entry",
+      danger: true,
+    });
+    if (!ok) return;
+    remove.mutate(entry.id, {
+      onError: (e) => setError(errorMessage(e, "Couldn’t delete that entry.")),
+    });
   }
 
   function saveEdit(entry: JournalEntry) {
@@ -414,6 +418,7 @@ export function JournalScreen() {
           </View>
         ) : null}
       </Sheet>
+      {dialog}
     </Screen>
   );
 }
@@ -428,7 +433,9 @@ const styles = StyleSheet.create({
   selectedDateLabel: { gap: 4 },
   selectedDateText: { fontSize: 19, lineHeight: 24 },
   newEntryButton: { alignSelf: "stretch" },
-  dayCard: { gap: 0, padding: 0, borderRadius: Radius.r4, overflow: "hidden" },
+  // overflow:"hidden" clips the tinted bg to the rounded corners on iOS.
+  // On Android, borderRadius clips natively and overflow:"hidden" suppresses elevation on child cards.
+  dayCard: { gap: 0, padding: 0, borderRadius: Radius.r4, overflow: Platform.OS === "android" ? "visible" : "hidden" },
   dayTitleBlock: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 16, gap: 8, borderBottomWidth: 1, borderBottomColor: Palette.line },
   titleRow: { flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: 12 },
   dayTitle: { flexShrink: 1 },

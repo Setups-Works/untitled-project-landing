@@ -5,7 +5,7 @@ import { AppText } from "./AppText";
 import { Icon, type IconName } from "./Icon";
 import { Palette, Radius, Shadow } from "@/constants/theme";
 
-type Kind = "primary" | "secondary" | "ghost" | "danger";
+type Kind = "primary" | "secondary" | "ghost" | "danger" | "dangerSolid";
 
 type Props = {
   title: string;
@@ -23,6 +23,7 @@ const palette: Record<Kind, { bg: string; fg: string; ring?: string }> = {
   secondary: { bg: Palette.glassHi, fg: Palette.fg, ring: Palette.glassRing },
   ghost: { bg: "transparent", fg: Palette.greenFg },
   danger: { bg: Palette.clayBg, fg: Palette.clayFg },
+  dangerSolid: { bg: Palette.clayFg, fg: Palette.onDark },
 };
 
 /** Pill button with a 48 pt touch target. */

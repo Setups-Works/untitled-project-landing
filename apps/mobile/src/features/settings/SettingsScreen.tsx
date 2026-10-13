@@ -24,7 +24,6 @@ import { api, errorMessage } from "@/lib/api";
 import { NOTE_CATEGORIES } from "@/lib/preferences";
 
 type Notice = { kind: "success" | "error" | "info"; text: string } | null;
-type Passkey = { id: string; name?: string; createdAt: string | Date };
 type TableRow = Record<string, unknown>;
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -56,7 +55,6 @@ export function SettingsScreen() {
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [passkeys, setPasskeys] = useState<Passkey[]>([]);
   const [resetConfirmation, setResetConfirmation] = useState("");
   const [deleteConfirmation, setDeleteConfirmation] = useState("");
   const [dangerReview, setDangerReview] = useState<{ action: "reset-workspace" | "delete-account"; confirmation: string } | null>(null);
@@ -70,15 +68,6 @@ export function SettingsScreen() {
     }).catch(() => undefined);
     return () => { active = false; };
   }, [auth, user?.id]);
-
-  useEffect(() => {
-    if (section !== "security") return;
-    let active = true;
-    void auth.$fetch("/passkey/list-user-passkeys", { method: "GET" }).then(({ data, error }) => {
-      if (active && !error && Array.isArray(data)) setPasskeys(data as Passkey[]);
-    }).catch(() => undefined);
-    return () => { active = false; };
-  }, [auth, section]);
 
   const createdLabel = account?.createdAt ? new Date(account.createdAt).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" }) : "—";
 
@@ -225,15 +214,6 @@ export function SettingsScreen() {
       setNewPassword("");
       setConfirmPassword("");
       setNotice({ kind: "success", text: "Password updated." });
-    });
-  }
-
-  async function removePasskey(id: string) {
-    await perform(`passkey-${id}`, async () => {
-      const { error } = await auth.$fetch("/passkey/delete-passkey", { method: "POST", body: { id } });
-      if (error) throw new Error(error.message || "Couldn’t remove that passkey.");
-      setPasskeys((items) => items.filter((item) => item.id !== id));
-      setNotice({ kind: "success", text: "Passkey removed." });
     });
   }
 
@@ -430,15 +410,6 @@ export function SettingsScreen() {
             </>
           ) : <AppText variant="body" color={Palette.fgMuted}>You sign in with {(account?.providers ?? []).map(providerName).join(", ")}; there’s no password to manage here.</AppText>}
           <View style={styles.divider} />
-          <AppText variant="bodyStrong">Passkeys</AppText>
-          <AppText variant="small" color={Palette.fgSubtle}>Existing passkeys can be removed. Registering a new passkey requires a browser on this account.</AppText>
-          {passkeys.map((passkey) => (
-            <View key={passkey.id} style={styles.passkeyRow}>
-              <View style={styles.flex}><AppText variant="bodyStrong">{passkey.name || "Passkey"}</AppText><AppText variant="small" color={Palette.fgSubtle}>Added {new Date(passkey.createdAt).toLocaleDateString()}</AppText></View>
-              <Button title="Remove" kind="secondary" loading={busy === `passkey-${passkey.id}`} onPress={() => void removePasskey(passkey.id)} />
-            </View>
-          ))}
-          <View style={styles.divider} />
           <Fact label="Last sign-in" value={account?.lastSignIn ? new Date(account.lastSignIn).toLocaleString() : "—"} />
           <Fact label="Account created" value={createdLabel} />
           <Fact label="Sign-in methods" value={(account?.providers ?? []).map(providerName).join(", ") || "—"} />
@@ -570,7 +541,6 @@ const styles = StyleSheet.create({
   segmentItem: { flex: 1, alignItems: "center", justifyContent: "center", minHeight: 40, borderRadius: Radius.pill },
   segmentItemActive: { backgroundColor: Palette.surface },
   switchRow: { flexDirection: "row", alignItems: "center", gap: 14, marginTop: 8 },
-  passkeyRow: { flexDirection: "row", alignItems: "center", gap: 10 },
   fact: { flexDirection: "row", justifyContent: "space-between", gap: 16 },
   factValue: { flexShrink: 1, textAlign: "right" },
   choiceWrap: { gap: 6 },

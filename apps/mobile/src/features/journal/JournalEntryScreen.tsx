@@ -1,7 +1,7 @@
 import type { JournalEntry } from "@untitled/types";
 import { router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
-import { Alert, Pressable, StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
 
 import { useJournalActions, useJournalEntry } from "./queries";
 import { AppText } from "@/components/ui/AppText";
@@ -10,6 +10,7 @@ import { Banner } from "@/components/ui/Banner";
 import { BarButton, DetailBar } from "@/components/ui/DetailBar";
 import { Markdown } from "@/components/ui/Markdown";
 import { Button } from "@/components/ui/Button";
+import { useConfirm } from "@/components/ui/Confirm";
 import { Screen } from "@/components/ui/Screen";
 import { ErrorState, LoadingState } from "@/components/ui/States";
 import { TextField } from "@/components/ui/TextField";
@@ -54,6 +55,7 @@ function EntryScreen({ entry }: { entry: JournalEntry }) {
 
 function EntryForm({ entry, onSaved, onCancel }: { entry: JournalEntry; onSaved?: () => void; onCancel?: () => void }) {
   const { update, remove } = useJournalActions();
+  const { ask, dialog } = useConfirm();
   const [body, setBody] = useState(entry.body);
   const [error, setError] = useState("");
   const id = entry.id;
@@ -66,15 +68,15 @@ function EntryForm({ entry, onSaved, onCancel }: { entry: JournalEntry; onSaved?
     );
   }
 
-  function confirmDelete() {
-    Alert.alert("Delete this entry?", "This can’t be undone.", [
-      { text: "Cancel", style: "cancel" },
-      {
-        text: "Delete",
-        style: "destructive",
-        onPress: () => remove.mutate(id, { onSuccess: () => router.back(), onError: (e) => setError(errorMessage(e)) }),
-      },
-    ]);
+  async function confirmDelete() {
+    const ok = await ask({
+      title: "Delete this entry?",
+      body: "This can’t be undone.",
+      confirmLabel: "Delete entry",
+      danger: true,
+    });
+    if (!ok) return;
+    remove.mutate(id, { onSuccess: () => router.back(), onError: (e) => setError(errorMessage(e)) });
   }
 
   return (
@@ -107,6 +109,7 @@ function EntryForm({ entry, onSaved, onCancel }: { entry: JournalEntry; onSaved?
         disabled={update.isPending}
         onPress={confirmDelete}
       />
+      {dialog}
     </Screen>
   );
 }

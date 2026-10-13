@@ -48,7 +48,7 @@ const styles = StyleSheet.create({
     maxWidth: MaxContentWidth,
     paddingHorizontal: Space.xl - 4,
     paddingTop: Space.lg,
-    paddingBottom: Space.xxl,
+    paddingBottom: Platform.OS === "android" ? Space.xxl + 56 : Space.xxl,
     gap: Space.lg,
   },
 });
