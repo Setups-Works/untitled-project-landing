@@ -46,6 +46,8 @@ export function serverEnv() {
       endpoint: optional("S3_ENDPOINT"),
       accessKey: optional("S3_ACCESS_KEY"),
       secretKey: optional("S3_SECRET_KEY"),
+      region: optional("S3_REGION") ?? "us-east-1",
+      autoCreateBuckets: optional("S3_AUTO_CREATE_BUCKETS")?.toLowerCase() !== "false",
     },
     smtpUrl: optional("SMTP_URL"),
     authSecret: optional("BETTER_AUTH_SECRET"),

@@ -12,7 +12,7 @@ import {
 import { requireEnv, serverEnv } from "../config/env";
 
 /**
- * Object storage over the S3 API (SeaweedFS in Docker; MinIO, Garage or AWS S3 work by changing the S3_* variables).
+ * Object storage over the S3 API (SeaweedFS in Docker; MinIO, Garage, Cloudflare R2 or AWS S3 work by changing S3_* variables).
  * The browser never talks to the object store: files go through /api/v1/storage/*, which checks the signed-in user first.
  * Every object key starts with the owner's user id — that prefix is the permission rule.
  */
@@ -29,7 +29,7 @@ function s3() {
   if (!g.__s3) {
     const e = serverEnv().s3;
     g.__s3 = new S3Client({
-      region: "us-east-1",
+      region: e.region,
       endpoint: requireEnv("S3_ENDPOINT", "Run `docker compose up -d` and copy .env.example to .env.local."),
       forcePathStyle: true,
       credentials: { accessKeyId: e.accessKey ?? "", secretAccessKey: e.secretKey ?? "" },
@@ -41,6 +41,7 @@ function s3() {
 /** Creates the buckets once per process; "already exists" is fine. */
 function ready() {
   g.__buckets ??= (async () => {
+    if (!serverEnv().s3.autoCreateBuckets) return;
     for (const name of Object.keys(BUCKETS)) {
       try {
         await s3().send(new CreateBucketCommand({ Bucket: name }));

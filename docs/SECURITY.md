@@ -15,6 +15,8 @@ Rules for everyone (and every AI agent). The checklist at the bottom is finished
 | ------------------------------------------------- | ------------------------------------ | -------------------------------------------------------- |
 | `DATABASE_URL`, `REDIS_URL`                       | server only                          | **server only**                                          |
 | `BETTER_AUTH_SECRET`, `S3_SECRET_KEY`, `SMTP_URL` | sessions/tokens, file storage, email | **server only**                                          |
+| `S3_ACCESS_KEY`                                     | file storage credentials             | server only                                               |
+| `S3_ENDPOINT`, `S3_REGION`, `S3_AUTO_CREATE_BUCKETS` | object storage endpoint and behavior | server-only configuration                                 |
 | `ADMIN_EMAILS`                                    | bootstrap admins                     | server only                                              |
 | `GROQ_API_KEY`, `COMPOSIO_API_KEY`                | AI / integrations services           | server only (Phase 3–4)                                  |
 | `CRON_SECRET`                                     | protects `/api/v1/jobs/*`            | server only                                              |

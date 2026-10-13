@@ -19,7 +19,7 @@ const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&l
 export async function sendMail(to: string, subject: string, text: string, action?: { label: string; url: string }) {
   const url = serverEnv().smtpUrl;
   if (!url) {
-    console.warn(`[mail] SMTP_URL is not set — email "${subject}" to ${to} was not sent.`);
+    console.warn("[mail] SMTP_URL is not set; outbound email was not sent.");
     return;
   }
   g.__mailer ??= nodemailer.createTransport(url);

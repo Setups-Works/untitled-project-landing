@@ -12,7 +12,7 @@
       "icon": "./assets/expo.icon"
     },
     "android": {
-      "package": "com.setupsworks.untitledproject",
+      "package": "com.setupsworks.workspace",
       "adaptiveIcon": {
         "backgroundColor": "#f5f4eb",
         "foregroundImage": "./assets/images/android-icon-foreground.png",

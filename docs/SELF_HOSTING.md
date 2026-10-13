@@ -11,7 +11,7 @@ The whole product runs on services you control. There is no Supabase or other ho
 | Cache / limits | **Redis 7**                                     | `apps/web/src/server/redis.ts`                                         |
 | Email          | SMTP (Mailpit in dev, your provider in prod)    | `apps/web/src/server/mail.ts`                                          |
 
-> MinIO stopped publishing Docker images, so object storage runs on SeaweedFS. The app only speaks the S3 API: MinIO, Garage, RustFS or AWS S3 work by changing the `S3_*` variables.
+> MinIO stopped publishing Docker images, so object storage runs on SeaweedFS. The app only speaks the S3 API: MinIO, Garage, RustFS, Cloudflare R2 or AWS S3 work by changing the `S3_*` variables.
 
 ## How requests are secured
 
@@ -43,6 +43,12 @@ docker compose --env-file .env.selfhost --profile app up -d --build
 
 This builds the image (`Dockerfile`, Next.js `standalone` output), runs `migrate` once, then starts `web` on `127.0.0.1:3000`. Put a TLS reverse proxy (Caddy, Traefik, Nginx, Cloudflare Tunnel) in front.
 
+## Using Cloudflare R2 for free-tier object storage
+
+R2 provides an S3-compatible API, so the application can use it without changing the storage transport. Its Standard tier currently includes 10 GB-month of storage, 1 million Class A operations and 10 million Class B operations each month; usage above those allowances can be billed. See [R2 pricing](https://developers.cloudflare.com/r2/pricing/).
+
+Create two R2 buckets named `avatars` and `note-files`, then create an S3 API token with **Object Read & Write** scoped to those buckets. In Azure App Service settings, set `S3_ENDPOINT` to `https://<ACCOUNT_ID>.r2.cloudflarestorage.com`, set `S3_REGION=auto`, set `S3_ACCESS_KEY` and `S3_SECRET_KEY` to the token credentials, and set `S3_AUTO_CREATE_BUCKETS=false`. Pre-creating the buckets lets the app use a bucket-scoped token without account-wide bucket-management access. Keep the credentials in Azure settings, never in client code. See [R2 S3 API compatibility](https://developers.cloudflare.com/r2/api/s3/api/) and [R2 authentication](https://developers.cloudflare.com/r2/api/tokens/).
+
 ## Production checklist
 
 - Strong random values for every secret in `.env.selfhost` (`openssl rand -hex 24`); `BETTER_AUTH_URL` = the public https address.
@@ -52,6 +58,33 @@ This builds the image (`Dockerfile`, Next.js `standalone` output), runs `migrate
 - Set up Google sign-in (optional): create OAuth credentials, add `<BETTER_AUTH_URL>/api/auth/callback/google` as a redirect URI, set `GOOGLE_CLIENT_ID/SECRET`.
 - Keep images updated; monitor disk space; limit SSH access.
 - Run more than one `web` instance only after reading "Scaling" below.
+
+## Deploying the Azure Docker app with GitHub Actions
+
+The workflow at `.github/workflows/deploy-azure-docker.yml` builds the web app from the repository `Dockerfile`, publishes an immutable commit-tagged image and `latest` to Docker Hub, then deploys the commit-tagged image to the Azure Web App. It runs on pushes to `main` when app, shared package, database migration, or image build files change. You can also run it from the repository's **Actions** tab with **Run workflow**.
+
+Add these repository secrets in **Settings → Secrets and variables → Actions** before the first run:
+
+| Secret | Value |
+| --- | --- |
+| `DOCKERHUB_USERNAME` | Docker Hub username (`nitheeshdr`) |
+| `DOCKERHUB_TOKEN` | Docker Hub access token with permission to push to `nitheeshdr/untitled-workspace` |
+| `AZURE_WEBAPP_PUBLISH_PROFILE` | The publish profile downloaded from the Azure Web App's **Overview** page |
+
+For the Azure portal's **Deployment Center → GitHub Actions → Registry settings**, configure Docker Hub separately from the image name:
+
+| Portal field | Value |
+| --- | --- |
+| Image source | Other container registries |
+| Image type | Private |
+| Registry login server | `https://index.docker.io` (this is the registry URL, not the Docker Hub username) |
+| Registry user name | `nitheeshdr` |
+| Registry password | A Docker Hub access token with pull access to the repository |
+| Image | `nitheeshdr/untitled-workspace:latest` |
+
+The GitHub workflow logs in to `docker.io` to push the image; App Service separately needs the private-registry credentials above to pull it. The workflow deploys the commit-tagged image after pushing it. If the Docker Hub repository is public, select **Public** in the portal and leave its private-registry credential fields empty.
+
+The workflow file must be committed to and pushed to the selected GitHub branch before Azure can select it under **Use available workflow**. If it is not on `main`, choose **Add a workflow** or push the file first. Treat the Azure publish profile and Docker Hub token as credentials. Keep runtime application settings, including the database URL and Better Auth secret, in the Azure Web App configuration; the workflow does not put them in the image or GitHub Actions logs. The Azure publish profile secret grants deployment access to this app, so rotate it in Azure if it is exposed.
 
 ## Scaling notes
 

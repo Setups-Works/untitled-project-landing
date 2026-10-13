@@ -18,6 +18,7 @@ RUN --mount=type=cache,target=/root/.local/share/pnpm/store pnpm install --froze
 
 FROM node:${NODE_VERSION} AS builder
 WORKDIR /app
+RUN corepack enable
 ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
 COPY --from=deps /app/apps/web/node_modules ./apps/web/node_modules
