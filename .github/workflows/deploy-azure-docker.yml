@@ -24,6 +24,7 @@ on:
 
 permissions:
   contents: read
+  id-token: write
 
 concurrency:
   group: azure-webapp-${{ github.ref }}
@@ -60,9 +61,15 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      - name: Sign in to Azure
+        uses: azure/login@v3
+        with:
+          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_136B4B7A0DD148E6A7E948CBCACAF485 }}
+          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_D06354EBB57E49C48FE1EAAFAD01349B }}
+          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_9014276113D9451381B961FBAFF693B0 }}
+
       - name: Deploy image to Azure Web App
         uses: azure/webapps-deploy@v3
         with:
           app-name: untitled-ws-nitheesh-13oct26
-          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           images: nitheeshdr/untitled-workspace:${{ github.sha }}
