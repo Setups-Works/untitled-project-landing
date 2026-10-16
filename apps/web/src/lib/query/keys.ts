@@ -26,6 +26,7 @@ export const qk = {
     messages: (chatId: string) => ["chats", "messages", chatId] as const,
   },
   calendar: { all: ["calendar"] as const, events: ["calendar", "events"] as const },
+  health: { all: ["health"] as const, days: (span: number) => ["health", "days", span] as const },
   profile: ["profile"] as const,
   aiProviders: ["ai", "providers"] as const,
 } as const;

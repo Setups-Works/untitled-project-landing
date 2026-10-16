@@ -4,6 +4,7 @@ import AuthLink from "./auth/AuthLink";
 import Glass from "./landing/Glass";
 import { SiteHeaderBar } from "./landing/Nav";
 import { WRAP } from "./landing/Kit";
+import { BrandMark } from "./BrandMark";
 
 export function SiteHeader() {
   return <SiteHeaderBar mega={MEGA} links={NAV_LINKS} menu={MENU} />;
@@ -17,7 +18,7 @@ export function SiteFooter() {
           <div className="grid gap-10 lg:grid-cols-[1.1fr_2fr]">
             <div className="flex flex-col items-start gap-4">
               <Link href="/" className="flex items-center gap-2.5 font-serif text-[27px] tracking-[-0.02em]">
-                <i className="size-2.5 rounded-full bg-green-fg shadow-[0_0_0_4px_var(--green-bg)]" aria-hidden />
+                <BrandMark size={34} />
                 untitled project
               </Link>
               <p className="max-w-sm text-[15px] leading-relaxed text-fg-muted">

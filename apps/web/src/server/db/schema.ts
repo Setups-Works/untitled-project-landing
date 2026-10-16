@@ -17,6 +17,7 @@ export const CLIENT_TABLES = [
   "profiles",
   "announcements",
   "calendar_events",
+  "health_daily",
 ] as const;
 
 /** To-one relations that `select("id,chats(title)")` may embed: table → alias → { foreign key column, related table }. */

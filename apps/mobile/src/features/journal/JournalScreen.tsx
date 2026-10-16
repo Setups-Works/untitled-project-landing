@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Platform, Pressable, StyleSheet, View } from "react-native";
 
 import { useJournal, useJournalActions, useJournalDay } from "./queries";
+import { EntryEditor } from "./EntryEditor";
 import { MAX_UPLOAD_BYTES, uploadJournalFile } from "./files";
 import { pickFiles, type PendingFile } from "@/features/chat/files";
 import { useRecorder } from "@/features/chat/useRecorder";
@@ -19,7 +20,6 @@ import { Markdown } from "@/components/ui/Markdown";
 import { Sheet } from "@/components/ui/Sheet";
 import { Screen } from "@/components/ui/Screen";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/States";
-import { TextField } from "@/components/ui/TextField";
 import { Palette, Radius } from "@/constants/theme";
 import { useAppState } from "@/providers/AppState";
 import { errorMessage } from "@/lib/api";
@@ -120,6 +120,7 @@ export function JournalScreen() {
   }, [allQ, dayQ]);
 
   const entries = dayQ.data ?? [];
+  const editingEntry = entries.find((entry) => entry.id === editingId);
   const markedDays = useMemo(() => new Set((allQ.data ?? []).map((entry) => entry.entry_date)), [allQ.data]);
   const selectedDate = parseDate(date);
   const title = selectedDate.toLocaleDateString(undefined, {
@@ -132,9 +133,9 @@ export function JournalScreen() {
   const weekday = selectedDate.toLocaleDateString(undefined, { weekday: "short" }).toUpperCase();
   const canAdd = (draft.trim().length > 0 || files.length > 0) && !busy && !loadingDraft && !rec.recording;
 
-  async function attach() {
+  async function attach(type?: string) {
     try {
-      const result = await pickFiles();
+      const result = await pickFiles(type);
       if (result.tooBig) setError("Files can be up to 10 MB.");
       if (result.files.length) setFiles((current) => [...current, ...result.files]);
     } catch {
@@ -290,7 +291,7 @@ export function JournalScreen() {
                 <Card
                   key={entry.id}
                   accessibilityLabel={`Open journal entry at ${timeOf(entry.created_at)}`}
-                  onPress={editingId === entry.id ? undefined : () => setViewingEntry(entry)}
+                  onPress={() => setViewingEntry(entry)}
                   style={styles.entryCard}
                 >
                   <View style={styles.entryMeta}>
@@ -298,30 +299,22 @@ export function JournalScreen() {
                     <View style={styles.entryActions}>
                       <Pressable
                         accessibilityRole="button"
-                        accessibilityLabel={editingId === entry.id ? "Cancel editing entry" : "Edit entry"}
+                        accessibilityLabel="Edit entry"
                         onPress={() => {
                           setError("");
-                          setEditingId(editingId === entry.id ? null : entry.id);
-                          setEditDraft(editingId === entry.id ? "" : entry.body);
+                          setEditingId(entry.id);
+                          setEditDraft(entry.body);
                         }}
                         style={styles.entryAction}
                       >
-                        <Icon name={editingId === entry.id ? "xmark" : "pen"} size={17} color={Palette.fgSubtle} />
+                        <Icon name="pen" size={17} color={Palette.fgSubtle} />
                       </Pressable>
                       <Pressable accessibilityRole="button" accessibilityLabel="Delete entry" onPress={() => removeEntry(entry)} style={styles.entryAction}>
                         <Icon name="trash-can" size={17} color={Palette.fgSubtle} />
                       </Pressable>
                     </View>
                   </View>
-                  {editingId === entry.id ? (
-                    <View style={styles.editForm}>
-                      <TextField label="Edit entry" value={editDraft} onChangeText={setEditDraft} multiline minHeight={120} maxLength={50_000} />
-                      <View style={styles.editActions}>
-                        <Button title="Cancel" kind="secondary" onPress={() => { setEditingId(null); setEditDraft(""); }} />
-                        <Button title="Save" loading={update.isPending} onPress={() => saveEdit(entry)} />
-                      </View>
-                    </View>
-                  ) : entry.body ? <Markdown text={entry.body} /> : null}
+                  {entry.body ? <Markdown text={entry.body} /> : null}
                   <AttachmentGallery attachments={entry.attachments} />
                 </Card>
             ))}
@@ -337,50 +330,40 @@ export function JournalScreen() {
         <EmptyState icon="book-open" title="Your journal is ready" hint="Write a line above. One sentence is enough." />
       ) : null}
 
-      <Sheet visible={newEntryOpen} onClose={() => setNewEntryOpen(false)} title="New entry">
-      <Card tone="amber" style={styles.composer}>
-        <AppText variant="label">New entry</AppText>
-        <TextField
-          label={`Your thoughts · ${dayLabel(date, today)}`}
-          value={draft}
-          onChangeText={setDraft}
-          multiline
-          maxLength={50_000}
-          minHeight={110}
-          placeholder="Start writing…"
-          editable={!loadingDraft && !busy}
-        />
-        {rec.recording ? <AppText variant="small" color={Palette.rec}>Stop recording to attach the audio.</AppText> : null}
-        {files.length ? (
-          <View style={styles.pendingFiles}>
-            {files.map((file, index) => (
-              <View key={`${file.uri}-${index}`} style={styles.fileChip}>
-                <Icon name={file.type.startsWith("audio/") ? "microphone" : file.type.startsWith("image/") ? "image" : "paperclip"} size={13} color={Palette.greenFg} />
-                <AppText variant="small" numberOfLines={1} style={styles.fileName}>{file.name}</AppText>
-                <Pressable accessibilityRole="button" accessibilityLabel={`Remove ${file.name}`} onPress={() => setFiles((current) => current.filter((_, i) => i !== index))} hitSlop={8}>
-                  <Icon name="xmark" size={13} color={Palette.fgSubtle} />
-                </Pressable>
-              </View>
-            ))}
-          </View>
-        ) : null}
-        <View style={styles.composerActions}>
-          <Pressable accessibilityRole="button" accessibilityLabel="Attach files" onPress={() => void attach()} style={styles.toolButton}>
-            <Icon name="paperclip" size={17} color={Palette.fgMuted} />
-            <AppText variant="small">Attach</AppText>
-          </Pressable>
-          <Pressable accessibilityRole="button" accessibilityLabel={rec.recording ? "Stop recording" : "Record a voice note"} onPress={() => void rec.toggle()} style={[styles.toolButton, rec.recording ? styles.recording : null]}>
-            <Icon name={rec.recording ? "stop" : "microphone"} size={16} color={rec.recording ? Palette.rec : Palette.fgMuted} />
-            <AppText variant="small" color={rec.recording ? Palette.rec : Palette.fgMuted}>
-              {rec.recording ? `${Math.floor(rec.secs / 60)}:${String(rec.secs % 60).padStart(2, "0")}` : "Voice"}
-            </AppText>
-          </Pressable>
-          <View style={styles.flex} />
-          <Button title="Add entry" icon="arrow-up" loading={busy} disabled={!canAdd} onPress={() => void addEntry()} style={styles.addButton} />
-        </View>
-        {error ? <Banner kind="error">{error}</Banner> : null}
-      </Card>
-      </Sheet>
+      <EntryEditor
+        visible={newEntryOpen}
+        dayLabel={`${dayLabel(date, today)} · ${selectedDate.toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" })}`}
+        draft={draft}
+        onDraft={setDraft}
+        files={files}
+        onRemoveFile={(index) => setFiles((current) => current.filter((_, i) => i !== index))}
+        recording={rec.recording}
+        recordingSecs={rec.secs}
+        onToggleRecording={() => void rec.toggle()}
+        onPickImages={() => void attach("image/*")}
+        onPickFiles={() => void attach()}
+        canSave={canAdd}
+        saving={busy}
+        error={error}
+        onSave={() => void addEntry()}
+        onClose={() => setNewEntryOpen(false)}
+      />
+
+      {/* Editing an entry uses the same writing page, without the record and attach buttons (an entry's files aren't changed here). */}
+      <EntryEditor
+        visible={editingEntry !== undefined}
+        dayLabel={editingEntry ? `Editing · ${dayLabel(editingEntry.entry_date, today)} · ${timeOf(editingEntry.created_at)}` : ""}
+        draft={editDraft}
+        onDraft={setEditDraft}
+        canSave={!!editingEntry && editDraft !== editingEntry.body && !update.isPending}
+        saving={update.isPending}
+        error={error}
+        onSave={() => editingEntry && saveEdit(editingEntry)}
+        onClose={() => {
+          setEditingId(null);
+          setEditDraft("");
+        }}
+      />
 
       <Sheet visible={calendarOpen} onClose={() => setCalendarOpen(false)} title="Choose a day">
         <CalendarGrid
@@ -447,16 +430,6 @@ const styles = StyleSheet.create({
   entryMeta: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
   entryActions: { flexDirection: "row", alignItems: "center", gap: 12 },
   entryAction: { width: 36, height: 36, borderRadius: Radius.pill, alignItems: "center", justifyContent: "center" },
-  editForm: { gap: 12 },
-  editActions: { flexDirection: "row", justifyContent: "flex-end", gap: 8 },
   emptyLine: { paddingVertical: 8 },
-  composer: { gap: 12 },
-  pendingFiles: { gap: 8 },
-  fileChip: { minHeight: 38, borderRadius: Radius.pill, backgroundColor: Palette.greenBg, paddingHorizontal: 12, flexDirection: "row", alignItems: "center", gap: 8 },
-  fileName: { flex: 1 },
-  composerActions: { flexDirection: "row", alignItems: "center", gap: 4 },
-  toolButton: { minHeight: 42, paddingHorizontal: 10, borderRadius: Radius.pill, flexDirection: "row", alignItems: "center", gap: 7 },
-  recording: { backgroundColor: Palette.clayBg },
-  addButton: { minHeight: 44, paddingHorizontal: 16 },
   todayButton: { marginTop: 12 },
 });

@@ -1,3 +1,4 @@
+import { audioClock, fallbackPeaks, WAVE, waveBarCount, waveSample } from "@untitled/logic";
 import type { Attachment } from "@untitled/types";
 import { setAudioModeAsync, useAudioPlayer, useAudioPlayerStatus } from "expo-audio";
 import { Image } from "expo-image";
@@ -6,7 +7,7 @@ import { ActivityIndicator, Linking, PanResponder, Pressable, StyleSheet, View }
 
 import { AppText } from "./AppText";
 import { Icon } from "./Icon";
-import { Palette, Radius } from "@/constants/theme";
+import { Palette, Radius, Shadow } from "@/constants/theme";
 import { useSignedUrls } from "@/features/attachments/useSignedUrls";
 import { useRuntimePrefs } from "@/lib/preferences";
 
@@ -66,14 +67,16 @@ export function AttachmentGallery({ attachments }: { attachments: Attachment[] }
   );
 }
 
-function AudioAttachment({ uri, name, failed }: { uri: string | null; name: string; failed: boolean }) {
+/** `bare` is the flat grey version used inside another card (the web's `bare` AudioWave in FilePreviewList). */
+export function AudioAttachment({ uri, name, failed, bare = false }: { uri: string | null; name: string; failed: boolean; bare?: boolean }) {
   const player = useAudioPlayer(uri, { updateInterval: 500 });
   const status = useAudioPlayerStatus(player);
   const [playbackError, setPlaybackError] = useState(false);
   const [waveWidth, setWaveWidth] = useState(0);
   const duration = status.duration || 0;
   const progress = duration > 0 ? Math.min(1, status.currentTime / duration) : 0;
-  const peaks = useMemo(() => waveformPeaks(name), [name]);
+  const peaks = useMemo(() => fallbackPeaks(name), [name]);
+  const barCount = waveBarCount(waveWidth);
   const disabled = !uri || failed || !status.isLoaded || !!status.error;
 
   const seekAt = useCallback((x: number) => {
@@ -100,7 +103,7 @@ function AudioAttachment({ uri, name, failed }: { uri: string | null; name: stri
 
   return (
     <View style={styles.audioWrap}>
-      <View style={styles.audioCard}>
+      <View style={[styles.audioCard, bare ? styles.audioBare : null]}>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel={`${status.playing ? "Pause" : "Play"} ${name}`}
@@ -123,41 +126,36 @@ function AudioAttachment({ uri, name, failed }: { uri: string | null; name: stri
           style={styles.waveform}
           {...panResponder.panHandlers}
         >
+          {/* The same bars as the web's waveform: 3 px wide, 2 px apart, taller and more opaque where the clip is louder. */}
           <View style={styles.waveBars}>
-            {peaks.map((peak, index) => (
-              <View
-                key={index}
-                style={[
-                  styles.waveBar,
-                  { height: Math.max(7, Math.round(peak * 34)), backgroundColor: duration > 0 && index / peaks.length <= progress ? Palette.greenFg : Palette.fgMuted },
-                ]}
-              />
-            ))}
+            {Array.from({ length: barCount }, (_, index) => {
+              const value = waveSample(peaks, index, barCount);
+              return (
+                <View
+                  key={index}
+                  style={{
+                    width: WAVE.barWidth,
+                    marginRight: index < barCount - 1 ? WAVE.barGap : 0,
+                    height: Math.max(WAVE.minBarHeight, value * WAVE.height * WAVE.maxFill),
+                    borderRadius: WAVE.barRadius,
+                    backgroundColor: Palette.fg,
+                    opacity: 0.3 + value * 0.7,
+                  }}
+                />
+              );
+            })}
           </View>
+          <View style={[styles.played, { width: `${progress * 100}%` }]} />
           <View style={[styles.playhead, { left: `${progress * 100}%` }]} />
           <View style={[styles.playheadDot, { left: `${progress * 100}%` }]} />
         </View>
         <AppText variant="small" color={Palette.fgSubtle} style={styles.audioTime}>
-          {clock(status.playing || status.currentTime > 0 ? status.currentTime : duration)}
+          {audioClock(status.playing || status.currentTime > 0 ? status.currentTime : duration)}
         </AppText>
       </View>
       {failed || status.error || playbackError ? <AppText variant="small" color={Palette.clayFg}>Couldn’t load this audio.</AppText> : null}
     </View>
   );
-}
-
-function waveformPeaks(seed: string) {
-  let value = 2166136261;
-  for (const character of seed) value = Math.imul(value ^ character.charCodeAt(0), 16777619);
-  return Array.from({ length: 56 }, (_, index) => {
-    value = Math.imul(value ^ (value >>> 15), 2246822507) + index;
-    return 0.22 + ((value >>> 0) % 1000) / 1300;
-  });
-}
-
-function clock(seconds: number) {
-  const safeSeconds = Number.isFinite(seconds) ? Math.max(0, Math.floor(seconds)) : 0;
-  return `${Math.floor(safeSeconds / 60)}:${String(safeSeconds % 60).padStart(2, "0")}`;
 }
 
 const styles = StyleSheet.create({
@@ -177,15 +175,17 @@ const styles = StyleSheet.create({
     borderColor: Palette.glassRing,
   },
   chipText: { flex: 1 },
-  audioCard: { minHeight: 56, flexDirection: "row", alignItems: "center", gap: 12, paddingLeft: 6, paddingRight: 14, paddingVertical: 6, borderRadius: Radius.pill, backgroundColor: Palette.surface, borderWidth: 1, borderColor: Palette.line },
+  // Same measurements as the web's AudioWave: a pill 6 px in from the left, 16 px on the right, a 40 px play button, 12 px gaps.
+  audioCard: { maxWidth: 420, width: "100%", flexDirection: "row", alignItems: "center", gap: 12, paddingLeft: 6, paddingRight: 16, paddingVertical: 6, borderRadius: Radius.pill, backgroundColor: Palette.surface, borderWidth: 1, borderColor: Palette.line },
+  audioBare: { backgroundColor: Palette.surfaceMuted, borderWidth: 0 },
   audioWrap: { gap: 4 },
-  audioButton: { width: 42, height: 42, borderRadius: Radius.pill, alignItems: "center", justifyContent: "center", backgroundColor: Palette.fillDark },
-  waveform: { height: 40, flex: 1, justifyContent: "center", overflow: "hidden" },
-  waveBars: { height: 40, flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 2 },
-  waveBar: { flex: 1, minWidth: 1, maxWidth: 3, borderRadius: Radius.pill },
-  playhead: { position: "absolute", top: 0, bottom: 0, width: 2, marginLeft: -1, backgroundColor: Palette.greenFg },
-  playheadDot: { position: "absolute", top: 12, width: 14, height: 14, marginLeft: -7, borderRadius: Radius.pill, backgroundColor: Palette.greenFg, borderWidth: 2, borderColor: Palette.surface },
+  audioButton: { width: 40, height: 40, borderRadius: Radius.pill, alignItems: "center", justifyContent: "center", backgroundColor: Palette.fillDark },
+  waveform: { height: WAVE.height, flex: 1, justifyContent: "center", borderRadius: Radius.r1, overflow: "hidden" },
+  waveBars: { height: WAVE.height, flexDirection: "row", alignItems: "center" },
+  played: { position: "absolute", top: 0, bottom: 0, left: 0, borderRadius: Radius.r1, backgroundColor: Palette.greenFg, opacity: 0.14 },
+  playhead: { position: "absolute", top: 0, bottom: 0, width: 2, marginLeft: -1, borderRadius: Radius.pill, backgroundColor: Palette.greenFg },
+  playheadDot: { position: "absolute", top: (WAVE.height - 14) / 2, width: 14, height: 14, marginLeft: -7, borderRadius: Radius.pill, backgroundColor: Palette.greenFg, borderWidth: 2, borderColor: Palette.surface, ...Shadow.e2 },
   pressed: { opacity: 0.82 },
   disabled: { opacity: 0.55 },
-  audioTime: { fontVariant: ["tabular-nums"], minWidth: 34, textAlign: "right" },
+  audioTime: { fontVariant: ["tabular-nums"], fontSize: 12, minWidth: 34, textAlign: "right" },
 });

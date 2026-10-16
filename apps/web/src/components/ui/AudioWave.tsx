@@ -2,24 +2,12 @@
 import { useEffect, useRef, useState } from "react";
 import { FontAwesomeIcon as FA } from "@fortawesome/react-fontawesome";
 import { faPause, faPlay } from "@fortawesome/free-solid-svg-icons";
+import { AUDIO_BARS, audioClock, fallbackPeaks } from "@untitled/logic/audio";
 import { AudioScrubber } from "./waveform";
 
-// Enough samples for the widest layout; the canvas resamples them to however many bars fit.
-const BARS = 96;
-const fmt = (s: number) => {
-  if (!Number.isFinite(s) || s < 0) s = 0;
-  return `${Math.floor(s / 60)}:${String(Math.floor(s % 60)).padStart(2, "0")}`;
-};
-
-/** Stable pseudo-random bar heights, used until (or if) the real audio can't be decoded. */
-function fallbackPeaks(seed: string) {
-  let h = 2166136261;
-  for (const c of seed) h = Math.imul(h ^ c.charCodeAt(0), 16777619);
-  return Array.from({ length: BARS }, (_, i) => {
-    h = Math.imul(h ^ (h >>> 15), 2246822507) + i;
-    return 0.25 + ((h >>> 0) % 1000) / 1400;
-  });
-}
+// The bar count, clock and fallback shape live in the shared package so the phone's player draws the same clip.
+const BARS = AUDIO_BARS;
+const fmt = audioClock;
 
 /** Loudness per bar from the real audio, so the picture matches what you will hear. */
 async function readPeaks(src: string, signal: AbortSignal) {

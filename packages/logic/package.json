@@ -12,6 +12,14 @@
       "types": "./src/dates.ts",
       "default": "./src/dates.ts"
     },
+    "./audio": {
+      "types": "./src/audio.ts",
+      "default": "./src/audio.ts"
+    },
+    "./health": {
+      "types": "./src/health.ts",
+      "default": "./src/health.ts"
+    },
     "./tasks": {
       "types": "./src/tasks.ts",
       "default": "./src/tasks.ts"

@@ -11,8 +11,8 @@ import { createUploadId } from "@/lib/uploadId";
 export type PendingFile = { uri: string; name: string; type: string; size: number };
 
 /** Opens the system file picker. Files over the 10 MB limit are skipped and counted so the caller can say so. */
-export async function pickFiles(): Promise<{ files: PendingFile[]; tooBig: number }> {
-  const res = await DocumentPicker.getDocumentAsync({ multiple: true, copyToCacheDirectory: true, type: "*/*" });
+export async function pickFiles(type = "*/*"): Promise<{ files: PendingFile[]; tooBig: number }> {
+  const res = await DocumentPicker.getDocumentAsync({ multiple: true, copyToCacheDirectory: true, type });
   if (res.canceled) return { files: [], tooBig: 0 };
   const all = res.assets.map((a) => ({ uri: a.uri, name: a.name, type: a.mimeType || "application/octet-stream", size: a.size ?? 0 }));
   const files = all.filter((f) => f.size <= MAX_UPLOAD_BYTES);

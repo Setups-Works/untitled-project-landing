@@ -4,11 +4,11 @@ import { useFonts } from "expo-font";
 import { Stack } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
-import { useEffect } from "react";
 import { StyleSheet, View } from "react-native";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
+import { AnimatedSplash } from "@/components/AnimatedSplash";
 import { AppText } from "@/components/ui/AppText";
 import { Screen } from "@/components/ui/Screen";
 import { Palette } from "@/constants/theme";
@@ -34,24 +34,31 @@ export default function RootLayout() {
       <SafeAreaProvider>
         <StatusBar style="dark" />
         {!mobileEnv.apiBaseUrl ? (
-          <SetupNotice onLayout={() => void SplashScreen.hideAsync()} />
+          <>
+            <SetupNotice />
+            <AnimatedSplash ready />
+          </>
         ) : (
-          <AppStateProvider>{fontsReady ? <Routes /> : null}</AppStateProvider>
+          <AppStateProvider>
+            {fontsReady ? <Routes /> : null}
+            <SplashGate fontsReady={fontsReady} />
+          </AppStateProvider>
         )}
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );
 }
 
+/** The animated splash covers the app until fonts and the stored session and onboarding flag are read, so no wrong screen flashes. */
+function SplashGate({ fontsReady }: { fontsReady: boolean }) {
+  const { ready } = useAppState();
+  return <AnimatedSplash ready={fontsReady && ready} />;
+}
+
 /** Declarative guards: a screen in a group whose `guard` is false cannot be reached, and the router falls back to `index`. */
 function Routes() {
   const { ready, onboardingDone, signedIn } = useAppState();
 
-  useEffect(() => {
-    if (ready) void SplashScreen.hideAsync();
-  }, [ready]);
-
-  // Keep the splash up until the stored session and onboarding flag are read, so no wrong screen flashes.
   if (!ready) return null;
 
   return (
@@ -83,9 +90,9 @@ function Routes() {
   );
 }
 
-function SetupNotice({ onLayout }: { onLayout: () => void }) {
+function SetupNotice() {
   return (
-    <View style={styles.root} onLayout={onLayout}>
+    <View style={styles.root}>
       <Screen scroll={false} contentStyle={styles.setup}>
         <AppText variant="label">untitled project</AppText>
         <AppText variant="title">Connect your workspace</AppText>

@@ -9,14 +9,14 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Font, Palette, Radius, Tints } from "@/constants/theme";
 
 type BottomTabBarProps = Parameters<NonNullable<ComponentProps<typeof Tabs>["tabBar"]>>[0];
-type SF = "house.fill" | "checklist" | "note.text" | "book.fill";
+type SF = "house.fill" | "checklist" | "book.fill" | "heart.fill";
 type FA = ComponentProps<typeof FontAwesome6>["name"];
 
 const TABS: { name: string; title: string; sf?: SF; fa: FA; image?: ImageSourcePropType }[] = [
   { name: "home", title: "Home", sf: "house.fill", fa: "house" },
-  { name: "todo", title: "To-do", sf: "checklist", fa: "list-check" },
-  { name: "notes", title: "Notes", sf: "note.text", fa: "note-sticky" },
+  { name: "todo", title: "Plan", sf: "checklist", fa: "list-check" },
   { name: "journal", title: "Journal", sf: "book.fill", fa: "book-open" },
+  { name: "health", title: "Health", sf: "heart.fill", fa: "heart-pulse" },
   { name: "chat", title: "Chat", fa: "comments", image: require("../../../assets/images/chat-sparkle.png") as ImageSourcePropType },
 ];
 
@@ -196,9 +196,9 @@ function AndroidTabs() {
       }}
     >
       <Tabs.Screen name="home" options={{ title: "Home" }} />
-      <Tabs.Screen name="todo" options={{ title: "To-do" }} />
-      <Tabs.Screen name="notes" options={{ title: "Notes" }} />
+      <Tabs.Screen name="todo" options={{ title: "Plan" }} />
       <Tabs.Screen name="journal" options={{ title: "Journal" }} />
+      <Tabs.Screen name="health" options={{ title: "Health" }} />
       <Tabs.Screen name="chat" options={{ title: "Chat" }} />
     </Tabs>
   );

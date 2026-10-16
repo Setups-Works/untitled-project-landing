@@ -11,6 +11,7 @@ import MegaPreview from "../MegaPreview";
 import type { MegaItem } from "../../lib/site";
 import { toneClass } from "../../lib/tones";
 import { WRAP } from "./Kit";
+import { BrandMark } from "../BrandMark";
 
 type Mega = { featured: MegaItem[]; workspace: MegaItem[]; explore: MegaItem[] };
 
@@ -26,7 +27,7 @@ export function SiteHeaderBar({ mega, links, menu }: { mega: Mega; links: { href
           href="/"
           className="liquid-bar flex shrink-0 items-center gap-2.5 rounded-pill py-2 pr-5 pl-3.5 font-serif text-[23px] tracking-[-0.02em]"
         >
-          <i className="size-2.5 rounded-full bg-green-fg shadow-[0_0_0_4px_var(--green-bg)]" aria-hidden />
+          <BrandMark size={28} />
           untitled project
         </Link>
         <NavMenu mega={mega} links={links} />

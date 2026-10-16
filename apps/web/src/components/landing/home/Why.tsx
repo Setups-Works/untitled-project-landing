@@ -8,6 +8,7 @@ import { Eyebrow, Lead, Section, Title } from "../Kit";
 import { showNow, useMotion } from "../motion";
 import { R, Reveal } from "../Reveal";
 import type { Tone } from "../../../lib/tones";
+import { BrandMark } from "../../BrandMark";
 
 // Where each scattered app starts (px offset and tilt from its final place in the grid). Fixed, so the layout is the same on every visit.
 const APPS: { icon: IconDefinition; t: string; tone: Tone; from: [number, number, number] }[] = [
@@ -93,7 +94,7 @@ export default function Why() {
               ))}
             </div>
             <div data-label data-reveal className="relative mt-5 flex items-center justify-center gap-2.5 opacity-0">
-              <i className="size-2.5 rounded-full bg-green-fg shadow-[0_0_0_4px_var(--green-bg)]" aria-hidden />
+              <BrandMark size={34} />
               <span className="font-serif text-[24px] tracking-[-0.02em] text-fg">untitled project</span>
             </div>
           </Glass>

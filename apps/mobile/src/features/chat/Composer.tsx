@@ -5,8 +5,10 @@ import { pickFiles, type PendingFile } from "./files";
 import type { AiProvider } from "./types";
 import { useRecorder } from "./useRecorder";
 import { AppText } from "@/components/ui/AppText";
+import { FilePreviewList } from "@/components/ui/FilePreviewList";
 import { GlassSurface } from "@/components/ui/GlassSurface";
 import { Icon } from "@/components/ui/Icon";
+import { RecordButton } from "@/components/ui/RecordButton";
 import { Sheet } from "@/components/ui/Sheet";
 import { Font, Palette, Radius } from "@/constants/theme";
 
@@ -59,26 +61,7 @@ export function Composer({ busy, providers, provider, onProvider, onSend, onErro
       <GlassSurface tone="violet" style={styles.card}>
         {files.length ? (
           <View style={styles.files}>
-            {files.map((f, i) => (
-              <View key={`${f.uri}-${i}`} style={styles.file}>
-                <Icon
-                  name={f.type.startsWith("audio/") ? "microphone" : f.type.startsWith("image/") ? "image" : "paperclip"}
-                  size={12}
-                  color={Palette.greenFg}
-                />
-                <AppText variant="small" color={Palette.fg} numberOfLines={1} style={styles.fileName}>
-                  {f.name}
-                </AppText>
-                <Pressable
-                  accessibilityRole="button"
-                  accessibilityLabel={`Remove ${f.name}`}
-                  hitSlop={8}
-                  onPress={() => setFiles((x) => x.filter((_, j) => j !== i))}
-                >
-                  <Icon name="xmark" size={12} color={Palette.fgSubtle} />
-                </Pressable>
-              </View>
-            ))}
+            <FilePreviewList files={files} onRemove={(i) => setFiles((x) => x.filter((_, j) => j !== i))} />
           </View>
         ) : null}
 
@@ -119,20 +102,7 @@ export function Composer({ busy, providers, provider, onProvider, onSend, onErro
 
           <View style={styles.spacer} />
 
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={rec.recording ? "Stop recording" : "Record a voice note"}
-            hitSlop={8}
-            onPress={() => void rec.toggle()}
-            style={[styles.iconBtn, rec.recording ? styles.recording : null]}
-          >
-            <Icon name={rec.recording ? "stop" : "microphone"} size={17} color={rec.recording ? Palette.rec : Palette.fgMuted} />
-          </Pressable>
-          {rec.recording ? (
-            <AppText variant="small" color={Palette.rec}>
-              {Math.floor(rec.secs / 60)}:{String(rec.secs % 60).padStart(2, "0")}
-            </AppText>
-          ) : null}
+          <RecordButton recording={rec.recording} secs={rec.secs} onToggle={() => void rec.toggle()} />
 
           <Pressable
             accessibilityRole="button"
@@ -196,7 +166,6 @@ const styles = StyleSheet.create({
   },
   bar: { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 8 },
   iconBtn: { width: 38, height: 38, borderRadius: Radius.pill, alignItems: "center", justifyContent: "center" },
-  recording: { backgroundColor: Palette.clayBg },
   model: { flexDirection: "row", alignItems: "center", gap: 6, minHeight: 38, paddingHorizontal: 10 },
   spacer: { flex: 1 },
   send: {
@@ -208,18 +177,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   sendOn: { backgroundColor: Palette.fillDark },
-  files: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 8 },
-  file: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 6,
-    maxWidth: "100%",
-    paddingHorizontal: 10,
-    minHeight: 32,
-    borderRadius: Radius.pill,
-    backgroundColor: Palette.greenBg,
-  },
-  fileName: { flexShrink: 1 },
+  files: { marginBottom: 8 },
   option: { flexDirection: "row", alignItems: "center", gap: 12, minHeight: 56, paddingHorizontal: 14, borderRadius: Radius.r2 },
   optionText: { flex: 1, gap: 2 },
 });

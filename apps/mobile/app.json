@@ -8,14 +8,21 @@
     "scheme": "untitled",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "bundleIdentifier": "com.setupsworks.untitledproject",
-      "icon": "./assets/expo.icon"
+      "bundleIdentifier": "com.setupsworks.untitledproject"
     },
     "android": {
       "package": "com.setupsworks.workspace",
       "softwareKeyboardLayoutMode": "pan",
+      "permissions": [
+        "android.permission.health.READ_STEPS",
+        "android.permission.health.READ_DISTANCE",
+        "android.permission.health.READ_ACTIVE_CALORIES_BURNED",
+        "android.permission.health.READ_HEART_RATE",
+        "android.permission.health.READ_RESTING_HEART_RATE",
+        "android.permission.health.READ_SLEEP"
+      ],
       "adaptiveIcon": {
-        "backgroundColor": "#f5f4eb",
+        "backgroundColor": "#efece3",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
@@ -33,10 +40,27 @@
         {
           "backgroundColor": "#f5f4eb",
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "imageWidth": 160
         }
       ],
-      "expo-audio"
+      "expo-audio",
+      [
+        "@kingstinct/react-native-healthkit",
+        {
+          "NSHealthShareUsageDescription": "untitled project reads your steps, distance, active energy, heart rate and sleep so you can see them in your workspace and ask the assistant about them.",
+          "NSHealthUpdateUsageDescription": false,
+          "background": false
+        }
+      ],
+      "react-native-health-connect",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "minSdkVersion": 26
+          }
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

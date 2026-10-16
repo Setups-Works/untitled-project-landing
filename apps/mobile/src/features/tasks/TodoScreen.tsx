@@ -26,7 +26,8 @@ const SMART: ViewKey[] = ["inbox", "today", "upcoming", "overdue", "recurring", 
 const LAYOUT_ICON: Record<ViewOpts["layout"], IconName> = { list: "list-ul", board: "table-columns", calendar: "calendar-days" };
 const NEW_LIST = "__new";
 
-export function TodoScreen() {
+/** `edges` lets a parent (the To-do / Notes pager) own the top inset. */
+export function TodoScreen({ edges }: { edges?: ("top" | "bottom" | "left" | "right")[] } = {}) {
   const { preferences, preferencesReady } = useAppState();
   const today = useMemo(() => isoDate(), []);
   const tasksQ = useTasks();
@@ -125,7 +126,7 @@ export function TodoScreen() {
   const shown = applyOpts(inThisView, opts);
 
   return (
-    <Screen onRefresh={refresh} refreshing={refreshing}>
+    <Screen onRefresh={refresh} refreshing={refreshing} edges={edges}>
       <View style={styles.head}>
         <AppText variant="title" accessibilityRole="header" style={styles.flex} numberOfLines={1}>
           {activeList ? activeList.name : (VIEW_TITLES[view] ?? "To-do")}

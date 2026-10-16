@@ -4,4 +4,6 @@ export const qk = {
   notes: ["notes"] as const,
   journal: ["journal"] as const,
   settings: ["settings"] as const,
+  health: ["health"] as const,
+  calendar: ["calendar"] as const,
 };

@@ -48,6 +48,33 @@ export type JournalEntry = {
   updated_at: string;
 };
 
+/** A calendar event. Times are UTC timestamps; an all-day event runs from midnight to midnight in the owner's local time. */
+export type CalendarEvent = {
+  id: string;
+  title: string;
+  description: string;
+  location: string;
+  start_at: string;
+  end_at: string;
+  all_day: boolean;
+  color: Tone | string;
+};
+
+/** One day of health aggregates synced from the phone (Apple Health or Health Connect). Any metric can be missing. */
+export type HealthDay = {
+  /** YYYY-MM-DD */
+  day: string;
+  steps: number | null;
+  distance_m: number | null;
+  active_kcal: number | null;
+  resting_hr: number | null;
+  hr_min: number | null;
+  hr_max: number | null;
+  sleep_minutes: number | null;
+  source: "healthkit" | "health_connect" | "unknown";
+  synced_at: string;
+};
+
 export type ListResponse<T> = { data: T[]; limit: number; offset: number };
 export type ItemResponse<T> = { data: T };
 

@@ -10,11 +10,10 @@ import UniversalSearch, { OPEN_SETTINGS_EVENT } from "./UniversalSearch";
 import { FontAwesomeIcon as FA } from "@fortawesome/react-fontawesome";
 import {
   faHouse,
-  faCalendarDays,
   faBookOpen,
   faComments,
-  faPenToSquare,
   faListCheck,
+  faHeartPulse,
   faShieldHalved,
   faRightFromBracket,
   faGear,
@@ -24,15 +23,16 @@ import { authClient } from "../../lib/auth/client";
 import { clearDrafts } from "../../lib/drafts";
 import { useSwipeNav } from "../../hooks/useSwipeNav";
 import SectionTabs from "./SectionTabs";
+import { BrandMark } from "../BrandMark";
 
 /** One line per workspace section — pages live in app/dashboard/<section>. */
 const TABS = [
   { href: "/dashboard", t: "Home", icon: faHouse },
-  { href: "/dashboard/calendar", t: "Calendar", icon: faCalendarDays },
   { href: "/dashboard/journal", t: "Journal", icon: faBookOpen },
   { href: "/dashboard/chat", t: "Chat", icon: faComments },
-  { href: "/dashboard/notes", t: "Notes", icon: faPenToSquare },
-  { href: "/dashboard/todo", t: "To-do", icon: faListCheck },
+  // To-do, Notes and Calendar share one tab; the switch at the top of each page moves between them (components/app/PlanSwitch.tsx).
+  { href: "/dashboard/todo", t: "Plan", icon: faListCheck, also: ["/dashboard/notes", "/dashboard/calendar"] },
+  { href: "/dashboard/health", t: "Health", icon: faHeartPulse },
 ];
 
 type Account = {
@@ -68,7 +68,9 @@ export default function AppNav({
   const box = useRef<HTMLDivElement>(null);
 
   // Which section we are on (the tab pill itself lives in SectionTabs).
-  const current = TABS.findIndex((t) => (t.href === "/dashboard" ? path === "/dashboard" : path.startsWith(t.href)));
+  const current = TABS.findIndex((t) =>
+    t.href === "/dashboard" ? path === "/dashboard" : [t.href, ...(t.also ?? [])].some((h) => path.startsWith(h)),
+  );
 
   // On a touch screen, swipe the page sideways to go to the next or previous section.
   useSwipeNav(current, TABS.length, (to) => router.push(TABS[to].href));
@@ -102,7 +104,7 @@ export default function AppNav({
   return (
     <header className="ap-bar">
       <Link href="/dashboard" className="logo ap-logo">
-        <i />
+        <BrandMark size={28} />
         <span>untitled project</span>
       </Link>
       {/* Liquid-glass section switcher (click, or drag the glass lens across and let go) with the search button beside it. */}

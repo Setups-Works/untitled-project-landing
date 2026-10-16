@@ -15,6 +15,7 @@ import {
   faPlus,
   faWandMagicSparkles,
 } from "@fortawesome/free-solid-svg-icons";
+import { BrandMark } from "./BrandMark";
 
 /**
  * A miniature of the real signed-in dashboard for the landing hero: the same top bar (logo, glass section switcher with its sliding
@@ -79,7 +80,7 @@ function TopBar({ view, onGo }: { view: Id; onGo: (id: Id) => void }) {
   return (
     <div className="relative flex items-center justify-center px-3 py-3 sm:px-5">
       <span className="absolute left-4 hidden items-center gap-2 font-serif text-[20px] tracking-[-0.02em] xl:flex">
-        <i className="size-2.5 rounded-full bg-green-fg" aria-hidden />
+        <BrandMark size={26} />
         untitled project
       </span>
       <div className="flex items-center gap-2">

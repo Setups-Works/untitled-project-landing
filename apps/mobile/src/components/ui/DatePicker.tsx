@@ -92,6 +92,8 @@ export function CalendarGrid({
   );
 }
 
+const DAY_SIZE = 36;
+
 type Props = { label: string; value: string | null; onChange: (iso: string | null) => void; clearable?: boolean };
 
 export function DateField({ label, value, onChange, clearable = true }: Props) {
@@ -175,7 +177,8 @@ const styles = StyleSheet.create({
   week: { flexDirection: "row" },
   grid: { flexDirection: "row", flexWrap: "wrap" },
   cell: { width: `${100 / 7}%`, alignItems: "center", paddingVertical: 3 },
-  day: { width: 36, height: 36, borderRadius: Radius.pill, alignItems: "center", justifyContent: "center" },
+  // Half the size exactly: Android draws a filled background square when the radius is far larger than the view (Radius.pill = 999).
+  day: { width: DAY_SIZE, height: DAY_SIZE, borderRadius: DAY_SIZE / 2, alignItems: "center", justifyContent: "center" },
   dot: { width: 4, height: 4, borderRadius: 2, backgroundColor: Palette.greenFg, marginTop: 1 },
   actions: { flexDirection: "row", gap: 8, marginTop: 12 },
   flex: { flex: 1, paddingHorizontal: 8 },

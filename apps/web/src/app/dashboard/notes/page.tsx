@@ -1,10 +1,14 @@
 import { Suspense } from "react";
+import PlanSwitch from "../../../components/app/PlanSwitch";
 import NotesView from "../../../components/app/NotesView";
 
 export default function Page() {
   return (
-    <Suspense>
-      <NotesView />
-    </Suspense>
+    <>
+      <PlanSwitch />
+      <Suspense>
+        <NotesView />
+      </Suspense>
+    </>
   );
 }

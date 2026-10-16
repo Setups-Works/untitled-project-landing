@@ -15,6 +15,7 @@ export async function resetUserWorkspace(userId: string): Promise<Result> {
     await db.from("notes").delete().not("id", "is", null),
     await db.from("journal_entries").delete().not("id", "is", null),
     await db.from("chats").delete().not("id", "is", null),
+    await db.from("health_daily").delete().not("id", "is", null),
   ];
   if (deletes.some((result) => result.error)) return { ok: false, error: "Some items couldn’t be deleted. Please try again." };
   try {

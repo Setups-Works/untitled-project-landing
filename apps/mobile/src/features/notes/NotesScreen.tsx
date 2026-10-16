@@ -47,7 +47,8 @@ function editedLabel(iso: string) {
   return `Edited ${date.toLocaleDateString(undefined, { day: "numeric", month: "short", ...(date.getFullYear() !== today.getFullYear() ? { year: "numeric" } : {}) })}`;
 }
 
-export function NotesScreen() {
+/** `edges` lets the stack header own the top inset when Notes is opened as a pushed screen. */
+export function NotesScreen({ edges }: { edges?: ("top" | "bottom" | "left" | "right")[] } = {}) {
   const notesQ = useNotes();
   const { create, update, remove } = useNoteActions();
   const [query, setQuery] = useState("");
@@ -168,7 +169,7 @@ export function NotesScreen() {
   }
 
   return (
-    <Screen onRefresh={refresh} refreshing={refreshing}>
+    <Screen onRefresh={refresh} refreshing={refreshing} edges={edges}>
       <View style={styles.head}>
         <View style={styles.titleWithCount}>
           <AppText variant="title" accessibilityRole="header">Notes</AppText>

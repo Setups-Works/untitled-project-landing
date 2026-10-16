@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import ClientOnly from "../../../components/app/ClientOnly";
+import PlanSwitch from "../../../components/app/PlanSwitch";
 import CalendarApp from "../../../features/calendar/components/CalendarApp";
 
 export const metadata = {
@@ -10,6 +11,7 @@ export const metadata = {
 export default function CalendarPage() {
   return (
     <ClientOnly>
+      <PlanSwitch />
       <Suspense fallback={<div className="p-6 text-xs text-fg-muted">Loading calendar...</div>}>
         <CalendarApp />
       </Suspense>
