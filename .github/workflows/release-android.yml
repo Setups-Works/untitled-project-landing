@@ -1,0 +1,121 @@
+name: Release Android
+
+# Pushing a tag like v1.2.0 builds the Android app and publishes it as a GitHub Release with the APK attached.
+#   git tag v1.2.0 && git push origin v1.2.0
+# Run it by hand (Actions → Release Android → Run workflow) to rebuild the APK of an existing tag.
+#
+# Repository settings used:
+#   variable EXPO_PUBLIC_API_URL        the web app's address, baked into the app at build time (required)
+#   secret   ANDROID_KEYSTORE_BASE64    optional: your upload keystore, base64. Without it the APK is signed with the debug key,
+#   secret   ANDROID_KEYSTORE_PASSWORD  which installs fine on a phone but cannot be uploaded to Google Play.
+#   secret   ANDROID_KEY_ALIAS
+#   secret   ANDROID_KEY_PASSWORD
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing tag to build and release (for example v1.2.0)
+        required: true
+
+permissions:
+  contents: write # create the release and upload the APK
+
+concurrency:
+  group: release-android-${{ github.event.inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+jobs:
+  apk:
+    name: Build and publish the APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      TAG: ${{ github.event.inputs.tag || github.ref_name }}
+      EXPO_PUBLIC_API_URL: ${{ vars.EXPO_PUBLIC_API_URL }}
+    steps:
+      - name: Check the tag and settings
+        run: |
+          [[ "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([-.][0-9A-Za-z.]+)?$ ]] || { echo "Tag '$TAG' must look like v1.2.3"; exit 1; }
+          [ -n "$EXPO_PUBLIC_API_URL" ] || { echo "Set the repository variable EXPO_PUBLIC_API_URL (Settings → Variables)."; exit 1; }
+
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ env.TAG }}
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      # android/ is generated from app.json and its config plugins (Health Connect, build properties), never committed.
+      - name: Generate the Android project
+        working-directory: apps/mobile
+        run: pnpm exec expo prebuild --platform android --no-install --clean
+
+      # The tag decides the version people see; the run number keeps versionCode rising so a newer APK always installs over an older one.
+      - name: Set the version
+        working-directory: apps/mobile/android/app
+        run: |
+          sed -i -E "s/versionCode [0-9]+/versionCode ${{ github.run_number }}/; s/versionName \"[^\"]*\"/versionName \"${TAG#v}\"/" build.gradle
+          grep -nE "versionCode|versionName" build.gradle
+
+      - name: Build the release APK
+        working-directory: apps/mobile/android
+        run: ./gradlew assembleRelease --no-daemon --stacktrace
+
+      - name: Sign with the release key (if configured)
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          APK=$(ls apps/mobile/android/app/build/outputs/apk/release/*.apk | head -n1)
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "No release keystore configured: the APK keeps the debug signature."
+            echo "SIGNED=debug" >> "$GITHUB_ENV"
+          else
+            echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.keystore"
+            APKSIGNER=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | sort -V | tail -n1)
+            "$APKSIGNER" sign --ks "$RUNNER_TEMP/release.keystore" --ks-key-alias "$KEY_ALIAS" \
+              --ks-pass env:KEYSTORE_PASSWORD --key-pass env:KEY_PASSWORD "$APK"
+            "$APKSIGNER" verify "$APK"
+            rm -f "$RUNNER_TEMP/release.keystore"
+            echo "SIGNED=release" >> "$GITHUB_ENV"
+          fi
+          cp "$APK" "untitled-project-$TAG.apk"
+          sha256sum "untitled-project-$TAG.apk" > "untitled-project-$TAG.apk.sha256"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: untitled-project-${{ env.TAG }}-apk
+          path: untitled-project-${{ env.TAG }}.apk*
+
+      - name: Publish the GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          NOTE="Android APK for $TAG. Download it on your phone, allow installs from this source, and open it."
+          [ "$SIGNED" = "debug" ] && NOTE="$NOTE Signed with the debug key (not for Google Play)."
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release upload "$TAG" "untitled-project-$TAG.apk" "untitled-project-$TAG.apk.sha256" --clobber
+          else
+            gh release create "$TAG" "untitled-project-$TAG.apk" "untitled-project-$TAG.apk.sha256" \
+              --title "$TAG" --generate-notes --notes "$NOTE" $( [[ "$TAG" == *-* ]] && echo --prerelease )
+          fi
