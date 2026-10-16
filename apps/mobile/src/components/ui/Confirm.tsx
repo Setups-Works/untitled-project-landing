@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useEffect, useRef, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useState, type ReactNode } from "react";
 import {
   Animated,
   Easing,
@@ -36,9 +36,9 @@ function ConfirmDialog({
   resolve,
 }: Pending) {
   const preferences = useRuntimePrefs();
-  const scrimOpacity = useRef(new Animated.Value(0)).current;
-  const translateY = useRef(new Animated.Value(12)).current;
-  const scale = useRef(new Animated.Value(0.97)).current;
+  const [scrimOpacity] = useState(() => new Animated.Value(0));
+  const [translateY] = useState(() => new Animated.Value(12));
+  const [scale] = useState(() => new Animated.Value(0.97));
 
   // Run the pop-in on mount, matching web cdPop: translateY(10px) scale(0.97) cdFade: 0.16s
   useEffect(() => {
@@ -216,9 +216,9 @@ function PromptDialog({
   const preferences = useRuntimePrefs();
   const insets = useSafeAreaInsets();
 
-  const scrimOpacity = useRef(new Animated.Value(0)).current;
-  const translateY = useRef(new Animated.Value(12)).current;
-  const scale = useRef(new Animated.Value(0.97)).current;
+  const [scrimOpacity] = useState(() => new Animated.Value(0));
+  const [translateY] = useState(() => new Animated.Value(12));
+  const [scale] = useState(() => new Animated.Value(0.97));
 
   useEffect(() => {
     if (preferences.reduceMotion) {

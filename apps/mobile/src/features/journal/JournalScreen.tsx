@@ -10,7 +10,6 @@ import { pickFiles, type PendingFile } from "@/features/chat/files";
 import { useRecorder } from "@/features/chat/useRecorder";
 import { AppText } from "@/components/ui/AppText";
 import { AttachmentGallery } from "@/components/ui/AttachmentGallery";
-import { Banner } from "@/components/ui/Banner";
 import { Button } from "@/components/ui/Button";
 import { CalendarGrid } from "@/components/ui/DatePicker";
 import { Card } from "@/components/ui/Card";

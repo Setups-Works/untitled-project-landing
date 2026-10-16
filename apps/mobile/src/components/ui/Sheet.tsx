@@ -11,7 +11,7 @@ import {
   View,
 } from "react-native";
 import { SafeAreaProvider, useSafeAreaInsets } from "react-native-safe-area-context";
-import { useEffect, useRef } from "react";
+import { useEffect, useState } from "react";
 
 import { AppText } from "./AppText";
 import { Palette, Radius, Shadow } from "@/constants/theme";
@@ -54,10 +54,10 @@ function Body({
   const Content = scroll ? ScrollView : View;
 
   // Scrim fade
-  const scrimOpacity = useRef(new Animated.Value(0)).current;
+  const [scrimOpacity] = useState(() => new Animated.Value(0));
   // Sheet: translate up + scale (mirrors web's cdPop: translateY(10px) scale(0.97))
-  const translateY = useRef(new Animated.Value(24)).current;
-  const scale = useRef(new Animated.Value(0.97)).current;
+  const [translateY] = useState(() => new Animated.Value(24));
+  const [scale] = useState(() => new Animated.Value(0.97));
 
   useEffect(() => {
     if (reduceMotion) {
