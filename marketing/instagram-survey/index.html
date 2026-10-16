@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="theme-color" content="#f5f4eb" />
+    <title>Untitled project — Instagram story</title>
+    <style>
+      /* design-ok-file: Campaign artwork follows the mobile app design tokens. */
+      @font-face { font-family: Geist; src: url("assets/Geist-Regular.ttf") format("truetype"); font-weight: 400; }
+      @font-face { font-family: Geist; src: url("assets/Geist-Medium.ttf") format("truetype"); font-weight: 500; }
+      @font-face { font-family: Geist; src: url("assets/Geist-SemiBold.ttf") format("truetype"); font-weight: 600; }
+      @font-face { font-family: Instrument Serif; src: url("assets/InstrumentSerif-Regular.ttf") format("truetype"); font-weight: 400; }
+      @font-face { font-family: Instrument Serif; src: url("assets/InstrumentSerif-Italic.ttf") format("truetype"); font-style: italic; font-weight: 400; }
+      :root {
+        --page: #f5f4eb; --surface: #fff; --ink: #1b1c14; --muted: #5f6055; --quiet: #7e7e72;
+        --green: #1f5d49; --green-soft: #e8efe7; --blue-soft: #e4eef2; --amber-soft: #fae9bd;
+        --violet-soft: #ece5f2; --serif: "Instrument Serif", Georgia, serif; --sans: Geist, Arial, sans-serif;
+      }
+      * { box-sizing: border-box; }
+      html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #deddd5; color: var(--ink); font-family: var(--sans); }
+      body { display: grid; place-items: center; }
+      .story { width: 1080px; height: 1920px; position: relative; overflow: hidden; isolation: isolate; background: var(--page); }
+      .ambient { position: absolute; z-index: -1; inset: -12%; background: radial-gradient(ellipse at 2% 28%, rgba(220,239,230,.92), transparent 38%), radial-gradient(ellipse at 97% 43%, rgba(236,229,242,.8), transparent 37%), radial-gradient(ellipse at 60% 100%, rgba(250,233,189,.72), transparent 43%); }
+      .top { position: absolute; top: 72px; left: 80px; right: 80px; display: flex; align-items: center; justify-content: space-between; z-index: 3; }
+      .wordmark { display: flex; align-items: center; gap: 12px; padding: 8px 20px 8px 14px; border: 1px solid rgba(255,255,255,.88); border-radius: 999px; background: rgba(255,255,255,.44); box-shadow: inset 0 1px 0 rgba(255,255,255,.7); font: 400 23px/1 var(--serif); letter-spacing: -.02em; }
+      .mark { width: 10px; height: 10px; flex: 0 0 10px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 4px var(--green-soft); }
+      .series { color: var(--quiet); font-size: 15px; font-weight: 500; letter-spacing: .13em; text-transform: uppercase; }
+      .slide { position: absolute; inset: 0; display: none; }
+      .slide.active { display: block; }
+      .copy { position: absolute; top: 207px; left: 80px; right: 80px; z-index: 2; }
+      .eyebrow { display: flex; align-items: center; gap: 13px; color: var(--green); font-size: 19px; font-weight: 600; letter-spacing: .13em; text-transform: uppercase; }
+      .eyebrow::before { content: ""; width: 36px; height: 2px; background: currentColor; opacity: .48; }
+      h1 { max-width: 920px; margin: 27px 0 20px; font: 400 88px/.98 var(--serif); letter-spacing: -.035em; text-wrap: balance; }
+      h1 em { color: var(--green); font-weight: 400; }
+      .lead { max-width: 830px; margin: 0; color: var(--muted); font-size: 29px; line-height: 1.42; letter-spacing: -.02em; }
+      .phone { position: absolute; top: 500px; left: 50%; width: 660px; aspect-ratio: 1419 / 2796; transform: translateX(-50%); filter: drop-shadow(0 32px 62px rgba(31,29,22,.23)); }
+      .phone.chat { top: 500px; width: 660px; }
+      /* These bounds match the transparent display opening in iphone-15-frame.png. */
+      .screen-window { position: absolute; top: 4.29%; left: 8.46%; width: 83.02%; height: 91.32%; overflow: hidden; border-radius: 12% / 5.5%; background: var(--page); }
+      .screen-shot { position: absolute; top: .45%; left: 0; display: block; width: 100%; height: 98.71%; object-fit: contain; object-position: center; }
+      .phone-frame { position: absolute; inset: 0; display: block; width: 100%; height: 100%; object-fit: contain; }
+      .integration-copy { top: 185px; }
+      .integration-copy h1 { max-width: 100%; font-size: 82px; }
+      .integration-copy .lead { max-width: 900px; }
+      .integration-groups { position: absolute; top: 440px; left: 80px; right: 80px; display: grid; gap: 18px; }
+      .integration-group h2 { margin: 0 0 10px; color: var(--green); font-size: 17px; font-weight: 600; letter-spacing: .11em; text-transform: uppercase; }
+      .integration-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+      .integration-card { min-height: 126px; display: flex; align-items: center; gap: 17px; padding: 16px 18px; border: 1px solid rgba(255,255,255,.9); border-radius: 27px; background: rgba(255,255,255,.64); box-shadow: inset 0 1px 0 rgba(255,255,255,.68), 0 8px 22px rgba(50,46,28,.055); }
+      .integration-logo { width: 66px; height: 66px; flex: 0 0 66px; display: grid; place-items: center; border: 1px solid rgba(255,255,255,.96); border-radius: 22px; background: rgba(255,255,255,.82); box-shadow: 0 4px 14px rgba(50,46,28,.035); }
+      .integration-logo img { width: 39px; height: 39px; object-fit: contain; }
+      .integration-info { min-width: 0; }
+      .integration-name { display: block; margin-bottom: 7px; font-size: 21px; font-weight: 600; letter-spacing: -.035em; line-height: 1.1; }
+      .integration-status { display: inline-flex; align-items: center; gap: 7px; padding: 5px 10px; border-radius: 999px; color: var(--quiet); background: rgba(126,126,114,.1); font-size: 13px; font-weight: 500; white-space: nowrap; }
+      .integration-status::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: currentColor; }
+      .integration-status.live { color: var(--green); background: rgba(31,93,73,.09); }
+      .integration-status.soon { color: var(--muted); background: rgba(126,126,114,.12); }
+      .slide-six-footer { position: absolute; bottom: 118px; left: 80px; right: 80px; display: flex; justify-content: center; color: var(--quiet); font-size: 17px; }
+      .footer { position: absolute; bottom: 56px; left: 80px; right: 80px; display: flex; align-items: center; justify-content: space-between; z-index: 2; color: var(--quiet); font-size: 19px; }
+      .handle { color: var(--green); font-size: 20px; font-weight: 600; letter-spacing: .025em; }
+      .brand-credit { display: inline-flex; align-items: center; gap: 14px; color: var(--quiet); font-size: 19px; letter-spacing: .015em; }
+      .brand-credit img { display: block; width: 116px; height: auto; }
+      .controls { position: absolute; inset: 0; z-index: 5; display: flex; justify-content: space-between; align-items: center; pointer-events: none; }
+      .controls button { width: 58px; height: 58px; margin: 18px; border: 0; border-radius: 50%; color: var(--ink); background: rgba(255,255,255,.78); font-size: 30px; cursor: pointer; pointer-events: auto; box-shadow: 0 6px 22px rgba(40,35,10,.1); }
+      .export-mode .controls { display: none !important; }
+      @media print { html, body { width: 1080px; height: 1920px; } .controls { display: none !important; } }
+    </style>
+  </head>
+  <body>
+    <main class="story" aria-label="Instagram story slides for the Untitled project app">
+      <div class="ambient"></div>
+      <header class="top"><div class="wordmark"><span class="mark" aria-hidden="true"></span><span>untitled project</span></div><span class="series">Your personal workspace</span></header>
+
+      <section class="slide active" data-slide="1" aria-label="Home screen">
+        <div class="copy"><div class="eyebrow">One personal workspace</div><h1>Your day, <em>in focus.</em></h1><p class="lead">Tasks, notes, journal entries, and conversations—organized in one workspace that’s yours.</p></div>
+        <div class="phone"><div class="screen-window"><img class="screen-shot" src="assets/screens/01-home.png" alt="App home screen showing the journal streak, a to-do, notes, and navigation" /></div><img class="phone-frame" src="assets/iphone-15-frame.png" alt="" /></div>
+        <div class="footer"><span class="handle">untitled project</span><span class="brand-credit"><span>A product of</span><img src="assets/setups-works-logo.png" alt="Setups Works" /></span></div>
+      </section>
+
+      <section class="slide" data-slide="2" aria-label="To-do screen">
+        <div class="copy"><div class="eyebrow">To-do</div><h1>Make room for <em>what matters.</em></h1><p class="lead">Turn priorities into clear next steps, organize your day, and see what’s coming up.</p></div>
+        <div class="phone"><div class="screen-window"><img class="screen-shot" src="assets/screens/02-todo.png" alt="To-do screen with inbox filters and daily tasks" /></div><img class="phone-frame" src="assets/iphone-15-frame.png" alt="" /></div>
+        <div class="footer"><span class="handle">untitled project</span><span class="brand-credit"><span>A product of</span><img src="assets/setups-works-logo.png" alt="Setups Works" /></span></div>
+      </section>
+
+      <section class="slide" data-slide="3" aria-label="Notes screen">
+        <div class="copy"><div class="eyebrow">Notes</div><h1>Ideas, <em>ready when you are.</em></h1><p class="lead">Capture thoughts, keep useful details organized, and find your notes when you need them.</p></div>
+        <div class="phone"><div class="screen-window"><img class="screen-shot" src="assets/screens/03-notes.png" alt="Notes screen showing saved notes and filters" /></div><img class="phone-frame" src="assets/iphone-15-frame.png" alt="" /></div>
+        <div class="footer"><span class="handle">untitled project</span><span class="brand-credit"><span>A product of</span><img src="assets/setups-works-logo.png" alt="Setups Works" /></span></div>
+      </section>
+
+      <section class="slide" data-slide="4" aria-label="Journal screen">
+        <div class="copy"><div class="eyebrow">Journal</div><h1>A personal record of <em>your days.</em></h1><p class="lead">Write, add photos, or save voice notes to reflect on your life over time.</p></div>
+        <div class="phone"><div class="screen-window"><img class="screen-shot" src="assets/screens/04-journal.png" alt="Journal screen with a selected date, voice entry, and photo entry" /></div><img class="phone-frame" src="assets/iphone-15-frame.png" alt="" /></div>
+        <div class="footer"><span class="handle">untitled project</span><span class="brand-credit"><span>A product of</span><img src="assets/setups-works-logo.png" alt="Setups Works" /></span></div>
+      </section>
+
+      <section class="slide" data-slide="5" aria-label="Chat screen">
+        <div class="copy"><div class="eyebrow">AI chat</div><h1>Get from question to <em>next step.</em></h1><p class="lead">Explore an idea, work through a question, and keep useful answers close to your personal workspace.</p></div>
+        <div class="phone chat"><div class="screen-window"><img class="screen-shot" src="assets/screens/05-chat.png" alt="Chat screen with a workout conversation" /></div><img class="phone-frame" src="assets/iphone-15-frame.png" alt="" /></div>
+        <div class="footer"><span class="handle">untitled project</span><span class="brand-credit"><span>A product of</span><img src="assets/setups-works-logo.png" alt="Setups Works" /></span></div>
+      </section>
+      <section class="slide" data-slide="6" aria-label="Connected services">
+        <div class="copy integration-copy"><div class="eyebrow">Integrations</div><h1>Your tools, <em>in one workspace.</em></h1><p class="lead">Connect everyday services to bring more of your personal and professional routines together.</p></div>
+        <div class="integration-groups">
+          <section class="integration-group" aria-label="Communication integrations"><h2>Communication</h2><div class="integration-grid">
+            <article class="integration-card"><span class="integration-logo"><img src="assets/logos/gmail.svg" alt="" /></span><span class="integration-info"><span class="integration-name">Gmail</span><span class="integration-status live">Available</span></span></article>
+            <article class="integration-card"><span class="integration-logo"><img src="assets/logos/outlook.svg" alt="" /></span><span class="integration-info"><span class="integration-name">Outlook</span><span class="integration-status soon">Coming soon</span></span></article>
+            <article class="integration-card"><span class="integration-logo"><img src="assets/logos/slack.svg" alt="" /></span><span class="integration-info"><span class="integration-name">Slack</span><span class="integration-status soon">Coming soon</span></span></article>
+          </div></section>
+          <section class="integration-group" aria-label="Calendar and meeting integrations"><h2>Calendar &amp; meetings</h2><div class="integration-grid">
+            <article class="integration-card"><span class="integration-logo"><img src="assets/logos/google-calendar.svg" alt="" /></span><span class="integration-info"><span class="integration-name">Google Calendar</span><span class="integration-status live">Available</span></span></article>
+            <article class="integration-card"><span class="integration-logo"><img src="assets/logos/google-meet.svg" alt="" /></span><span class="integration-info"><span class="integration-name">Google Meet</span><span class="integration-status live">Available</span></span></article>
+            <article class="integration-card"><span class="integration-logo"><img src="assets/logos/microsoft-teams.svg" alt="" /></span><span class="integration-info"><span class="integration-name">Microsoft Teams</span><span class="integration-status soon">Coming soon</span></span></article>
+            <article class="integration-card"><span class="integration-logo"><img src="assets/logos/zoom.svg" alt="" /></span><span class="integration-info"><span class="integration-name">Zoom</span><span class="integration-status soon">Coming soon</span></span></article>
+          </div></section>
+          <section class="integration-group" aria-label="Data integrations"><h2>Data</h2><div class="integration-grid">
+            <article class="integration-card"><span class="integration-logo"><img src="assets/logos/google-drive.svg" alt="" /></span><span class="integration-info"><span class="integration-name">Google Drive</span><span class="integration-status live">Available</span></span></article>
+            <article class="integration-card"><span class="integration-logo"><img src="assets/logos/google-docs.svg" alt="" /></span><span class="integration-info"><span class="integration-name">Google Docs</span><span class="integration-status live">Available</span></span></article>
+            <article class="integration-card"><span class="integration-logo"><img src="assets/logos/google-sheets.svg" alt="" /></span><span class="integration-info"><span class="integration-name">Google Sheets</span><span class="integration-status live">Available</span></span></article>
+            <article class="integration-card"><span class="integration-logo"><img src="assets/logos/notion.svg" alt="" /></span><span class="integration-info"><span class="integration-name">Notion</span><span class="integration-status soon">Coming soon</span></span></article>
+          </div></section>
+          <section class="integration-group" aria-label="Work integrations"><h2>Work</h2><div class="integration-grid">
+            <article class="integration-card"><span class="integration-logo"><img src="assets/logos/github.svg" alt="" /></span><span class="integration-info"><span class="integration-name">GitHub</span><span class="integration-status soon">Coming soon</span></span></article>
+            <article class="integration-card"><span class="integration-logo"><img src="assets/logos/linear.svg" alt="" /></span><span class="integration-info"><span class="integration-name">Linear</span><span class="integration-status soon">Coming soon</span></span></article>
+            <article class="integration-card"><span class="integration-logo"><img src="assets/logos/hubspot.svg" alt="" /></span><span class="integration-info"><span class="integration-name">HubSpot</span><span class="integration-status soon">Coming soon</span></span></article>
+          </div></section>
+          <section class="integration-group" aria-label="More integrations"><h2>More</h2><div class="integration-grid">
+            <article class="integration-card"><span class="integration-logo"><img src="assets/logos/cloudflare.svg" alt="" /></span><span class="integration-info"><span class="integration-name">Cloudflare</span><span class="integration-status soon">Coming soon</span></span></article>
+            <article class="integration-card"><span class="integration-logo"><img src="assets/logos/eventbrite.png" alt="" /></span><span class="integration-info"><span class="integration-name">Eventbrite</span><span class="integration-status soon">Coming soon</span></span></article>
+            <article class="integration-card"><span class="integration-logo"><img src="assets/logos/maps.svg" alt="" /></span><span class="integration-info"><span class="integration-name">Maps</span><span class="integration-status live">Available</span></span></article>
+          </div></section>
+        </div>
+        <div class="slide-six-footer">Connect the tools that fit your day.</div>
+        <div class="footer"><span class="handle">untitled project</span><span class="brand-credit"><span>A product of</span><img src="assets/setups-works-logo.png" alt="Setups Works" /></span></div>
+      </section>
+      <div class="controls" aria-label="Story preview controls"><button type="button" id="prev" aria-label="Previous slide">‹</button><button type="button" id="next" aria-label="Next slide">›</button></div>
+    </main>
+    <script>
+      const slides = [...document.querySelectorAll(".slide")];
+      let current = Number(new URLSearchParams(location.search).get("slide") || 1) - 1;
+      function show(index) {
+        current = (index + slides.length) % slides.length;
+        slides.forEach((slide, i) => slide.classList.toggle("active", i === current));
+        history.replaceState(null, "", `?slide=${current + 1}`);
+      }
+      document.getElementById("prev").addEventListener("click", () => show(current - 1));
+      document.getElementById("next").addEventListener("click", () => show(current + 1));
+      window.addEventListener("keydown", (event) => { if (event.key === "ArrowRight") show(current + 1); if (event.key === "ArrowLeft") show(current - 1); });
+      if (new URLSearchParams(location.search).has("export")) document.body.classList.add("export-mode");
+      show(current);
+    </script>
+  </body>
+</html>
