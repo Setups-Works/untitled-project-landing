@@ -23,6 +23,22 @@ export type Release = {
 export const RELEASES: Release[] = [
   {
     date: "2026-10-17",
+    title: "Health by day, and a chat that knows your numbers",
+    summary: "Pick Today, Yesterday, 7 days or 30 days, and hand what you see to the assistant.",
+    tone: "blue",
+    appVersion: "v1.0.3",
+    changes: [
+      { kind: "new", platform: "app", text: "A “Sync this phone” switch. Turn it on only for the phone you wear; any other phone shows your account’s data without overwriting it." },
+      { kind: "fixed", platform: "app", text: "A second phone no longer asks you to connect Health when your account already has data." },
+      { kind: "new", platform: "web", text: "Health filter for Today, Yesterday, 7 days and 30 days, with totals, averages and a steps chart for the range." },
+      { kind: "new", platform: "app", text: "The same filter and a refreshed Health layout in the Android app." },
+      { kind: "new", platform: "web", text: "Ask the assistant, Add to journal and Save as note from Health. The assistant drafts it and you confirm in the chat." },
+      { kind: "new", platform: "app", text: "The same three actions in the app, opening a new chat with your numbers." },
+      { kind: "improved", platform: "web", text: "The assistant sees 30 days of health data and knows which day is today and yesterday." },
+    ],
+  },
+  {
+    date: "2026-10-17",
     title: "Health syncs, and the app updates itself",
     summary: "Partial health data now shows up, and new Android versions are offered inside the app.",
     tone: "mint",

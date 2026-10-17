@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useLocalSearchParams } from "expo-router";
+import { useEffect, useState } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -19,12 +20,24 @@ export function ChatScreen() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [run, setRun] = useState(0);
   const [drawer, setDrawer] = useState(false);
+  const [seed, setSeed] = useState<string | undefined>();
 
-  const open = (id: string | null) => {
+  const open = (id: string | null, firstMessage?: string) => {
     setActiveId(id);
+    setSeed(firstMessage);
     setRun((n) => n + 1);
     setDrawer(false);
   };
+
+  // A message handed over from another screen (the Health actions): start a new chat with it. `n` makes a repeat tap count again.
+  const { ask, n } = useLocalSearchParams<{ ask?: string; n?: string }>();
+  useEffect(() => {
+    if (ask) {
+      setActiveId(null);
+      setSeed(ask.slice(0, 500));
+      setRun((r) => r + 1);
+    }
+  }, [ask, n]);
   const title = activeId ? prettyTitle(chatsQ.data?.find((c) => c.id === activeId)?.title ?? "Chat") : "New chat";
 
   return (
@@ -47,7 +60,7 @@ export function ChatScreen() {
         </Pressable>
       </View>
 
-      <Conversation key={run} chatId={activeId} onCreated={setActiveId} />
+      <Conversation key={run} chatId={activeId} seed={seed} onCreated={setActiveId} />
 
       <RecentChatsDrawer
         visible={drawer}

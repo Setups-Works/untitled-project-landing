@@ -1,17 +1,22 @@
 import {
+  daysInRange,
   fmtDistance,
   fmtDuration,
-  fmtHeartRange,
   fmtNumber,
+  HEALTH_ACTIONS,
   HEALTH_GOALS,
-  HEALTH_WEEK,
+  HEALTH_RANGES,
+  healthPrompt,
   healthRatio,
-  healthTotal,
   SOURCE_LABEL,
+  summarizeHealth,
+  type HealthAction,
+  type HealthRange,
 } from "@untitled/logic";
-import type { HealthDay, Tone } from "@untitled/types";
-import { useMemo } from "react";
-import { StyleSheet, View, useWindowDimensions } from "react-native";
+import type { Tone } from "@untitled/types";
+import { router } from "expo-router";
+import { useMemo, useState } from "react";
+import { StyleSheet, Switch, View, useWindowDimensions } from "react-native";
 import Svg, { Circle } from "react-native-svg";
 
 import { mergeDays } from "./merge";
@@ -23,9 +28,11 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Icon, type IconName } from "@/components/ui/Icon";
 import { Screen } from "@/components/ui/Screen";
+import { Segmented } from "@/components/ui/Segmented";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/States";
 import { Palette, Radius, Space, Tints } from "@/constants/theme";
 import { errorMessage } from "@/lib/api";
+import { isoDate } from "@/lib/dates";
 
 const RING = 200;
 const STROKE = 20;
@@ -35,35 +42,35 @@ const C = 2 * Math.PI * R;
 const WIDE = 760;
 const WIDE_COLUMN = 1100;
 
-type Metric = "steps" | "distance_m" | "active_kcal" | "resting_hr" | "sleep_minutes";
-
-/** The newest day that has this metric. A day with a gap (no watch worn, nothing recorded yet) shouldn't blank the tile. */
-function newest(days: HealthDay[], key: Metric) {
-  const d = days.find((x) => x[key] !== null);
-  return d ? { value: d[key] as number, day: d.day } : null;
-}
-
-const dayLabel = (iso: string) => new Date(`${iso}T12:00:00`).toLocaleDateString(undefined, { day: "numeric", month: "short" });
+const ACTION_ICON: Record<HealthAction, IconName> = { ask: "wand-magic-sparkles", journal: "book-open", note: "pen-to-square" };
 
 export function HealthScreen() {
   const conn = useHealthConnection();
   const daysQ = useHealthDays();
   const { width } = useWindowDimensions();
   const wide = width >= WIDE;
+  const [range, setRange] = useState<HealthRange>("today");
   // Stored data plus what the phone just read, so partial or not-yet-saved data still shows.
   const days = useMemo(() => mergeDays(daysQ.data ?? [], conn.phoneDays), [daysQ.data, conn.phoneDays]);
   const hasData = days.some((d) => Object.entries(d).some(([k, v]) => typeof v === "number" && k !== "day"));
+  const meta = HEALTH_RANGES.find((r) => r.key === range)!;
+  const today = isoDate();
+  const inRange = useMemo(() => daysInRange(days, range, today), [days, range, today]);
+  const sum = useMemo(() => summarizeHealth(inRange), [inRange]);
+  const multi = meta.days > 1;
   const latest = days[0];
-  const today = latest?.day;
-  const heartDay = days.find((d) => d.hr_min !== null && d.hr_max !== null);
-  const steps = newest(days, "steps");
-  const sleep = newest(days, "sleep_minutes");
-  const distance = newest(days, "distance_m");
-  const energy = newest(days, "active_kcal");
-  const resting = newest(days, "resting_hr");
-  const week = days.slice(0, HEALTH_WEEK);
-  const weekSteps = healthTotal(week, (d) => d.steps);
-  const refresh = () => void conn.sync().catch(() => undefined);
+  const goal = HEALTH_GOALS.steps * meta.days;
+  const bars = useMemo(() => {
+    const byDay = new Map(inRange.map((d) => [d.day, d.steps]));
+    return Array.from({ length: meta.days }, (_, i) => {
+      const day = isoDate(new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate() - (meta.days - 1 - i)));
+      return { day, steps: byDay.get(day) ?? null };
+    });
+  }, [inRange, meta.days]);
+  const refresh = () => void conn.refresh().catch(() => undefined);
+  // Hands the numbers to the chat: it answers, or drafts a journal entry or note that you confirm there.
+  const toChat = (action: HealthAction) =>
+    router.push({ pathname: "/chat", params: { ask: healthPrompt(action, range), n: String(Date.now()) } });
 
   return (
     <Screen onRefresh={refresh} refreshing={conn.syncing} contentStyle={wide ? styles.wide : undefined}>
@@ -74,96 +81,177 @@ export function HealthScreen() {
         </AppText>
       </View>
 
-      {conn.status === "checking" ? (
+      {conn.status === "checking" || (daysQ.isPending && !hasData) ? (
         <LoadingState />
-      ) : conn.status === "unsupported" ? (
+      ) : !hasData && conn.status === "unsupported" ? (
         <EmptyState
           icon="heart-pulse"
           title="Health isn’t available here"
           hint={
             healthSource
-              ? `${healthSource.name} isn’t available on this device. Open the app on your phone to connect your health data.`
+              ? `${healthSource.name} isn’t available on this device. Sync from another phone and it shows up here.`
               : "Open the app on your iPhone or Android phone to connect your health data. It then appears here on the web too."
           }
         />
-      ) : conn.status === "setup" ? (
+      ) : !hasData && conn.status === "setup" ? (
         <SetupCard onConnect={() => void conn.connect()} name={healthSource?.name ?? "Health"} />
-      ) : daysQ.isPending && !hasData ? (
-        <LoadingState />
       ) : daysQ.isError && !hasData ? (
         <ErrorState message={errorMessage(daysQ.error)} onRetry={() => void daysQ.refetch()} />
       ) : (
-        <View style={wide ? styles.row : styles.stack}>
+        <View style={styles.stack}>
+          <Segmented options={HEALTH_RANGES.map((r) => ({ key: r.key, label: r.label }))} value={range} onChange={setRange} />
+
           {conn.noData && (
             <View style={styles.full}>
-              <Banner kind="error">
-                No health data came through. Check that access is allowed, then pull down to sync again.
-              </Banner>
+              <Banner kind="error">No health data came through. Check that access is allowed, then pull down to sync again.</Banner>
               <Button title="Open permission settings" kind="secondary" icon="gear" onPress={() => healthSource?.openSettings()} />
             </View>
           )}
           {(conn.syncError || daysQ.isError) && hasData && (
-            <View style={styles.full}>
-              <Banner kind="info">Showing what your phone has. It couldn’t be saved to your account yet, so pull down to try again.</Banner>
-            </View>
+            <Banner kind="info">Showing what your phone has. It couldn’t be saved to your account yet, so pull down to try again.</Banner>
           )}
-          {latest ? (
+
+          {!latest ? (
+            conn.syncError ? (
+              <ErrorState message={errorMessage(conn.syncError, "Couldn’t sync your health data.")} onRetry={refresh} />
+            ) : conn.syncing ? (
+              <EmptyState icon="rotate" title="Syncing your health data" hint="This only takes a moment." />
+            ) : (
+              <EmptyState icon="heart-pulse" title="No health data yet" hint="Pull down to sync. If it stays empty, allow access in your phone’s health settings." />
+            )
+          ) : (
             <>
-              <Card tone="blue" style={wide ? styles.ringWide : undefined}>
-                <Ring
-                  fraction={healthRatio(weekSteps, HEALTH_GOALS.steps * HEALTH_WEEK)}
-                  detail={`${fmtNumber(weekSteps)} of ${fmtNumber(HEALTH_GOALS.steps * HEALTH_WEEK)}`}
-                />
-              </Card>
-              <View style={styles.tiles}>
-                <Tile tone="green" icon="shoe-prints" label="Steps" value={steps && fmtNumber(steps.value)} day={steps?.day} today={today} />
-                <Tile tone="violet" icon="moon" label="Sleep" value={sleep && fmtDuration(sleep.value)} day={sleep?.day} today={today} />
-                <Tile
-                  tone="mint"
-                  icon="location-dot"
-                  label="Distance"
-                  value={distance && fmtDistance(distance.value)}
-                  day={distance?.day}
-                  today={today}
-                />
-                <Tile
-                  tone="amber"
-                  icon="fire"
-                  label="Active energy"
-                  value={energy && `${fmtNumber(energy.value)} kcal`}
-                  day={energy?.day}
-                  today={today}
-                />
-                <Tile
-                  tone="clay"
-                  icon="heart"
-                  label="Heart rate"
-                  value={heartDay ? fmtHeartRange(heartDay) : null}
-                  day={heartDay?.day}
-                  today={today}
-                />
-                <Tile
-                  tone="blue"
-                  icon="heart-pulse"
-                  label="Resting heart rate"
-                  value={resting && `${resting.value} bpm`}
-                  day={resting?.day}
-                  today={today}
-                />
+              <View style={wide ? styles.row : styles.stack}>
+                <Card tone="blue" style={wide ? styles.ringWide : undefined}>
+                  <Ring
+                    fraction={healthRatio(sum.steps ?? 0, goal)}
+                    title={multi ? `Steps, ${meta.label}` : "Steps"}
+                    detail={`${fmtNumber(sum.steps ?? 0)} of ${fmtNumber(goal)}`}
+                  />
+                  {multi && (
+                    <View style={styles.bars} accessibilityLabel="Steps per day">
+                      {bars.map((b) => (
+                        <View key={b.day} style={styles.barCell}>
+                          <View
+                            style={[
+                              styles.bar,
+                              {
+                                height: `${Math.max(healthRatio(b.steps ?? 0, HEALTH_GOALS.steps) * 100, 6)}%`,
+                                backgroundColor: b.steps === null ? Tints.blue.line : Tints.blue.fg,
+                              },
+                            ]}
+                          />
+                        </View>
+                      ))}
+                    </View>
+                  )}
+                </Card>
+                {sum.recorded === 0 ? (
+                  <View style={styles.tiles}>
+                    <EmptyState
+                      icon="calendar-day"
+                      title={`Nothing recorded ${range === "today" ? "today" : range === "yesterday" ? "yesterday" : "in this period"}`}
+                      hint="Pull down to sync, or pick another day."
+                    />
+                  </View>
+                ) : (
+                  <View style={styles.tiles}>
+                    <Tile
+                      tone="green"
+                      icon="shoe-prints"
+                      label="Steps"
+                      value={sum.steps === null ? null : fmtNumber(sum.steps)}
+                      note={multi && sum.stepsAvg !== null ? `${fmtNumber(sum.stepsAvg)} a day on average` : `Goal ${fmtNumber(HEALTH_GOALS.steps)}`}
+                    />
+                    <Tile
+                      tone="violet"
+                      icon="moon"
+                      label={multi ? "Sleep, average" : "Sleep"}
+                      value={sum.sleepAvg === null ? null : fmtDuration(sum.sleepAvg)}
+                      note={`Goal ${fmtDuration(HEALTH_GOALS.sleepMinutes)}`}
+                    />
+                    <Tile tone="mint" icon="location-dot" label="Distance" value={sum.distance === null ? null : fmtDistance(sum.distance)} />
+                    <Tile
+                      tone="amber"
+                      icon="fire"
+                      label="Active energy"
+                      value={sum.activeKcal === null ? null : `${fmtNumber(sum.activeKcal)} kcal`}
+                    />
+                    <Tile
+                      tone="clay"
+                      icon="heart"
+                      label="Heart rate"
+                      value={sum.hrMin === null || sum.hrMax === null ? null : `${sum.hrMin}–${sum.hrMax} bpm`}
+                    />
+                    <Tile
+                      tone="blue"
+                      icon="heart-pulse"
+                      label={multi ? "Resting heart rate, average" : "Resting heart rate"}
+                      value={sum.restingAvg === null ? null : `${sum.restingAvg} bpm`}
+                    />
+                  </View>
+                )}
+              </View>
+
+              <View style={styles.actions}>
+                <AppText variant="label">Use with the assistant</AppText>
+                <View style={styles.actionRow}>
+                  {HEALTH_ACTIONS.map((a) => (
+                    <Button
+                      key={a.key}
+                      title={a.label}
+                      icon={ACTION_ICON[a.key]}
+                      kind={a.key === "ask" ? "primary" : "secondary"}
+                      onPress={() => toChat(a.key)}
+                      style={styles.actionBtn}
+                    />
+                  ))}
+                </View>
               </View>
             </>
-          ) : conn.syncError ? (
-            <View style={styles.full}>
-              <ErrorState message={errorMessage(conn.syncError, "Couldn’t sync your health data.")} onRetry={refresh} />
-            </View>
-          ) : conn.syncing ? (
-            <EmptyState icon="rotate" title="Syncing your health data" hint="This only takes a moment." />
-          ) : (
-            <EmptyState icon="heart-pulse" title="No health data yet" hint="Pull down to sync. If it stays empty, allow access in your phone’s health settings." />
           )}
+
+          <SyncToggle
+            on={conn.status === "ready"}
+            unsupported={conn.status === "unsupported"}
+            name={healthSource?.name ?? "Health"}
+            onChange={(on) => void conn.setSyncOn(on)}
+          />
         </View>
       )}
     </Screen>
+  );
+}
+
+/**
+ * Per-phone switch. Your account holds one set of daily totals, and a phone that syncs replaces the days it reads, so only the phone
+ * you actually wear should sync. Every other phone leaves this off and still shows the account's data.
+ */
+function SyncToggle({ on, unsupported, name, onChange }: { on: boolean; unsupported: boolean; name: string; onChange: (on: boolean) => void }) {
+  return (
+    <Card>
+      <View style={styles.toggle}>
+        <View style={styles.flex}>
+          <AppText variant="bodyStrong">Sync this phone</AppText>
+          <AppText variant="small" color={Palette.fgMuted}>
+            {unsupported
+              ? `${name} isn’t available on this phone, so it shows what your other phone synced.`
+              : on
+                ? `This phone reads ${name} and updates your account. Turn it off on a phone you don’t wear.`
+                : "Off: this phone only shows the data already in your account. Turn it on to read this phone and replace those days."}
+          </AppText>
+        </View>
+        {!unsupported && (
+          <Switch
+            value={on}
+            onValueChange={onChange}
+            accessibilityLabel="Sync this phone"
+            trackColor={{ false: Palette.lineStrong, true: Palette.greenFg }}
+            thumbColor={Palette.surface}
+          />
+        )}
+      </View>
+    </Card>
   );
 }
 
@@ -187,22 +275,7 @@ function SetupCard({ onConnect, name }: { onConnect: () => void; name: string })
   );
 }
 
-function Tile({
-  tone,
-  icon,
-  label,
-  value,
-  day,
-  today,
-}: {
-  tone: Tone;
-  icon: IconName;
-  label: string;
-  value: string | null;
-  /** The day the value is from; named when it isn't the latest synced day. */
-  day?: string;
-  today?: string;
-}) {
+function Tile({ tone, icon, label, value, note }: { tone: Tone; icon: IconName; label: string; value: string | null; note?: string }) {
   return (
     <View style={styles.tileCell}>
       <Card tone={tone}>
@@ -217,9 +290,9 @@ function Tile({
             <AppText variant="title" color={Tints[tone].fg} numberOfLines={1} adjustsFontSizeToFit>
               {value ?? "No data"}
             </AppText>
-            {value && day && day !== today ? (
+            {note ? (
               <AppText variant="small" color={Tints[tone].fg}>
-                {`From ${dayLabel(day)}`}
+                {note}
               </AppText>
             ) : null}
           </View>
@@ -229,9 +302,9 @@ function Tile({
   );
 }
 
-function Ring({ fraction, detail }: { fraction: number; detail: string }) {
+function Ring({ fraction, title, detail }: { fraction: number; title: string; detail: string }) {
   return (
-    <View style={styles.ring} accessible accessibilityRole="progressbar" accessibilityLabel={`Weekly steps ${Math.round(fraction * 100)} percent. ${detail}`}>
+    <View style={styles.ring} accessible accessibilityRole="progressbar" accessibilityLabel={`${title} ${Math.round(fraction * 100)} percent. ${detail}`}>
       <Svg width={RING} height={RING} viewBox={`0 0 ${RING} ${RING}`} style={styles.svg}>
         <Circle cx={RING / 2} cy={RING / 2} r={R} fill="none" stroke={Tints.blue.line} strokeWidth={STROKE} />
         <Circle
@@ -248,7 +321,7 @@ function Ring({ fraction, detail }: { fraction: number; detail: string }) {
         />
       </Svg>
       <View style={styles.ringText}>
-        <AppText variant="label">Weekly steps</AppText>
+        <AppText variant="label">{title}</AppText>
         <AppText variant="display">{`${Math.round(fraction * 100)}%`}</AppText>
         <AppText variant="small" align="center">
           {detail}
@@ -281,4 +354,11 @@ const styles = StyleSheet.create({
   ring: { width: RING, height: RING, alignSelf: "center", alignItems: "center", justifyContent: "center" },
   svg: { position: "absolute" },
   ringText: { alignItems: "center", gap: Space.xs },
+  bars: { flexDirection: "row", alignItems: "flex-end", gap: 3, height: 64, marginTop: Space.lg },
+  barCell: { flex: 1, height: "100%", justifyContent: "flex-end" },
+  bar: { width: "100%", borderRadius: Radius.pill, minHeight: 4 },
+  toggle: { flexDirection: "row", alignItems: "center", gap: Space.md },
+  actions: { gap: Space.sm, marginTop: Space.sm },
+  actionRow: { flexDirection: "row", flexWrap: "wrap", gap: Space.sm },
+  actionBtn: { flexGrow: 1 },
 });

@@ -80,5 +80,22 @@ export function useHealthConnection() {
     await sync().catch(() => undefined);
   }, [flagKey, sync]);
 
-  return { status, noData, phoneDays, connect, sync, syncing: push.isPending, syncError: push.error };
+  /** Pull-to-refresh: a syncing phone reads and uploads; any other phone just reloads what the account has. */
+  const refresh = useCallback(async () => {
+    if (status === "ready") await sync();
+    else await qc.invalidateQueries({ queryKey: qk.health });
+  }, [status, sync, qc]);
+
+  /** Turns this phone's sync on (asks for access the first time) or off. Off keeps showing the account's data, just stops uploading. */
+  const setSyncOn = useCallback(
+    async (on: boolean) => {
+      if (on) return connect();
+      await AsyncStorage.setItem(flagKey, "0").catch(() => undefined);
+      setPhoneDays([]);
+      setStatus("setup");
+    },
+    [connect, flagKey],
+  );
+
+  return { status, noData, phoneDays, connect, refresh, setSyncOn, sync, syncing: push.isPending, syncError: push.error };
 }

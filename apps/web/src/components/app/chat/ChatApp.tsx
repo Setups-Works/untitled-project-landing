@@ -154,6 +154,16 @@ export default function ChatApp({ name }: { name: string }) {
     });
   }, [sb]);
 
+  // "?ask=…" (from the Health page) starts a new chat with that message, once, and the AI answers as usual.
+  const asked = useRef(false);
+  const askText = params.get("ask");
+  useEffect(() => {
+    if (!askText || activeId || asked.current || !ready) return;
+    asked.current = true;
+    void send(askText.slice(0, 500), [], () => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- send is recreated every render; this must run once per link
+  }, [askText, activeId, ready]);
+
   // Old "?new=1" links just mean "an empty chat".
   useEffect(() => {
     if (params.get("new")) router.replace("/dashboard/chat");

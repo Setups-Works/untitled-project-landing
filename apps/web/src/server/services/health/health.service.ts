@@ -1,4 +1,5 @@
 import "server-only";
+import { addDays } from "@untitled/logic/dates";
 import { userDb } from "../../db/builders";
 import { listHealthDays, upsertHealthDays } from "../../repositories/health.repository";
 import type { HealthSyncInput } from "./health.schema";
@@ -11,16 +12,19 @@ export async function getHealth(userId: string, days: number) {
 }
 
 /**
- * The last week as one delimited text block for the chat model, or "" when nothing has been synced (the prompt then tells the
- * assistant to point the person at the Health page). Only validated integers go in, so nothing here can carry an instruction.
+ * The last 30 days as one delimited text block for the chat model, or "" when nothing has been synced (the prompt then tells the
+ * assistant to point the person at the Health page). Days are labelled today / yesterday from the person's own calendar date, so
+ * "how was yesterday?" maps to a line. Only validated integers go in, so nothing here can carry an instruction.
  */
-export async function healthContextFor(userId: string): Promise<string> {
-  const days = await getHealth(userId, 7).catch(() => []);
+export async function healthContextFor(userId: string, localDate: string): Promise<string> {
+  const days = await getHealth(userId, 30).catch(() => []);
   if (!days.length) return "";
-  const part = (label: string, v: number | null, unit: string) => (v === null ? "" : ` ${label} ${v}${unit}`);
+  const yesterday = addDays(localDate, -1);
+  const label = (day: string) => (day === localDate ? `${day} (today)` : day === yesterday ? `${day} (yesterday)` : day);
+  const part = (name: string, v: number | null, unit: string) => (v === null ? "" : ` ${name} ${v}${unit}`);
   const lines = days.map((d) => {
     const hr = d.hr_min !== null && d.hr_max !== null ? ` heart rate ${d.hr_min}-${d.hr_max} bpm` : "";
-    return `${d.day}:${part("steps", d.steps, "")}${part("distance", d.distance_m, " m")}${part("active energy", d.active_kcal, " kcal")}${part("resting heart rate", d.resting_hr, " bpm")}${hr}${part("sleep", d.sleep_minutes, " min")}`;
+    return `${label(d.day)}:${part("steps", d.steps, "")}${part("distance", d.distance_m, " m")}${part("active energy", d.active_kcal, " kcal")}${part("resting heart rate", d.resting_hr, " bpm")}${hr}${part("sleep", d.sleep_minutes, " min")}`;
   });
   return `<health-data source="${days[0].source}">\n${lines.join("\n")}\n</health-data>`;
 }

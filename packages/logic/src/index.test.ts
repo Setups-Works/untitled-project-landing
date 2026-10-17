@@ -1,7 +1,8 @@
 import { describe, expect, it } from "vitest";
 import { addDays, monthGrid } from "./dates";
 import { applyOpts, DEFAULT_OPTS, inView, nextDue, nthRuleFor, recurrenceLabel, upcomingDates } from "./tasks";
-import type { Task } from "@untitled/types";
+import type { HealthDay, Task } from "@untitled/types";
+import { daysInRange, healthPrompt, summarizeHealth } from "./health";
 
 const task = (over: Partial<Task>): Task => ({
   id: "1",
@@ -56,5 +57,32 @@ describe("dates", () => {
     const g = monthGrid(2026, 9, 0);
     expect(g).toHaveLength(42);
     expect(g).toContain("2026-10-12");
+  });
+});
+
+describe("health ranges", () => {
+  const day = (d: string, over: Partial<HealthDay> = {}): HealthDay => ({
+    day: d, steps: null, distance_m: null, active_kcal: null, resting_hr: null, hr_min: null, hr_max: null, sleep_minutes: null,
+    source: "health_connect", synced_at: "", ...over,
+  });
+  const days = [day("2026-10-17", { steps: 1000 }), day("2026-10-16", { steps: 3000, sleep_minutes: 400, hr_min: 50, hr_max: 150 }), day("2026-10-11", { steps: 5000 }), day("2026-09-20", { steps: 9 })];
+
+  it("picks the days for each filter", () => {
+    expect(daysInRange(days, "today", "2026-10-17").map((d) => d.day)).toEqual(["2026-10-17"]);
+    expect(daysInRange(days, "yesterday", "2026-10-17").map((d) => d.day)).toEqual(["2026-10-16"]);
+    expect(daysInRange(days, "week", "2026-10-17").map((d) => d.day)).toEqual(["2026-10-17", "2026-10-16", "2026-10-11"]);
+    expect(daysInRange(days, "month", "2026-10-17")).toHaveLength(4);
+  });
+
+  it("totals activity, averages the rest, and ignores gaps", () => {
+    const s = summarizeHealth(daysInRange(days, "week", "2026-10-17"));
+    expect(s).toMatchObject({ steps: 9000, stepsAvg: 3000, sleepAvg: 400, hrMin: 50, hrMax: 150, recorded: 3, distance: null });
+    expect(summarizeHealth([]).steps).toBeNull();
+  });
+
+  it("builds a chat message per action and range", () => {
+    expect(healthPrompt("journal", "yesterday")).toContain("yesterday");
+    expect(healthPrompt("note", "week")).toContain("the last 7 days");
+    expect(healthPrompt("ask", "today")).toContain("today");
   });
 });

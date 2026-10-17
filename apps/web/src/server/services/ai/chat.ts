@@ -113,7 +113,7 @@ export async function startChatReply(opts: {
   if (rows[rows.length - 1].role !== "user") return { ok: false, status: 400, error: "Nothing to reply to." };
 
   // The model is bad at calendar arithmetic ("next Tuesday", "the 20th"), so it gets a ready list of the coming dates instead.
-  const health = await healthContextFor(opts.userId);
+  const health = await healthContextFor(opts.userId, opts.localDate);
   const messages: AiMessage[] = [
     { role: "system", content: `${CHAT_PROMPT.system} ${calendarFor(opts.localDate)}${health ? `\n${health}` : ""}` },
     ...rows.map((m) => ({ role: m.role, content: m.body.slice(0, LIMITS.charsPerMessage) })),

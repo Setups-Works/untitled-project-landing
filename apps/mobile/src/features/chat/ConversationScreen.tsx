@@ -33,7 +33,16 @@ const titleFrom = (text: string) => prettyTitle((text.split("\n")[0]?.trim() || 
  * The conversation itself, shown right on the Chat tab. `chatId` is null for a new chat; the parent remounts this component
  * (via `key`) when another chat is picked, so each conversation starts with clean state and any streaming reply is aborted.
  */
-export function Conversation({ chatId: initialId, onCreated }: { chatId: string | null; onCreated: (id: string) => void }) {
+export function Conversation({
+  chatId: initialId,
+  seed,
+  onCreated,
+}: {
+  chatId: string | null;
+  /** A first message to send by itself when this opens a new chat. */
+  seed?: string;
+  onCreated: (id: string) => void;
+}) {
   const { user } = useAppState();
   const [chatId, setChatId] = useState<string | null>(initialId);
   const messagesQ = useMessages(chatId ?? undefined);
@@ -106,6 +115,15 @@ export function Conversation({ chatId: initialId, onCreated }: { chatId: string 
       setBusy(false);
     }
   }
+
+  // Sent once, and only after the AI list has loaded, so the reply isn't skipped as "No AI".
+  const seeded = useRef(false);
+  useEffect(() => {
+    if (!seed || initialId || seeded.current || providersLoading || !user) return;
+    seeded.current = true;
+    void send(seed, [], () => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- send changes every render; this must run once per mount
+  }, [seed, initialId, providersLoading, user]);
 
   const messages = messagesQ.data ?? [];
   // Not while the provider list is still loading: "No AI" is only the placeholder until the server answers.
