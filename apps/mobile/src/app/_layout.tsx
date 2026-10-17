@@ -13,6 +13,7 @@ import { AppText } from "@/components/ui/AppText";
 import { Screen } from "@/components/ui/Screen";
 import { Palette } from "@/constants/theme";
 import { mobileEnv } from "@/config/env";
+import { UpdatePrompt } from "@/features/updates/UpdatePrompt";
 import { AppStateProvider, useAppState } from "@/providers/AppState";
 
 void SplashScreen.preventAutoHideAsync();
@@ -41,6 +42,7 @@ export default function RootLayout() {
         ) : (
           <AppStateProvider>
             {fontsReady ? <Routes /> : null}
+            {fontsReady ? <UpdatePrompt /> : null}
             <SplashGate fontsReady={fontsReady} />
           </AppStateProvider>
         )}

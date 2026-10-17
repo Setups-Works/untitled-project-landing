@@ -14,6 +14,12 @@ Re-run an existing tag (for example after changing a repository setting): Action
 
 Tags must look like `v1.2.3`. A tag with a suffix (`v1.2.3-beta.1`) is published as a pre-release.
 
+## How people get the update
+
+On Android the app asks GitHub for the latest release each time it opens (`apps/mobile/src/features/updates`). If its tag is newer than the installed version, a dialog offers **Update**, which opens the release's APK; the phone downloads it and offers to install it over the old one. That works because every build is signed with the same key and `versionCode` rises with each run. Pre-releases, drafts and releases without an `.apk` are never offered. The first build that contains this check is v1.0.2; earlier installs have to be updated by hand once.
+
+Add a line to the web changelog (`apps/web/src/features/changelog/releases.ts`) in the same change as the tag.
+
 ## What the workflow does (`.github/workflows/release-android.yml`)
 
 1. Generates `apps/mobile/android` with `expo prebuild` (that folder is never committed).
