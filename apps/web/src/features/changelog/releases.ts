@@ -23,6 +23,22 @@ export type Release = {
 export const RELEASES: Release[] = [
   {
     date: "2026-10-17",
+    title: "Health syncs, and the app updates itself",
+    summary: "Partial health data now shows up, and new Android versions are offered inside the app.",
+    tone: "mint",
+    appVersion: "v1.0.2",
+    changes: [
+      { kind: "new", platform: "app", text: "The app checks GitHub for a newer version when it opens and offers to install it." },
+      { kind: "fixed", platform: "app", text: "Health no longer fails to sync when one reading, such as resting heart rate, is missing." },
+      { kind: "improved", platform: "app", text: "Each Health tile shows its most recent value, and says which day it’s from when it isn’t today." },
+      { kind: "improved", platform: "app", text: "Health shows what your phone read even when it can’t be saved to your account yet." },
+      { kind: "fixed", platform: "web", text: "A reading outside the possible range is stored as no data instead of rejecting the whole sync." },
+      { kind: "new", platform: "web", text: "This changelog page, covering both the web app and the Android app." },
+      { kind: "improved", platform: "web", text: "Emails carry the ghost logo." },
+    ],
+  },
+  {
+    date: "2026-10-17",
     title: "Health sync tells you what went wrong",
     summary: "When the phone can’t send your health data, the app now says why instead of waiting forever.",
     tone: "clay",
