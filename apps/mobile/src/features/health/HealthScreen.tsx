@@ -9,9 +9,12 @@ import {
   healthTotal,
   SOURCE_LABEL,
 } from "@untitled/logic";
-import type { Tone } from "@untitled/types";import { StyleSheet, View, useWindowDimensions } from "react-native";
+import type { HealthDay, Tone } from "@untitled/types";
+import { useMemo } from "react";
+import { StyleSheet, View, useWindowDimensions } from "react-native";
 import Svg, { Circle } from "react-native-svg";
 
+import { mergeDays } from "./merge";
 import { useHealthConnection, useHealthDays } from "./queries";
 import { healthSource } from "./source";
 import { AppText } from "@/components/ui/AppText";
@@ -32,13 +35,32 @@ const C = 2 * Math.PI * R;
 const WIDE = 760;
 const WIDE_COLUMN = 1100;
 
+type Metric = "steps" | "distance_m" | "active_kcal" | "resting_hr" | "sleep_minutes";
+
+/** The newest day that has this metric. A day with a gap (no watch worn, nothing recorded yet) shouldn't blank the tile. */
+function newest(days: HealthDay[], key: Metric) {
+  const d = days.find((x) => x[key] !== null);
+  return d ? { value: d[key] as number, day: d.day } : null;
+}
+
+const dayLabel = (iso: string) => new Date(`${iso}T12:00:00`).toLocaleDateString(undefined, { day: "numeric", month: "short" });
+
 export function HealthScreen() {
   const conn = useHealthConnection();
   const daysQ = useHealthDays();
   const { width } = useWindowDimensions();
   const wide = width >= WIDE;
-  const days = daysQ.data ?? [];
+  // Stored data plus what the phone just read, so partial or not-yet-saved data still shows.
+  const days = useMemo(() => mergeDays(daysQ.data ?? [], conn.phoneDays), [daysQ.data, conn.phoneDays]);
+  const hasData = days.some((d) => Object.entries(d).some(([k, v]) => typeof v === "number" && k !== "day"));
   const latest = days[0];
+  const today = latest?.day;
+  const heartDay = days.find((d) => d.hr_min !== null && d.hr_max !== null);
+  const steps = newest(days, "steps");
+  const sleep = newest(days, "sleep_minutes");
+  const distance = newest(days, "distance_m");
+  const energy = newest(days, "active_kcal");
+  const resting = newest(days, "resting_hr");
   const week = days.slice(0, HEALTH_WEEK);
   const weekSteps = healthTotal(week, (d) => d.steps);
   const refresh = () => void conn.sync().catch(() => undefined);
@@ -66,9 +88,9 @@ export function HealthScreen() {
         />
       ) : conn.status === "setup" ? (
         <SetupCard onConnect={() => void conn.connect()} name={healthSource?.name ?? "Health"} />
-      ) : daysQ.isPending ? (
+      ) : daysQ.isPending && !hasData ? (
         <LoadingState />
-      ) : daysQ.isError ? (
+      ) : daysQ.isError && !hasData ? (
         <ErrorState message={errorMessage(daysQ.error)} onRetry={() => void daysQ.refetch()} />
       ) : (
         <View style={wide ? styles.row : styles.stack}>
@@ -80,6 +102,11 @@ export function HealthScreen() {
               <Button title="Open permission settings" kind="secondary" icon="gear" onPress={() => healthSource?.openSettings()} />
             </View>
           )}
+          {(conn.syncError || daysQ.isError) && hasData && (
+            <View style={styles.full}>
+              <Banner kind="info">Showing what your phone has. It couldn’t be saved to your account yet, so pull down to try again.</Banner>
+            </View>
+          )}
           {latest ? (
             <>
               <Card tone="blue" style={wide ? styles.ringWide : undefined}>
@@ -89,31 +116,39 @@ export function HealthScreen() {
                 />
               </Card>
               <View style={styles.tiles}>
-                <Tile tone="green" icon="shoe-prints" label="Steps" value={latest.steps === null ? null : fmtNumber(latest.steps)} />
-                <Tile
-                  tone="violet"
-                  icon="moon"
-                  label="Sleep"
-                  value={latest.sleep_minutes === null ? null : fmtDuration(latest.sleep_minutes)}
-                />
+                <Tile tone="green" icon="shoe-prints" label="Steps" value={steps && fmtNumber(steps.value)} day={steps?.day} today={today} />
+                <Tile tone="violet" icon="moon" label="Sleep" value={sleep && fmtDuration(sleep.value)} day={sleep?.day} today={today} />
                 <Tile
                   tone="mint"
                   icon="location-dot"
                   label="Distance"
-                  value={latest.distance_m === null ? null : fmtDistance(latest.distance_m)}
+                  value={distance && fmtDistance(distance.value)}
+                  day={distance?.day}
+                  today={today}
                 />
                 <Tile
                   tone="amber"
                   icon="fire"
                   label="Active energy"
-                  value={latest.active_kcal === null ? null : `${fmtNumber(latest.active_kcal)} kcal`}
+                  value={energy && `${fmtNumber(energy.value)} kcal`}
+                  day={energy?.day}
+                  today={today}
                 />
-                <Tile tone="clay" icon="heart" label="Heart rate" value={fmtHeartRange(latest)} />
+                <Tile
+                  tone="clay"
+                  icon="heart"
+                  label="Heart rate"
+                  value={heartDay ? fmtHeartRange(heartDay) : null}
+                  day={heartDay?.day}
+                  today={today}
+                />
                 <Tile
                   tone="blue"
                   icon="heart-pulse"
                   label="Resting heart rate"
-                  value={latest.resting_hr === null ? null : `${latest.resting_hr} bpm`}
+                  value={resting && `${resting.value} bpm`}
+                  day={resting?.day}
+                  today={today}
                 />
               </View>
             </>
@@ -152,7 +187,22 @@ function SetupCard({ onConnect, name }: { onConnect: () => void; name: string })
   );
 }
 
-function Tile({ tone, icon, label, value }: { tone: Tone; icon: IconName; label: string; value: string | null }) {
+function Tile({
+  tone,
+  icon,
+  label,
+  value,
+  day,
+  today,
+}: {
+  tone: Tone;
+  icon: IconName;
+  label: string;
+  value: string | null;
+  /** The day the value is from; named when it isn't the latest synced day. */
+  day?: string;
+  today?: string;
+}) {
   return (
     <View style={styles.tileCell}>
       <Card tone={tone}>
@@ -167,6 +217,11 @@ function Tile({ tone, icon, label, value }: { tone: Tone; icon: IconName; label:
             <AppText variant="title" color={Tints[tone].fg} numberOfLines={1} adjustsFontSizeToFit>
               {value ?? "No data"}
             </AppText>
+            {value && day && day !== today ? (
+              <AppText variant="small" color={Tints[tone].fg}>
+                {`From ${dayLabel(day)}`}
+              </AppText>
+            ) : null}
           </View>
         </View>
       </Card>

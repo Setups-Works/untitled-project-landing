@@ -1,6 +1,7 @@
 import { z } from "zod";
 
-const metric = (min: number, max: number) => z.number().int().min(min).max(max).nullable().optional();
+/** A reading outside the possible range (a phone reports 0 for "no heart rate") is stored as no data, so one bad value can't reject the day. */
+const metric = (min: number, max: number) => z.number().int().min(min).max(max).nullable().optional().catch(null);
 
 export const healthDayInput = z.object({
   day: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),

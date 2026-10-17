@@ -4,6 +4,7 @@ import { HEALTH_SPAN, HEALTH_WEEK } from "@untitled/logic";
 import type { HealthDay } from "@untitled/types";
 import { useCallback, useEffect, useState } from "react";
 
+import { sanitizeDay } from "./limits";
 import { healthSource } from "./source";
 import type { DayTotals } from "./source.types";
 import { api } from "@/lib/api";
@@ -37,14 +38,18 @@ export function useHealthConnection() {
   const flagKey = `health:connected:${user?.id ?? "anon"}`;
   const [status, setStatus] = useState<HealthStatus>("checking");
   const [noData, setNoData] = useState(false);
+  /** What the phone read on the last sync, kept so the screen can show it even if saving to the account fails. */
+  const [phoneDays, setPhoneDays] = useState<HealthDay[]>([]);
 
   const push = useMutation({
     mutationFn: async () => {
       if (!healthSource) return [];
       const today = isoDate();
       const days = Array.from({ length: SYNC_DAYS }, (_, i) => addDays(today, -i));
-      const totals = await healthSource.readDays(days);
+      const source = healthSource.id;
+      const totals = (await healthSource.readDays(days)).map(sanitizeDay);
       setNoData(!hasAnyData(totals));
+      setPhoneDays(totals.map((t) => ({ ...t, source, synced_at: "" })));
       if (hasAnyData(totals)) await api.put("/api/v1/health", { source: healthSource.id, days: totals });
       return totals;
     },
@@ -75,5 +80,5 @@ export function useHealthConnection() {
     await sync().catch(() => undefined);
   }, [flagKey, sync]);
 
-  return { status, noData, connect, sync, syncing: push.isPending, syncError: push.error };
+  return { status, noData, phoneDays, connect, sync, syncing: push.isPending, syncError: push.error };
 }
