@@ -21,10 +21,20 @@ export async function healthContextFor(userId: string, localDate: string): Promi
   if (!days.length) return "";
   const yesterday = addDays(localDate, -1);
   const label = (day: string) => (day === localDate ? `${day} (today)` : day === yesterday ? `${day} (yesterday)` : day);
-  const part = (name: string, v: number | null, unit: string) => (v === null ? "" : ` ${name} ${v}${unit}`);
+  // Every figure is listed, and a missing one says so: left out, the model fills the gap with 0, which reads as "measured nothing".
+  const fig = (name: string, value: string | null) => `${name} ${value ?? "not recorded"}`;
+  const num = (v: number | null, unit: string) => (v === null ? null : `${v}${unit}`);
   const lines = days.map((d) => {
-    const hr = d.hr_min !== null && d.hr_max !== null ? ` heart rate ${d.hr_min}-${d.hr_max} bpm` : "";
-    return `${label(d.day)}:${part("steps", d.steps, "")}${part("distance", d.distance_m, " m")}${part("active energy", d.active_kcal, " kcal")}${part("resting heart rate", d.resting_hr, " bpm")}${hr}${part("sleep", d.sleep_minutes, " min")}`;
+    const heart = d.hr_min !== null && d.hr_max !== null ? `${d.hr_min}-${d.hr_max} bpm` : null;
+    const parts = [
+      fig("steps", num(d.steps, "")),
+      fig("distance", num(d.distance_m, " m")),
+      fig("active energy", num(d.active_kcal, " kcal")),
+      fig("heart rate", heart),
+      fig("resting heart rate", num(d.resting_hr, " bpm")),
+      fig("sleep", num(d.sleep_minutes, " min")),
+    ];
+    return `${label(d.day)}: ${parts.join(", ")}`;
   });
   return `<health-data source="${days[0].source}">\n${lines.join("\n")}\n</health-data>`;
 }

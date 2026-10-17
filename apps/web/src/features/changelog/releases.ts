@@ -38,6 +38,8 @@ export const RELEASES: Release[] = [
       { kind: "fixed", platform: "app", text: "Today’s steps are never behind: the newest reading from your phone is shown first, and it syncs when you return to the app." },
       { kind: "improved", platform: "app", text: "Syncing is faster and lighter. It reads each metric once for the whole week and skips uploading when nothing changed." },
       { kind: "fixed", platform: "web", text: "A moment with no reading no longer erases a number that was already saved." },
+      { kind: "fixed", platform: "web", text: "“Save as note” from Health now shows its draft in the chat. A note with a list in it used to disappear." },
+      { kind: "fixed", platform: "web", text: "The assistant says a figure was not recorded instead of reporting 0 for it." },
     ],
   },
   {

@@ -37,7 +37,7 @@ describe("auth validation", () => {
   });
 });
 
-import { parseChatActions } from "./chatActions";
+import { parseChatActions, repairJsonStrings } from "./chatActions";
 
 describe("chat drafts", () => {
   const draft = '<create-item>{"kind":"task","title":"Buy milk","description":"","due_date":"2026-10-13"}</create-item>';
@@ -53,6 +53,20 @@ describe("chat drafts", () => {
   it("ignores invalid drafts and never leaks a half-written block", () => {
     expect(parseChatActions('<create-item>{"kind":"task"}</create-item>ok').proposals).toHaveLength(0);
     expect(parseChatActions('Working on it <create-item>{"kind":').body).toBe("Working on it");
+  });
+
+  it("keeps a multi-line note whose body has real line breaks inside the JSON string", () => {
+    const note = '<create-item>{"kind":"note","title":"Health summary","body":"- Steps: 2,835\n- Sleep: not recorded\n\ttabbed"}</create-item>';
+    const r = parseChatActions(`Here's a draft note.\n${note}`);
+    expect(r.body).toBe("Here's a draft note.");
+    expect(r.proposals).toHaveLength(1);
+    expect(r.proposals[0]?.action).toMatchObject({ kind: "note", title: "Health summary", body: "- Steps: 2,835\n- Sleep: not recorded\n\ttabbed" });
+  });
+
+  it("repairs only what is inside strings, and leaves valid blocks alone", () => {
+    expect(repairJsonStrings('{"a":"x\ny","b":1}')).toBe('{"a":"x\\ny","b":1}');
+    expect(repairJsonStrings('{\n  "a": "x\\ny"\n}')).toBe('{\n  "a": "x\\ny"\n}');
+    expect(parseChatActions(draft).proposals).toHaveLength(1);
   });
 
   it("reads confirmed drafts as created", () => {

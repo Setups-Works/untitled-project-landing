@@ -80,9 +80,45 @@ const createdSchema = z.object({
   action: chatActionSchema,
 });
 
+/**
+ * Models often write a multi-line note body (a list, a summary) with real line breaks inside the JSON string, which JSON forbids, so
+ * the whole draft would be dropped. This escapes raw line breaks and tabs that sit inside string values and leaves everything else as
+ * it was; a valid block is returned unchanged.
+ */
+export function repairJsonStrings(json: string): string {
+  let out = "";
+  let inString = false;
+  let escaped = false;
+  for (const ch of json) {
+    if (inString) {
+      if (escaped) escaped = false;
+      else if (ch === "\\") escaped = true;
+      else if (ch === '"') inString = false;
+      else if (ch === "\n") {
+        out += "\\n";
+        continue;
+      } else if (ch === "\r") continue;
+      else if (ch === "\t") {
+        out += "\\t";
+        continue;
+      }
+    } else if (ch === '"') inString = true;
+    out += ch;
+  }
+  return out;
+}
+
+function parseJson(json: string): unknown {
+  try {
+    return JSON.parse(json);
+  } catch {
+    return JSON.parse(repairJsonStrings(json));
+  }
+}
+
 function readBlock(tag: string, json: string): { action: ChatAction; created: CreatedItem | null } | null {
   try {
-    const raw: unknown = JSON.parse(json);
+    const raw: unknown = parseJson(json);
     if (tag === "create-item") {
       const r = chatActionSchema.safeParse(raw);
       return r.success ? { action: r.data, created: null } : null;
