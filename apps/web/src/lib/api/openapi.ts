@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { healthSyncInput } from "../../server/services/health/health.schema";
 import { RESOURCES } from "./resources";
 
 /**
@@ -67,6 +68,20 @@ const removeRequest = z.object({
   paths: z.array(z.string()).max(1000).optional(),
   prefix: z.string().max(300).optional(),
 });
+const healthDay = z.object({
+  day: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  steps: z.number().int().nullable(),
+  distance_m: z.number().int().nullable(),
+  active_kcal: z.number().int().nullable(),
+  resting_hr: z.number().int().nullable(),
+  hr_min: z.number().int().nullable(),
+  hr_max: z.number().int().nullable(),
+  sleep_minutes: z.number().int().nullable(),
+  source: z.enum(["healthkit", "health_connect", "unknown"]),
+  synced_at: z.string(),
+});
+const healthListResponse = z.object({ data: z.array(healthDay) });
+const healthSavedResponse = z.object({ data: z.object({ saved: z.number().int() }) });
 const okResponse = z.object({ ok: z.literal(true) });
 const errorResponse = z.object({ error: z.string() });
 
@@ -81,6 +96,9 @@ const schemas = {
   SignRequest: signRequest,
   SignResponse: signResponse,
   RemoveRequest: removeRequest,
+  HealthSyncRequest: healthSyncInput,
+  HealthListResponse: healthListResponse,
+  HealthSavedResponse: healthSavedResponse,
   Ok: okResponse,
   Error: errorResponse,
 };
@@ -197,6 +215,7 @@ export function buildOpenApi() {
       { name: "To-do", description: "To-dos, including repeating ones" },
       { name: "Notes", description: "Notes (Markdown) with colours, pins and files" },
       { name: "Journal", description: "Journal entries by day" },
+      { name: "Health", description: "Daily activity, sleep and heart-rate totals synced from the phone" },
       { name: "AI", description: "Assistant replies and confirmed drafts" },
       { name: "Data", description: "Row-level-security protected data door used by the web app" },
       { name: "Realtime", description: "Server-sent events" },
@@ -206,6 +225,29 @@ export function buildOpenApi() {
     ],
     paths: {
       ...resourcePaths,
+      "/api/v1/health": {
+        get: {
+          tags: ["Health"],
+          summary: "Your recent daily health totals, newest first",
+          security: secured,
+          parameters: [{ name: "days", in: "query", schema: { type: "integer", minimum: 1, maximum: 90, default: 14 } }],
+          responses: { "200": { description: "OK", content: json("HealthListResponse") }, "401": common["401"], "500": err("Could not load.") },
+        },
+        put: {
+          tags: ["Health"],
+          summary: "Save daily totals read from Apple Health or Health Connect",
+          description:
+            "Sent by the mobile app. Each day is replaced, so the latest sync of a day wins. Only daily aggregates are stored, never raw samples. A metric the phone has no data for is null or omitted.",
+          security: secured,
+          requestBody: body("HealthSyncRequest"),
+          responses: {
+            "200": { description: "Saved", content: json("HealthSavedResponse") },
+            "400": err("Invalid input."),
+            ...common,
+            "500": err("Could not save."),
+          },
+        },
+      },
       "/api/v1/auth-config": {
         get: {
           tags: ["Config"],
