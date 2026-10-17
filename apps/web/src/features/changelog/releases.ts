@@ -23,6 +23,18 @@ export type Release = {
 export const RELEASES: Release[] = [
   {
     date: "2026-10-17",
+    title: "Health drafts that show up",
+    summary: "Saving a health summary as a note now works, and missing figures are no longer reported as zero.",
+    tone: "clay",
+    appVersion: "v1.0.5",
+    changes: [
+      { kind: "fixed", platform: "app", text: "“Save as note” and “Add to journal” from Health show their draft in the chat. A note with a list in it used to disappear." },
+      { kind: "fixed", platform: "web", text: "The same fix on the web: a draft with a multi-line body is kept instead of silently dropped." },
+      { kind: "fixed", platform: "web", text: "The assistant says a figure was not recorded instead of reporting 0 m, 0 kcal or 0 minutes for it." },
+    ],
+  },
+  {
+    date: "2026-10-17",
     title: "A detail page for every health metric",
     summary: "Tap steps, sleep, distance, energy or heart rate to see it day by day. Health is also more accurate.",
     tone: "violet",
@@ -38,8 +50,6 @@ export const RELEASES: Release[] = [
       { kind: "fixed", platform: "app", text: "Today’s steps are never behind: the newest reading from your phone is shown first, and it syncs when you return to the app." },
       { kind: "improved", platform: "app", text: "Syncing is faster and lighter. It reads each metric once for the whole week and skips uploading when nothing changed." },
       { kind: "fixed", platform: "web", text: "A moment with no reading no longer erases a number that was already saved." },
-      { kind: "fixed", platform: "web", text: "“Save as note” from Health now shows its draft in the chat. A note with a list in it used to disappear." },
-      { kind: "fixed", platform: "web", text: "The assistant says a figure was not recorded instead of reporting 0 for it." },
     ],
   },
   {
