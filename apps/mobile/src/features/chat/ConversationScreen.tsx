@@ -36,11 +36,14 @@ const titleFrom = (text: string) => prettyTitle((text.split("\n")[0]?.trim() || 
 export function Conversation({
   chatId: initialId,
   seed,
+  onSeeded,
   onCreated,
 }: {
   chatId: string | null;
   /** A first message to send by itself when this opens a new chat. */
   seed?: string;
+  /** Called as the seed is sent, so the parent doesn't offer it to a later chat. */
+  onSeeded?: () => void;
   onCreated: (id: string) => void;
 }) {
   const { user } = useAppState();
@@ -121,6 +124,7 @@ export function Conversation({
   useEffect(() => {
     if (!seed || initialId || seeded.current || providersLoading || !user) return;
     seeded.current = true;
+    onSeeded?.();
     void send(seed, [], () => {});
     // eslint-disable-next-line react-hooks/exhaustive-deps -- send changes every render; this must run once per mount
   }, [seed, initialId, providersLoading, user]);

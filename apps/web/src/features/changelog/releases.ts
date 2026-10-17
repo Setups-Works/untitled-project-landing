@@ -23,6 +23,25 @@ export type Release = {
 export const RELEASES: Release[] = [
   {
     date: "2026-10-17",
+    title: "A detail page for every health metric",
+    summary: "Tap steps, sleep, distance, energy or heart rate to see it day by day. Health is also more accurate.",
+    tone: "violet",
+    appVersion: "v1.0.4",
+    changes: [
+      { kind: "new", platform: "web", text: "Each Health tile opens a page with a chart per day, your average, best and lowest day, and every day listed." },
+      { kind: "new", platform: "app", text: "The same detail screen in the Android app, opened from any Health tile." },
+      { kind: "new", platform: "web", text: "Ask the assistant about one metric from its detail page." },
+      { kind: "new", platform: "app", text: "Ask the assistant about one metric from its detail screen." },
+      { kind: "improved", platform: "app", text: "Health now picks a day like the Journal: step with the arrows or choose any day from the calendar." },
+      { kind: "improved", platform: "web", text: "The same day picker on the Health page, with a dot on days that have data." },
+      { kind: "fixed", platform: "app", text: "Sleep is counted for the day you wake up, so a night that crosses midnight is no longer split in two." },
+      { kind: "fixed", platform: "app", text: "Today’s steps are never behind: the newest reading from your phone is shown first, and it syncs when you return to the app." },
+      { kind: "improved", platform: "app", text: "Syncing is faster and lighter. It reads each metric once for the whole week and skips uploading when nothing changed." },
+      { kind: "fixed", platform: "web", text: "A moment with no reading no longer erases a number that was already saved." },
+    ],
+  },
+  {
+    date: "2026-10-17",
     title: "Health by day, and a chat that knows your numbers",
     summary: "Pick Today, Yesterday, 7 days or 30 days, and hand what you see to the assistant.",
     tone: "blue",

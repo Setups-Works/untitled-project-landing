@@ -29,21 +29,30 @@ export async function healthContextFor(userId: string, localDate: string): Promi
   return `<health-data source="${days[0].source}">\n${lines.join("\n")}\n</health-data>`;
 }
 
-/** Store what the phone read. Days are replaced, so the latest sync of a day wins (the day is still filling up). */
+/**
+ * Store what the phone read. A day is replaced by its latest reading (the day is still filling up), but a metric the phone sent no
+ * value for keeps what was stored: "no reading right now" must not erase a number an earlier sync or another phone recorded.
+ */
 export async function syncHealth(userId: string, input: HealthSyncInput) {
+  const db = userDb(userId);
   const syncedAt = new Date().toISOString();
-  const rows = input.days.map((d) => ({
-    day: d.day,
-    steps: d.steps ?? null,
-    distance_m: d.distance_m ?? null,
-    active_kcal: d.active_kcal ?? null,
-    resting_hr: d.resting_hr ?? null,
-    hr_min: d.hr_min ?? null,
-    hr_max: d.hr_max ?? null,
-    sleep_minutes: d.sleep_minutes ?? null,
-    source: input.source,
-    synced_at: syncedAt,
-  }));
-  await upsertHealthDays(userDb(userId), rows);
+  const oldest = input.days.reduce((min, d) => (d.day < min ? d.day : min), input.days[0]!.day);
+  const stored = new Map((await listHealthDays(db, oldest, input.days.length + 1)).map((r) => [r.day, r]));
+  const rows = input.days.map((d) => {
+    const old = stored.get(d.day);
+    return {
+      day: d.day,
+      steps: d.steps ?? old?.steps ?? null,
+      distance_m: d.distance_m ?? old?.distance_m ?? null,
+      active_kcal: d.active_kcal ?? old?.active_kcal ?? null,
+      resting_hr: d.resting_hr ?? old?.resting_hr ?? null,
+      hr_min: d.hr_min ?? old?.hr_min ?? null,
+      hr_max: d.hr_max ?? old?.hr_max ?? null,
+      sleep_minutes: d.sleep_minutes ?? old?.sleep_minutes ?? null,
+      source: input.source,
+      synced_at: syncedAt,
+    };
+  });
+  await upsertHealthDays(db, rows);
   return { saved: rows.length };
 }

@@ -4,7 +4,8 @@ const METRICS = ["steps", "distance_m", "active_kcal", "resting_hr", "hr_min", "
 
 /**
  * One list of days, newest first, from what the account has stored and what the phone just read. For each day and each metric the
- * stored value wins; the phone fills any gap, so data shows up even when saving it to the account failed or hasn't finished.
+ * phone's reading wins, because it is the newer one (a total synced this morning is already behind); the stored value fills any
+ * gap. So data shows up even when saving it to the account failed or hasn't finished, and today's steps are never stale.
  */
 export function mergeDays(stored: HealthDay[], phone: HealthDay[]): HealthDay[] {
   const byDay = new Map<string, HealthDay>();
@@ -15,7 +16,9 @@ export function mergeDays(stored: HealthDay[], phone: HealthDay[]): HealthDay[] 
       byDay.set(p.day, { ...p });
       continue;
     }
-    for (const k of METRICS) have[k] ??= p[k];
+    for (const k of METRICS) have[k] = p[k] ?? have[k];
+    if (p.synced_at) have.synced_at = p.synced_at;
+    have.source = p.source;
   }
   return [...byDay.values()].sort((a, b) => (a.day < b.day ? 1 : a.day > b.day ? -1 : 0));
 }

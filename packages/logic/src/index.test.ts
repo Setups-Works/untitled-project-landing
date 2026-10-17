@@ -2,7 +2,21 @@ import { describe, expect, it } from "vitest";
 import { addDays, monthGrid } from "./dates";
 import { applyOpts, DEFAULT_OPTS, inView, nextDue, nthRuleFor, recurrenceLabel, upcomingDates } from "./tasks";
 import type { HealthDay, Task } from "@untitled/types";
-import { daysInRange, healthPrompt, summarizeHealth } from "./health";
+import {
+  dayRange,
+  daysInRange,
+  healthPrompt,
+  isHealthMetric,
+  metricPrompt,
+  metricRowText,
+  metricSeries,
+  metricsRecorded,
+  parseRange,
+  pickedDay,
+  rangeMeta,
+  stepRange,
+  summarizeHealth,
+} from "./health";
 
 const task = (over: Partial<Task>): Task => ({
   id: "1",
@@ -74,6 +88,41 @@ describe("health ranges", () => {
     expect(daysInRange(days, "month", "2026-10-17")).toHaveLength(4);
   });
 
+  it("steps one day back and forward with the arrows, never past today", () => {
+    const t = "2026-10-17";
+    expect(stepRange("today", t, -1)).toBe("yesterday");
+    expect(stepRange("yesterday", t, -1)).toBe("day:2026-10-15");
+    expect(stepRange("day:2026-10-15", t, 1)).toBe("yesterday");
+    expect(stepRange("yesterday", t, 1)).toBe("today");
+    expect(stepRange("today", t, 1)).toBeNull();
+    expect(stepRange("week", t, -1)).toBeNull();
+    expect(stepRange("day:2026-10-11", t, 1)).toBe("day:2026-10-12");
+  });
+
+  it("counts the figures a day has", () => {
+    expect(metricsRecorded(summarizeHealth([days[1]!]))).toBe(3);
+    expect(metricsRecorded(summarizeHealth([]))).toBe(0);
+  });
+
+  it("picks one specific day from the calendar", () => {
+    expect(daysInRange(days, dayRange("2026-10-11"), "2026-10-17").map((d) => d.day)).toEqual(["2026-10-11"]);
+    expect(daysInRange(days, dayRange("2026-10-12"), "2026-10-17")).toEqual([]);
+    expect(rangeMeta(dayRange("2026-10-11"), "2026-10-17")).toMatchObject({ from: "2026-10-11", to: "2026-10-11", days: 1 });
+    expect(rangeMeta(dayRange("2026-10-17"), "2026-10-17").label).toBe("Today");
+    expect(pickedDay(dayRange("2026-10-11"))).toBe("2026-10-11");
+    expect(pickedDay("week")).toBeNull();
+    expect(healthPrompt("ask", dayRange("2026-10-11"))).toContain("on 2026-10-11");
+    expect(metricSeries(days, "steps", dayRange("2026-10-11"), "2026-10-17").points).toEqual([{ day: "2026-10-11", value: 5000 }]);
+  });
+
+  it("accepts only real ranges from outside input", () => {
+    expect(parseRange("week")).toBe("week");
+    expect(parseRange("day:2026-10-11")).toBe("day:2026-10-11");
+    expect(parseRange("day:tomorrow")).toBeNull();
+    expect(parseRange("<script>")).toBeNull();
+    expect(parseRange(undefined)).toBeNull();
+  });
+
   it("totals activity, averages the rest, and ignores gaps", () => {
     const s = summarizeHealth(daysInRange(days, "week", "2026-10-17"));
     expect(s).toMatchObject({ steps: 9000, stepsAvg: 3000, sleepAvg: 400, hrMin: 50, hrMax: 150, recorded: 3, distance: null });
@@ -84,5 +133,43 @@ describe("health ranges", () => {
     expect(healthPrompt("journal", "yesterday")).toContain("yesterday");
     expect(healthPrompt("note", "week")).toContain("the last 7 days");
     expect(healthPrompt("ask", "today")).toContain("today");
+  });
+});
+
+describe("one metric in detail", () => {
+  const d = (day: string, over: Partial<HealthDay>): HealthDay => ({
+    day, steps: null, distance_m: null, active_kcal: null, resting_hr: null, hr_min: null, hr_max: null, sleep_minutes: null,
+    source: "health_connect", synced_at: "", ...over,
+  });
+  const days = [d("2026-10-17", { steps: 2000, hr_min: 48, hr_max: 120 }), d("2026-10-15", { steps: 8000, sleep_minutes: 420, hr_min: 55, hr_max: 160 })];
+
+  it("returns every day of the range, with gaps as null", () => {
+    const s = metricSeries(days, "steps", "week", "2026-10-17");
+    expect(s.points).toHaveLength(7);
+    expect(s.points[6]).toEqual({ day: "2026-10-17", value: 2000 });
+    expect(s.points[5]).toEqual({ day: "2026-10-16", value: null });
+  });
+
+  it("adds up activity and finds the best and lowest day", () => {
+    const s = metricSeries(days, "steps", "week", "2026-10-17");
+    expect(s).toMatchObject({ headline: 10000, average: 5000, recorded: 2 });
+    expect(s.best).toEqual({ day: "2026-10-15", value: 8000 });
+    expect(s.lowest).toEqual({ day: "2026-10-17", value: 2000 });
+  });
+
+  it("averages sleep, and takes the lowest heart reading from any day", () => {
+    expect(metricSeries(days, "sleep", "week", "2026-10-17").headline).toBe(420);
+    const h = metricSeries(days, "heart", "week", "2026-10-17");
+    expect(h.best).toEqual({ day: "2026-10-15", value: 160 });
+    expect(h.lowest).toEqual({ day: "2026-10-17", value: 48 });
+  });
+
+  it("has nothing to say about a day without a reading", () => {
+    const s = metricSeries(days, "steps", "yesterday", "2026-10-17");
+    expect(s).toMatchObject({ headline: null, recorded: 0, best: null });
+    expect(isHealthMetric("steps")).toBe(true);
+    expect(isHealthMetric("nope")).toBe(false);
+    expect(metricRowText("heart", days[0]!)).toBe("48–120 bpm");
+    expect(metricPrompt("sleep", "week")).toContain("the last 7 days");
   });
 });

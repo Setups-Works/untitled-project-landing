@@ -4,20 +4,13 @@ export function dayBounds(day: string) {
   return { start: new Date(y, m - 1, d), end: new Date(y, m - 1, d + 1) };
 }
 
-export type Interval = { start: number; end: number };
+/** One range covering all the given local days, so a whole sync can be read with a single query per metric. */
+export function spanOf(days: string[]) {
+  const sorted = [...days].sort();
+  return { start: dayBounds(sorted[0]!).start, end: dayBounds(sorted[sorted.length - 1]!).end };
+}
 
-/**
- * Whole minutes covered by the intervals, counting overlaps once. A phone and a watch often both record the same night, and adding
- * their samples would double it.
- */
-export function sleepMinutes(intervals: Interval[]) {
-  const sorted = [...intervals].sort((a, b) => a.start - b.start);
-  let covered = 0;
-  let cursor = -Infinity;
-  for (const { start, end } of sorted) {
-    if (end <= cursor) continue;
-    covered += end - Math.max(start, cursor);
-    cursor = end;
-  }
-  return Math.round(covered / 60_000);
+/** The local calendar day (YYYY-MM-DD) of a moment. Slices are tagged by their middle, so a 23- or 25-hour day still lands on its own date. */
+export function localDay(d: Date) {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }

@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { HEALTH_SPAN, HEALTH_WEEK } from "@untitled/logic";
 import type { HealthDay } from "@untitled/types";
 import { useCallback, useEffect, useState } from "react";
+import { AppState } from "react-native";
 
 import { sanitizeDay } from "./limits";
 import { healthSource } from "./source";
@@ -14,6 +15,11 @@ import { useAppState } from "@/providers/AppState";
 
 /** The phone re-sends the last week on each sync: today is still filling up, and an earlier sync may have missed a late watch upload. */
 const SYNC_DAYS = HEALTH_WEEK;
+/** Automatic syncs (opening the app, coming back to it) are skipped within this time of the last one; pulling down always syncs. */
+const AUTO_SYNC_GAP_MS = 2 * 60_000;
+
+type SyncOptions = { force?: boolean } | undefined;
+type LastSync = { at: number; sig: string };
 
 export function useHealthDays() {
   return useQuery({
@@ -41,16 +47,33 @@ export function useHealthConnection() {
   /** What the phone read on the last sync, kept so the screen can show it even if saving to the account fails. */
   const [phoneDays, setPhoneDays] = useState<HealthDay[]>([]);
 
+  const lastKey = `health:last:${user?.id ?? "anon"}`;
+
   const push = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (opts: SyncOptions) => {
       if (!healthSource) return [];
+      const force = opts?.force === true;
+      const last = JSON.parse((await AsyncStorage.getItem(lastKey).catch(() => null)) ?? "null") as LastSync | null;
+      // An automatic sync right after another one has nothing new to read.
+      if (!force && last && Date.now() - last.at < AUTO_SYNC_GAP_MS) return [];
+
       const today = isoDate();
       const days = Array.from({ length: SYNC_DAYS }, (_, i) => addDays(today, -i));
       const source = healthSource.id;
       const totals = (await healthSource.readDays(days)).map(sanitizeDay);
       setNoData(!hasAnyData(totals));
-      setPhoneDays(totals.map((t) => ({ ...t, source, synced_at: "" })));
-      if (hasAnyData(totals)) await api.put("/api/v1/health", { source: healthSource.id, days: totals });
+      const readAt = new Date().toISOString();
+      setPhoneDays(totals.map((t) => ({ ...t, source, synced_at: readAt })));
+
+      // Upload only when something changed since the last successful upload. Pulling down uploads regardless, which also repairs the
+      // account if another phone replaced these days.
+      const sig = JSON.stringify(totals);
+      if (hasAnyData(totals) && (force || sig !== last?.sig)) {
+        await api.put("/api/v1/health", { source, days: totals });
+        await AsyncStorage.setItem(lastKey, JSON.stringify({ at: Date.now(), sig } satisfies LastSync)).catch(() => undefined);
+      } else if (last) {
+        await AsyncStorage.setItem(lastKey, JSON.stringify({ at: Date.now(), sig: last.sig } satisfies LastSync)).catch(() => undefined);
+      }
       return totals;
     },
     onSettled: () => qc.invalidateQueries({ queryKey: qk.health }),
@@ -64,12 +87,21 @@ export function useHealthConnection() {
       const connected = (await AsyncStorage.getItem(flagKey).catch(() => null)) === "1";
       if (!live) return;
       setStatus(connected ? "ready" : "setup");
-      if (connected) await sync().catch(() => undefined);
+      if (connected) await sync({ force: false }).catch(() => undefined);
     })();
     return () => {
       live = false;
     };
   }, [flagKey, sync]);
+
+  // Coming back to the app is when today's steps have moved on, so catch up then (the gap above stops it repeating).
+  useEffect(() => {
+    if (status !== "ready") return;
+    const sub = AppState.addEventListener("change", (s) => {
+      if (s === "active") void sync({ force: false }).catch(() => undefined);
+    });
+    return () => sub.remove();
+  }, [status, sync]);
 
   const connect = useCallback(async () => {
     if (!healthSource) return;
@@ -77,12 +109,12 @@ export function useHealthConnection() {
     if (!done) return;
     await AsyncStorage.setItem(flagKey, "1").catch(() => undefined);
     setStatus("ready");
-    await sync().catch(() => undefined);
+    await sync({ force: true }).catch(() => undefined);
   }, [flagKey, sync]);
 
   /** Pull-to-refresh: a syncing phone reads and uploads; any other phone just reloads what the account has. */
   const refresh = useCallback(async () => {
-    if (status === "ready") await sync();
+    if (status === "ready") await sync({ force: true });
     else await qc.invalidateQueries({ queryKey: qk.health });
   }, [status, sync, qc]);
 

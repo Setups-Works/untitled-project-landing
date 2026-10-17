@@ -9,9 +9,10 @@ import {
   fmtDuration,
   fmtNumber,
   HEALTH_GOALS,
-  HEALTH_RANGES,
   HEALTH_SPAN,
   healthRatio as ratio,
+  metricsRecorded,
+  rangeMeta,
   SOURCE_LABEL,
   summarizeHealth,
   type HealthRange,
@@ -28,8 +29,13 @@ const SECTION_LABEL = "text-[11px] font-semibold tracking-[0.1em] text-fg-faint 
 export default function HealthApp() {
   const { days, isPending, isError } = useHealthDays(HEALTH_SPAN);
   const [range, setRange] = useState<HealthRange>("today");
-  const meta = HEALTH_RANGES.find((r) => r.key === range)!;
   const today = isoDate();
+  const meta = rangeMeta(range, today);
+  // Days with any reading get a dot in the calendar.
+  const daysWithData = useMemo(
+    () => days.filter((d) => [d.steps, d.distance_m, d.active_kcal, d.resting_hr, d.hr_min, d.hr_max, d.sleep_minutes].some((v) => v !== null)).map((d) => d.day),
+    [days],
+  );
   const inRange = useMemo(() => daysInRange(days, range, today), [days, range, today]);
   const sum = useMemo(() => summarizeHealth(inRange), [inRange]);
   const multi = meta.days > 1;
@@ -67,7 +73,14 @@ export default function HealthApp() {
       ) : (
         <>
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-            <RangeFilter value={range} onChange={setRange} />
+            <RangeFilter
+              value={range}
+              onChange={setRange}
+              today={today}
+              daysWithData={daysWithData}
+              count={multi ? sum.recorded : metricsRecorded(sum)}
+              pills={false}
+            />
             <HealthActions range={range} />
           </div>
 
@@ -81,7 +94,11 @@ export default function HealthApp() {
               {multi && (
                 <ul className="mt-5 flex h-[72px] items-end gap-1" aria-label="Steps per day">
                   {bars.map((d) => (
-                    <li key={d.day} className="flex h-full min-w-0 flex-1 flex-col justify-end" title={`${d.day}: ${fmtNumber(d.steps ?? 0)} steps`}>
+                    <li
+                      key={d.day}
+                      className="flex h-full min-w-0 flex-1 flex-col justify-end"
+                      title={`${d.day}: ${fmtNumber(d.steps ?? 0)} steps`}
+                    >
                       <span
                         className={`at-blue block min-h-1 rounded-pill ${d.steps === null ? "bg-(--abl)" : "bg-(--abf)"}`}
                         style={{ height: `${Math.max(ratio(d.steps ?? 0, HEALTH_GOALS.steps) * 100, 4)}%` }}
@@ -99,42 +116,57 @@ export default function HealthApp() {
               </p>
               {sum.recorded === 0 ? (
                 <p className="ap-none glass rounded-r3 p-5 text-[14px] text-fg-muted">
-                  Nothing was recorded {range === "today" ? "today" : range === "yesterday" ? "yesterday" : "in this period"} yet. Pull to sync
-                  in the phone app, or pick another day.
+                  Nothing was recorded {multi ? "in this period" : meta.label === "Today" || meta.label === "Yesterday" ? meta.label.toLowerCase() : `on ${meta.label}`}
+                  {meta.label === "Today" ? " yet" : ""}. Sync in the phone app, or pick another day.
                 </p>
               ) : (
                 <div className="grid gap-3 sm:grid-cols-2">
                   <StatTile
                     tint="green"
+                    href={`/dashboard/health/steps?range=${range}`}
                     icon={faShoePrints}
                     label="Steps"
                     value={sum.steps === null ? null : fmtNumber(sum.steps)}
-                    note={multi && sum.stepsAvg !== null ? `${fmtNumber(sum.stepsAvg)} a day on average` : `Goal ${fmtNumber(HEALTH_GOALS.steps)}`}
+                    note={
+                      multi && sum.stepsAvg !== null
+                        ? `${fmtNumber(sum.stepsAvg)} a day on average`
+                        : `Goal ${fmtNumber(HEALTH_GOALS.steps)}`
+                    }
                     fill={ratio(multi ? (sum.stepsAvg ?? 0) : (sum.steps ?? 0), HEALTH_GOALS.steps)}
                   />
                   <StatTile
                     tint="violet"
+                    href={`/dashboard/health/sleep?range=${range}`}
                     icon={faMoon}
                     label={multi ? "Sleep, average" : "Sleep"}
                     value={sum.sleepAvg === null ? null : fmtDuration(sum.sleepAvg)}
                     note={`Goal ${fmtDuration(HEALTH_GOALS.sleepMinutes)}`}
                     fill={ratio(sum.sleepAvg ?? 0, HEALTH_GOALS.sleepMinutes)}
                   />
-                  <StatTile tint="mint" icon={faLocationDot} label="Distance" value={sum.distance === null ? null : fmtDistance(sum.distance)} />
+                  <StatTile
+                    tint="mint"
+                    href={`/dashboard/health/distance?range=${range}`}
+                    icon={faLocationDot}
+                    label="Distance"
+                    value={sum.distance === null ? null : fmtDistance(sum.distance)}
+                  />
                   <StatTile
                     tint="amber"
+                    href={`/dashboard/health/energy?range=${range}`}
                     icon={faFire}
                     label="Active energy"
                     value={sum.activeKcal === null ? null : `${fmtNumber(sum.activeKcal)} kcal`}
                   />
                   <StatTile
                     tint="clay"
+                    href={`/dashboard/health/heart?range=${range}`}
                     icon={faHeart}
                     label="Heart rate"
                     value={sum.hrMin === null || sum.hrMax === null ? null : `${sum.hrMin}–${sum.hrMax} bpm`}
                   />
                   <StatTile
                     tint="blue"
+                    href={`/dashboard/health/resting?range=${range}`}
                     icon={faHeartPulse}
                     label={multi ? "Resting heart rate, average" : "Resting heart rate"}
                     value={sum.restingAvg === null ? null : `${sum.restingAvg} bpm`}

@@ -5,12 +5,14 @@ import {
   fmtNumber,
   HEALTH_ACTIONS,
   HEALTH_GOALS,
-  HEALTH_RANGES,
   healthPrompt,
   healthRatio,
+  metricsRecorded,
+  rangeMeta,
   SOURCE_LABEL,
   summarizeHealth,
   type HealthAction,
+  type HealthMetric,
   type HealthRange,
 } from "@untitled/logic";
 import type { Tone } from "@untitled/types";
@@ -19,8 +21,10 @@ import { useMemo, useState } from "react";
 import { StyleSheet, Switch, View, useWindowDimensions } from "react-native";
 import Svg, { Circle } from "react-native-svg";
 
+import { askChat } from "../chat/handoff";
 import { mergeDays } from "./merge";
 import { useHealthConnection, useHealthDays } from "./queries";
+import { RangeFilter } from "./RangeFilter";
 import { healthSource } from "./source";
 import { AppText } from "@/components/ui/AppText";
 import { Banner } from "@/components/ui/Banner";
@@ -28,11 +32,10 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Icon, type IconName } from "@/components/ui/Icon";
 import { Screen } from "@/components/ui/Screen";
-import { Segmented } from "@/components/ui/Segmented";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/States";
 import { Palette, Radius, Space, Tints } from "@/constants/theme";
 import { errorMessage } from "@/lib/api";
-import { isoDate } from "@/lib/dates";
+import { addDays, isoDate } from "@/lib/dates";
 
 const RING = 200;
 const STROKE = 20;
@@ -53,24 +56,30 @@ export function HealthScreen() {
   // Stored data plus what the phone just read, so partial or not-yet-saved data still shows.
   const days = useMemo(() => mergeDays(daysQ.data ?? [], conn.phoneDays), [daysQ.data, conn.phoneDays]);
   const hasData = days.some((d) => Object.entries(d).some(([k, v]) => typeof v === "number" && k !== "day"));
-  const meta = HEALTH_RANGES.find((r) => r.key === range)!;
   const today = isoDate();
+  const meta = rangeMeta(range, today);
   const inRange = useMemo(() => daysInRange(days, range, today), [days, range, today]);
   const sum = useMemo(() => summarizeHealth(inRange), [inRange]);
   const multi = meta.days > 1;
   const latest = days[0];
   const goal = HEALTH_GOALS.steps * meta.days;
+  // Days with any reading get a dot in the calendar.
+  const daysWithData = useMemo(
+    () => days.filter((d) => [d.steps, d.distance_m, d.active_kcal, d.resting_hr, d.hr_min, d.hr_max, d.sleep_minutes].some((v) => v !== null)).map((d) => d.day),
+    [days],
+  );
+  // Every day of the range, oldest first, so empty days show as gaps instead of disappearing.
   const bars = useMemo(() => {
     const byDay = new Map(inRange.map((d) => [d.day, d.steps]));
     return Array.from({ length: meta.days }, (_, i) => {
-      const day = isoDate(new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate() - (meta.days - 1 - i)));
+      const day = addDays(meta.to, -(meta.days - 1 - i));
       return { day, steps: byDay.get(day) ?? null };
     });
-  }, [inRange, meta.days]);
+  }, [inRange, meta.days, meta.to]);
   const refresh = () => void conn.refresh().catch(() => undefined);
   // Hands the numbers to the chat: it answers, or drafts a journal entry or note that you confirm there.
-  const toChat = (action: HealthAction) =>
-    router.push({ pathname: "/chat", params: { ask: healthPrompt(action, range), n: String(Date.now()) } });
+  const openMetric = (metric: HealthMetric) => router.push({ pathname: "/health/[metric]", params: { metric, range } });
+  const toChat = (action: HealthAction) => askChat(healthPrompt(action, range));
 
   return (
     <Screen onRefresh={refresh} refreshing={conn.syncing} contentStyle={wide ? styles.wide : undefined}>
@@ -99,7 +108,13 @@ export function HealthScreen() {
         <ErrorState message={errorMessage(daysQ.error)} onRetry={() => void daysQ.refetch()} />
       ) : (
         <View style={styles.stack}>
-          <Segmented options={HEALTH_RANGES.map((r) => ({ key: r.key, label: r.label }))} value={range} onChange={setRange} />
+          <RangeFilter
+            value={range}
+            onChange={setRange}
+            daysWithData={daysWithData}
+            count={multi ? sum.recorded : metricsRecorded(sum)}
+            pills={false}
+          />
 
           {conn.noData && (
             <View style={styles.full}>
@@ -150,7 +165,7 @@ export function HealthScreen() {
                   <View style={styles.tiles}>
                     <EmptyState
                       icon="calendar-day"
-                      title={`Nothing recorded ${range === "today" ? "today" : range === "yesterday" ? "yesterday" : "in this period"}`}
+                      title={`Nothing recorded ${multi ? "in this period" : meta.label === "Today" || meta.label === "Yesterday" ? meta.label.toLowerCase() : `on ${meta.label}`}`}
                       hint="Pull down to sync, or pick another day."
                     />
                   </View>
@@ -162,6 +177,7 @@ export function HealthScreen() {
                       label="Steps"
                       value={sum.steps === null ? null : fmtNumber(sum.steps)}
                       note={multi && sum.stepsAvg !== null ? `${fmtNumber(sum.stepsAvg)} a day on average` : `Goal ${fmtNumber(HEALTH_GOALS.steps)}`}
+                      onPress={() => openMetric("steps")}
                     />
                     <Tile
                       tone="violet"
@@ -169,25 +185,35 @@ export function HealthScreen() {
                       label={multi ? "Sleep, average" : "Sleep"}
                       value={sum.sleepAvg === null ? null : fmtDuration(sum.sleepAvg)}
                       note={`Goal ${fmtDuration(HEALTH_GOALS.sleepMinutes)}`}
+                      onPress={() => openMetric("sleep")}
                     />
-                    <Tile tone="mint" icon="location-dot" label="Distance" value={sum.distance === null ? null : fmtDistance(sum.distance)} />
+                    <Tile
+                      tone="mint"
+                      icon="location-dot"
+                      label="Distance"
+                      value={sum.distance === null ? null : fmtDistance(sum.distance)}
+                      onPress={() => openMetric("distance")}
+                    />
                     <Tile
                       tone="amber"
                       icon="fire"
                       label="Active energy"
                       value={sum.activeKcal === null ? null : `${fmtNumber(sum.activeKcal)} kcal`}
+                      onPress={() => openMetric("energy")}
                     />
                     <Tile
                       tone="clay"
                       icon="heart"
                       label="Heart rate"
                       value={sum.hrMin === null || sum.hrMax === null ? null : `${sum.hrMin}–${sum.hrMax} bpm`}
+                      onPress={() => openMetric("heart")}
                     />
                     <Tile
                       tone="blue"
                       icon="heart-pulse"
                       label={multi ? "Resting heart rate, average" : "Resting heart rate"}
                       value={sum.restingAvg === null ? null : `${sum.restingAvg} bpm`}
+                      onPress={() => openMetric("resting")}
                     />
                   </View>
                 )}
@@ -275,10 +301,25 @@ function SetupCard({ onConnect, name }: { onConnect: () => void; name: string })
   );
 }
 
-function Tile({ tone, icon, label, value, note }: { tone: Tone; icon: IconName; label: string; value: string | null; note?: string }) {
+function Tile({
+  tone,
+  icon,
+  label,
+  value,
+  note,
+  onPress,
+}: {
+  tone: Tone;
+  icon: IconName;
+  label: string;
+  value: string | null;
+  note?: string;
+  /** Opens this metric's detail screen. */
+  onPress: () => void;
+}) {
   return (
     <View style={styles.tileCell}>
-      <Card tone={tone}>
+      <Card tone={tone} onPress={onPress} accessibilityLabel={`${label}, ${value ?? "no data"}. Open details`}>
         <View style={styles.tile}>
           <View style={styles.badge}>
             <Icon name={icon} size={17} color={Tints[tone].fg} />
