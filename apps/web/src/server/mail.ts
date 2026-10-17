@@ -23,12 +23,14 @@ export async function sendMail(to: string, subject: string, text: string, action
     return;
   }
   g.__mailer ??= nodemailer.createTransport(url);
+  // Mail clients can only load an absolute https URL, so the ghost mascot comes from the site itself.
+  const logoUrl = `${serverEnv().authUrl.replace(/\/$/, "")}/brand/ghost.png`;
   // Matches the website: cream page, white rounded card, serif headline, forest-green accent, dark pill button.
   const html = `<!doctype html><html><body style="margin:0;padding:0;background:#f5f4eb">
   <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f5f4eb"><tr><td align="center" style="padding:32px 16px">
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:520px">
       <tr><td style="padding:0 8px 16px;font-family:Georgia,'Times New Roman',serif;font-size:22px;color:#1b1c14">
-        <span style="display:inline-block;width:10px;height:10px;border-radius:50%;background:#1f5d49;margin-right:8px"></span>untitled project
+        <img src="${esc(logoUrl)}" width="28" height="28" alt="" style="display:inline-block;vertical-align:middle;margin-right:8px;border:0"><span style="vertical-align:middle">untitled project</span>
       </td></tr>
       <tr><td style="background:#ffffff;border-radius:24px;border:1px solid #e4e1d2;padding:32px 28px;font-family:-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;color:#1b1c14">
         <p style="margin:0 0 6px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#7e7e72">${esc(subject)}</p>
