@@ -117,8 +117,14 @@ export function HealthScreen() {
                 />
               </View>
             </>
+          ) : conn.syncError ? (
+            <View style={styles.full}>
+              <ErrorState message={errorMessage(conn.syncError, "Couldn’t sync your health data.")} onRetry={refresh} />
+            </View>
+          ) : conn.syncing ? (
+            <EmptyState icon="rotate" title="Syncing your health data" hint="This only takes a moment." />
           ) : (
-            <EmptyState icon="rotate" title="Syncing your health data" hint="Pull down to refresh if nothing shows up in a minute." />
+            <EmptyState icon="heart-pulse" title="No health data yet" hint="Pull down to sync. If it stays empty, allow access in your phone’s health settings." />
           )}
         </View>
       )}

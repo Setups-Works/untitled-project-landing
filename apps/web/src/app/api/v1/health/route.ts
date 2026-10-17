@@ -13,7 +13,8 @@ export async function GET(req: Request) {
   const days = Number(new URL(req.url).searchParams.get("days") ?? 14);
   try {
     return json({ data: await getHealth(user.id, days) });
-  } catch {
+  } catch (e) {
+    console.error("health GET failed:", e instanceof Error ? e.message : "unknown");
     return json({ error: "Couldn’t load your health data." }, 500);
   }
 }
@@ -27,7 +28,8 @@ export async function PUT(req: Request) {
   if (!parsed.success) return json({ error: `${parsed.error.issues[0]?.path.join(".") || "body"}: ${parsed.error.issues[0]?.message ?? "invalid"}` }, 400);
   try {
     return json({ data: await syncHealth(user.id, parsed.data) });
-  } catch {
+  } catch (e) {
+    console.error("health PUT failed:", e instanceof Error ? e.message : "unknown");
     return json({ error: "Couldn’t save your health data." }, 500);
   }
 }
