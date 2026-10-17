@@ -13,7 +13,11 @@ import {
   faTag,
   faShieldHalved,
   faSeedling,
+  faClockRotateLeft,
 } from "@fortawesome/free-solid-svg-icons";
+/** The public repository. App releases (the Android APK) are published under its Releases. */
+export const GITHUB_REPO = "https://github.com/Setups-Works/untitled-project-landing";
+
 export const FEATURES = [
   { href: "/universal-search", t: "Universal Search", d: "Find anything across notes, tasks, mail and meetings." },
   { href: "/context-graph", t: "Context Graph", d: "See how your work connects." },
@@ -37,6 +41,7 @@ export const MENU: [string, string][] = [
   ["Pricing", "/pricing"],
   ["Privacy & Security", "/privacy-security"],
   ["Early users", "/early-users"],
+  ["Changelog", "/changelog"],
 ];
 
 export const FOOTER_COLS: { title: string; links: [string, string][] }[] = [
@@ -47,6 +52,7 @@ export const FOOTER_COLS: { title: string; links: [string, string][] }[] = [
       ["Product demo", "/demo"],
       ["Pricing", "/pricing"],
       ["Early users", "/early-users"],
+      ["Changelog", "/changelog"],
     ],
   },
   {
@@ -123,5 +129,6 @@ export const MEGA: { featured: MegaItem[]; workspace: MegaItem[]; explore: MegaI
     { href: "/pricing", t: "Pricing", d: "", icon: faTag },
     { href: "/privacy-security", t: "Privacy & Security", d: "", icon: faShieldHalved },
     { href: "/early-users", t: "Early users", d: "", icon: faSeedling },
+    { href: "/changelog", t: "Changelog", d: "", icon: faClockRotateLeft },
   ],
 };
