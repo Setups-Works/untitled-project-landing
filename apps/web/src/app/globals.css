@@ -9168,12 +9168,6 @@
     background: var(--green-bg);
     margin-bottom: 10px;
   }
-  .cx-mark i {
-    width: 24px;
-    height: 24px;
-    border-radius: 50%;
-    background: var(--green-fg);
-  }
   .cx-hello small {
     font: 500 12px var(--sans);
     letter-spacing: 0.22em;

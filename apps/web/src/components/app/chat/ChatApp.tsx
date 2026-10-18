@@ -24,6 +24,7 @@ import type { Attachment, Chat, ChatFolder, Message } from "../../../lib/workspa
 import { chatGreeting, isUnread, prettyTitle } from "../../../lib/chat";
 import { fmtTime } from "../../../lib/prefs";
 import { safeName } from "../../../lib/notes";
+import { BrandMark } from "../../BrandMark";
 import Menu, { MenuItem, MenuSeparator } from "../../ui/Menu";
 import { useConfirm, usePrompt } from "../../ui/Confirm";
 import AttachmentImage from "../../ui/AttachmentImage";
@@ -596,7 +597,7 @@ export default function ChatApp({ name }: { name: string }) {
           {!activeId ? (
             <div className="cx-hello">
               <span className="cx-mark" aria-hidden>
-                <i />
+                <BrandMark size={40} />
               </span>
               <small>{today}</small>
               <h2>{hello.title}</h2>
