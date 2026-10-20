@@ -165,7 +165,8 @@
             }
           ]
         }
-      ]
+      ],
+      "./plugins/withAndroidWorkRuntimeFix"
     ],
     "experiments": {
       "typedRoutes": true,
