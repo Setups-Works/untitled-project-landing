@@ -8,7 +8,7 @@ import { AppText } from "@/components/ui/AppText";
 import { Button } from "@/components/ui/Button";
 import { ErrorState, LoadingState } from "@/components/ui/States";
 import { Icon } from "@/components/ui/Icon";
-import { Sheet } from "@/components/ui/Sheet";
+import { DeleteSheet } from "@/components/ui/DeleteSheet";
 import { PromptSheet } from "@/components/ui/PromptSheet";
 import { Banner } from "@/components/ui/Banner";
 import { Palette, Radius, Shadow } from "@/constants/theme";
@@ -241,16 +241,23 @@ export function RecentChatsDrawer({ visible, activeId, onClose, onSelect, onNew,
         setRename(null);
         void act(() => patchChat.mutateAsync({ id: target.id, title: title.slice(0, 200) }).then(() => undefined));
       }} />
-      <Sheet visible={confirm !== null} title={confirm === "clear" ? "Clear this chat?" : "Delete this chat?"} onClose={() => { setConfirm(null); setConfirmChat(null); }}>
-        <AppText variant="body" color={Palette.fgMuted}>{confirm === "clear" ? "All messages and their attachments will be deleted. The chat itself stays." : "This chat, its messages and attachments will be permanently deleted."}</AppText>
-        {error ? <Banner kind="error">{error}</Banner> : null}
-        <Button title={confirm === "clear" ? "Clear messages" : "Delete chat"} kind="danger" loading={busy} onPress={() => {
+      <DeleteSheet
+        visible={confirm !== null}
+        title={confirm === "clear" ? "Clear this chat?" : "Delete this chat?"}
+        message={confirm === "clear" ? "All messages and their attachments will be deleted. The chat itself stays." : "This chat, its messages and attachments will be permanently deleted."}
+        confirmLabel={confirm === "clear" ? "Clear messages" : "Delete chat"}
+        error={error}
+        loading={busy}
+        onConfirm={() => {
           if (!confirmChat || !confirm) return;
           const chat = confirmChat;
-          void act(() => confirm === "clear" ? clearMessages(chat) : deleteChat(chat));
-        }} />
-        <Button title="Cancel" kind="secondary" onPress={() => { setConfirm(null); setConfirmChat(null); }} />
-      </Sheet>
+          void act(() => (confirm === "clear" ? clearMessages(chat) : deleteChat(chat)));
+        }}
+        onClose={() => {
+          setConfirm(null);
+          setConfirmChat(null);
+        }}
+      />
     </Modal>
   );
 }

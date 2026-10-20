@@ -21,6 +21,7 @@ export type Entry = {
   updated_at: string;
   kind: "text" | "voice";
   attachments: Attachment[];
+  share_token?: string | null;
 };
 export type Attachment = { path: string; name: string; type: string; size: number };
 export type Note = {

@@ -1,20 +1,18 @@
 import type { JournalEntry } from "@untitled/types";
 import { router, useLocalSearchParams } from "expo-router";
 import { useState } from "react";
-import { Pressable, StyleSheet, View } from "react-native";
+import { StyleSheet, View } from "react-native";
 
-import { useJournalActions, useJournalEntry } from "./queries";
+import { EntryEditSheet } from "./EntryEditSheet";
+import { EntryShareSheet } from "./EntryShareSheet";
+import { useJournalEntry } from "./queries";
 import { AppText } from "@/components/ui/AppText";
 import { AttachmentGallery } from "@/components/ui/AttachmentGallery";
-import { Banner } from "@/components/ui/Banner";
 import { BarButton, DetailBar } from "@/components/ui/DetailBar";
 import { Markdown } from "@/components/ui/Markdown";
-import { Button } from "@/components/ui/Button";
-import { useConfirm } from "@/components/ui/Confirm";
 import { Screen } from "@/components/ui/Screen";
 import { ErrorState, LoadingState } from "@/components/ui/States";
-import { TextField } from "@/components/ui/TextField";
-import { Palette } from "@/constants/theme";
+import { Palette, Radius, Tints } from "@/constants/theme";
 import { errorMessage } from "@/lib/api";
 import { dayLabel, timeOf } from "@/lib/dates";
 
@@ -36,85 +34,49 @@ export function JournalEntryScreen() {
   return <EntryScreen entry={entryQ.data} />;
 }
 
-/** An entry opens as a rendered page; the editor only appears after tapping Edit, and saving returns to the page. */
+/** An entry opens as a rendered page in a sheet, like a note; the writing page only appears after tapping Edit, and saving returns here. */
 function EntryScreen({ entry }: { entry: JournalEntry }) {
   const [editing, setEditing] = useState(false);
-  if (editing) return <EntryForm entry={entry} onSaved={() => setEditing(false)} onCancel={() => setEditing(false)} />;
+  const [sharing, setSharing] = useState(false);
+  // Mounting the editor only when editing starts lets it begin from the latest saved entry without syncing state in an effect.
+  if (editing)
+    return (
+      <EntryEditSheet
+        embedded
+        entry={entry}
+        onClose={() => setEditing(false)}
+        onSaved={() => setEditing(false)}
+        onDeleted={() => router.back()}
+      />
+    );
+  const tint = Tints.violet;
   return (
     <Screen edges={["top", "left", "right", "bottom"]}>
       <DetailBar
-        label={`${dayLabel(entry.entry_date)} · ${timeOf(entry.created_at)}`}
+        label="Journal"
         onClose={() => router.back()}
-        action={<BarButton title="Edit" onPress={() => setEditing(true)} />}
+        action={
+          <View style={styles.actions}>
+            <BarButton title="Share" onPress={() => setSharing(true)} />
+            <BarButton title="Edit" onPress={() => setEditing(true)} />
+          </View>
+        }
       />
-      {entry.body ? <Markdown text={entry.body} /> : null}
-      <AttachmentGallery attachments={entry.attachments} />
-    </Screen>
-  );
-}
-
-function EntryForm({ entry, onSaved, onCancel }: { entry: JournalEntry; onSaved?: () => void; onCancel?: () => void }) {
-  const { update, remove } = useJournalActions();
-  const { ask, dialog } = useConfirm();
-  const [body, setBody] = useState(entry.body);
-  const [error, setError] = useState("");
-  const id = entry.id;
-
-  function save() {
-    setError("");
-    update.mutate(
-      { id, body },
-      { onSuccess: () => (onSaved ? onSaved() : router.back()), onError: (e) => setError(errorMessage(e, "Couldn’t save the entry.")) },
-    );
-  }
-
-  async function confirmDelete() {
-    const ok = await ask({
-      title: "Delete this entry?",
-      body: "This can’t be undone.",
-      confirmLabel: "Delete entry",
-      danger: true,
-    });
-    if (!ok) return;
-    remove.mutate(id, { onSuccess: () => router.back(), onError: (e) => setError(errorMessage(e)) });
-  }
-
-  return (
-    <Screen edges={["top", "left", "right", "bottom"]}>
-      <View style={styles.bar}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={onCancel ? "Cancel" : "Close"}
-          hitSlop={12}
-          onPress={() => (onCancel ? onCancel() : router.back())}
-        >
-          <AppText variant="bodyStrong" color={Palette.fgMuted}>
-            {onCancel ? "Cancel" : "Close"}
-          </AppText>
-        </Pressable>
-        <AppText variant="label">
-          {dayLabel(entry.entry_date)} · {timeOf(entry.created_at)}
+      <View style={[styles.page, { backgroundColor: tint.bg, borderColor: tint.line }]}>
+        <AppText variant="title">{dayLabel(entry.entry_date)}</AppText>
+        <AppText variant="small" color={Palette.fgSubtle}>
+          {timeOf(entry.created_at)}
+          {entry.updated_at !== entry.created_at ? ` · edited ${timeOf(entry.updated_at)}` : ""}
         </AppText>
-        <View style={styles.spacer} />
+        {entry.body ? <Markdown text={entry.body} /> : null}
+        <AttachmentGallery attachments={entry.attachments} />
       </View>
-      <AttachmentGallery attachments={entry.attachments} />
-      <TextField label="Entry" value={body} onChangeText={setBody} multiline minHeight={260} />
-      {error ? <Banner kind="error">{error}</Banner> : null}
-      <Button title="Save changes" loading={update.isPending} disabled={remove.isPending} onPress={save} />
-      <Button
-        title="Delete entry"
-        kind="danger"
-        icon="trash"
-        loading={remove.isPending}
-        disabled={update.isPending}
-        onPress={confirmDelete}
-      />
-      {dialog}
+      {sharing ? <EntryShareSheet entry={entry} onClose={() => setSharing(false)} /> : null}
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  bar: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", minHeight: 36 },
-  spacer: { width: 40 },
+  actions: { flexDirection: "row", alignItems: "center", gap: 16 },
+  page: { gap: 12, padding: 16, borderRadius: Radius.r3, borderWidth: 1 },
 });

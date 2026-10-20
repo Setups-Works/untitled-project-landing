@@ -14,6 +14,7 @@ import {
 } from "@untitled/logic";
 import { forwardRef } from "react";
 import { View } from "react-native";
+import { captureRef } from "react-native-view-shot";
 import Svg, { ClipPath, Defs, LinearGradient, RadialGradient, Rect, Stop, Text as SvgText, Circle } from "react-native-svg";
 
 import { Font } from "@/constants/theme";
@@ -46,7 +47,7 @@ function Linear({ id, angle, stops }: { id: string; angle: number; stops: GiftSt
  * The welcome gift card: the same layers, wording and numbers as the web card (packages/logic/src/giftCard.ts), drawn as one
  * SVG in the card's own 1712 × 1080 space. The ref is the Svg, so the share action can turn exactly what is on screen into a PNG.
  */
-export const GiftCard = forwardRef<Svg, { name: string }>(function GiftCard({ name }, ref) {
+export const GiftCard = forwardRef<View, { name: string }>(function GiftCard({ name }, ref) {
   const L = GIFT_LAYERS;
   const F = GIFT_FACE;
   const label = name.trim().toUpperCase() || "WELCOME";
@@ -56,8 +57,15 @@ export const GiftCard = forwardRef<Svg, { name: string }>(function GiftCard({ na
   const mono = Font.mono.fontFamily;
 
   return (
-    <View accessible accessibilityRole="image" accessibilityLabel={`Welcome gift card for ${name}`} style={{ aspectRatio: GIFT_W / GIFT_H, width: "100%" }}>
-      <Svg ref={ref} width="100%" height="100%" viewBox={`0 0 ${GIFT_W} ${GIFT_H}`}>
+    <View
+      ref={ref}
+      collapsable={false}
+      accessible
+      accessibilityRole="image"
+      accessibilityLabel={`Welcome gift card for ${name}`}
+      style={{ aspectRatio: GIFT_W / GIFT_H, width: "100%" }}
+    >
+      <Svg width="100%" height="100%" viewBox={`0 0 ${GIFT_W} ${GIFT_H}`}>
         <Defs>
           <ClipPath id="card">
             <Rect width={GIFT_W} height={GIFT_H} rx={GIFT_RADIUS} ry={GIFT_RADIUS} />
@@ -89,7 +97,15 @@ export const GiftCard = forwardRef<Svg, { name: string }>(function GiftCard({ na
         <SvgText x={F.padX + 66} y={F.top} fill={F.ink} fontFamily={serif} fontSize={F.brandSize} letterSpacing={F.brandSpacing}>
           {GIFT_TEXT.brand}
         </SvgText>
-        <SvgText x={GIFT_W - F.padX} y={F.top - 6} textAnchor="end" fill={F.inkSoft} fontFamily={mono} fontSize={F.smallSize} letterSpacing={F.smallSpacing}>
+        <SvgText
+          x={GIFT_W - F.padX}
+          y={F.top - 6}
+          textAnchor="end"
+          fill={F.inkSoft}
+          fontFamily={mono}
+          fontSize={F.smallSize}
+          letterSpacing={F.smallSpacing}
+        >
           {GIFT_TEXT.tag}
         </SvgText>
         <SvgText x={F.padX} y={F.footY} fill={F.inkSoft} fontFamily={mono} fontSize={F.smallSize} letterSpacing={F.smallSpacing}>
@@ -97,7 +113,14 @@ export const GiftCard = forwardRef<Svg, { name: string }>(function GiftCard({ na
         </SvgText>
 
         {/* Engraved name: light lower edge, dark upper edge, then the core. */}
-        <SvgText x={F.padX} y={F.nameY + F.engrave.offset} fill={F.engrave.light} fontFamily={serif} fontSize={size} letterSpacing={spacing}>
+        <SvgText
+          x={F.padX}
+          y={F.nameY + F.engrave.offset}
+          fill={F.engrave.light}
+          fontFamily={serif}
+          fontSize={size}
+          letterSpacing={spacing}
+        >
           {label}
         </SvgText>
         <SvgText x={F.padX} y={F.nameY - F.engrave.offset} fill={F.engrave.dark} fontFamily={serif} fontSize={size} letterSpacing={spacing}>
@@ -107,13 +130,27 @@ export const GiftCard = forwardRef<Svg, { name: string }>(function GiftCard({ na
           {label}
         </SvgText>
 
-        <Rect x={1.5} y={1.5} width={GIFT_W - 3} height={GIFT_H - 3} rx={GIFT_RADIUS} ry={GIFT_RADIUS} fill="none" stroke={F.rim} strokeWidth={3} />
+        <Rect
+          x={1.5}
+          y={1.5}
+          width={GIFT_W - 3}
+          height={GIFT_H - 3}
+          rx={GIFT_RADIUS}
+          ry={GIFT_RADIUS}
+          fill="none"
+          stroke={F.rim}
+          strokeWidth={3}
+        />
       </Svg>
     </View>
   );
 });
 
-/** The card as a base64 PNG (no data-URL prefix), at the same 1712 × 1080 the web downloads. */
-export function giftCardPng(svg: Svg): Promise<string> {
-  return new Promise((resolve) => svg.toDataURL(resolve, { width: GIFT_W, height: GIFT_H }));
+/**
+ * The card as a PNG file in the cache (a file:// URI), at the same 1712 × 1080 the web downloads. It is a snapshot of the view on
+ * screen, so it looks exactly like the card and needs no file-system calls of our own; `collapsable={false}` keeps Android from
+ * flattening the view away before it can be captured.
+ */
+export function captureGiftCard(view: View): Promise<string> {
+  return captureRef(view, { format: "png", quality: 1, result: "tmpfile", width: GIFT_W, height: GIFT_H });
 }

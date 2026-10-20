@@ -3,9 +3,7 @@ export type ApiError = {
   code?: string;
 };
 
-export type ApiResponse<T> =
-  | { ok: true; status: number; data: T }
-  | { ok: false; status: number; error: ApiError };
+export type ApiResponse<T> = { ok: true; status: number; data: T } | { ok: false; status: number; error: ApiError };
 
 export type ApiClientOptions = {
   /** An origin such as https://app.example.com. Leave empty for same-origin web requests. */
@@ -61,3 +59,5 @@ export function createApiClient(options: ApiClientOptions) {
     },
   };
 }
+export * from "./sharedJournals";
+export * from "./journal";

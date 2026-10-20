@@ -5,6 +5,8 @@ import { AiProviderError, type AiChunk, type AiProvider, type AiRequest } from "
 const BASE = "https://api.groq.com/openai/v1";
 // Models that don't answer chat messages (speech, text-to-speech, safety classifiers, …).
 const NOT_CHAT = /whisper|orpheus|tts|guard|safeguard|embed|allam/i;
+const MAX_TOKENS = 4096;
+const REASONING_MODELS = /gpt-oss/i;
 const g = globalThis as unknown as { __groqModels?: { ids: string[]; at: number } };
 
 /**
@@ -72,8 +74,12 @@ export const groqProvider: AiProvider = {
             model: modelId,
             messages: req.messages,
             temperature: req.temperature ?? 0.6,
-            // Reasoning models spend part of this budget thinking before they write the answer, so keep it generous.
-            max_tokens: req.maxTokens ?? 2048,
+            // Reasoning models spend part of this budget thinking before they write the answer, so keep it generous: a budget that
+            // runs out mid-answer cuts off the <create-item> draft blocks, which always come last.
+            max_tokens: req.maxTokens ?? MAX_TOKENS,
+            // Chat answers don't need long deliberation; low effort leaves the budget for the answer and its draft blocks. Only models
+            // that support the setting get it (others reject unknown parameters).
+            ...(REASONING_MODELS.test(modelId) ? { reasoning_effort: "low" } : {}),
             stream: true,
           }),
           signal: req.signal,

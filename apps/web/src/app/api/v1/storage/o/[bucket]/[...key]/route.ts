@@ -1,7 +1,17 @@
 import { NextResponse } from "next/server";
 import { forbidden, json, sameOrigin, unauthorized } from "../../../../../../../server/http";
 import { currentUser } from "../../../../../../../server/session";
-import { BUCKETS, deleteObject, getObject, isBucket, ownsKey, putObject, validKey, verifySignature } from "../../../../../../../server/storage";
+import { mayUseJournalFile } from "../../../../../../../server/services/collaboration/collaboration.service";
+import {
+  BUCKETS,
+  deleteObject,
+  getObject,
+  isBucket,
+  ownsKey,
+  putObject,
+  validKey,
+  verifySignature,
+} from "../../../../../../../server/storage";
 
 type Ctx = { params: Promise<{ bucket: string; key: string[] }> };
 
@@ -51,6 +61,8 @@ export async function PUT(req: Request, { params }: Ctx) {
   const key = keyOf(parts);
   if (!isBucket(bucket) || !validKey(key)) return json({ error: "Bad path." }, 400);
   if (!ownsKey(user.id, key)) return forbidden();
+  // Files in a shared journal may only be added by someone who can write in it.
+  if ((await mayUseJournalFile(user.id, key, true)) === false) return forbidden();
   const rules = BUCKETS[bucket];
   const type = (req.headers.get("content-type") || "application/octet-stream").split(";")[0].trim().toLowerCase();
   if (rules.types && !(rules.types as readonly string[]).includes(type)) return json({ error: "That file type isn’t allowed." }, 415);

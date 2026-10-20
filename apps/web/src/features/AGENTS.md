@@ -25,6 +25,7 @@ features/<name>/
 | `auth`                                            | A                     | 0–1   | built (in `components/auth`, `server/auth.ts`) |
 | `workspace`                                       | A                     | 1     | planned (UNT-55)                               |
 | `notes`, `tasks`, `journal`, `search`, `insights` | B                     | 2     | built in legacy location → migrate             |
+| `collaboration` (shared journals)                 | B                     | 2     | built (`features/collaboration`)               |
 | `calendar`, `email`                               | B (UI) + C (services) | 3     | planned                                        |
 | `integrations`                                    | B (UI) + C (service)  | 3     | planned                                        |
 | `ai`                                              | C (+ B for chat UI)   | 4     | planned                                        |

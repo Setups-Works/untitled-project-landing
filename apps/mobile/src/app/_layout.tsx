@@ -1,3 +1,4 @@
+import { useWidgetSync } from "@/features/widgets";
 import { Geist_400Regular, Geist_500Medium, Geist_600SemiBold } from "@expo-google-fonts/geist";
 import { InstrumentSerif_400Regular, InstrumentSerif_400Regular_Italic } from "@expo-google-fonts/instrument-serif";
 import { useFonts } from "expo-font";
@@ -13,7 +14,7 @@ import { AppText } from "@/components/ui/AppText";
 import { Screen } from "@/components/ui/Screen";
 import { Palette } from "@/constants/theme";
 import { mobileEnv } from "@/config/env";
-import { UpdatePrompt } from "@/features/updates/UpdatePrompt";
+import { UpdateProvider } from "@/features/updates/UpdateProvider";
 import { AppStateProvider, useAppState } from "@/providers/AppState";
 
 void SplashScreen.preventAutoHideAsync();
@@ -41,8 +42,7 @@ export default function RootLayout() {
           </>
         ) : (
           <AppStateProvider>
-            {fontsReady ? <Routes /> : null}
-            {fontsReady ? <UpdatePrompt /> : null}
+            <UpdateProvider>{fontsReady ? <Routes /> : null}</UpdateProvider>
             <SplashGate fontsReady={fontsReady} />
           </AppStateProvider>
         )}
@@ -60,6 +60,8 @@ function SplashGate({ fontsReady }: { fontsReady: boolean }) {
 /** Declarative guards: a screen in a group whose `guard` is false cannot be reached, and the router falls back to `index`. */
 function Routes() {
   const { ready, onboardingDone, signedIn } = useAppState();
+  // Keeps the home-screen widgets in step with the app (and wipes them on sign-out).
+  useWidgetSync(signedIn);
 
   if (!ready) return null;
 
@@ -84,7 +86,18 @@ function Routes() {
             sheetCornerRadius: 28,
           }}
         />
-        <Stack.Screen name="journal/[id]" options={{ presentation: "modal" }} />
+        <Stack.Screen
+          name="journal/[id]"
+          options={{
+            presentation: "formSheet",
+            sheetAllowedDetents: [0.82, 1],
+            sheetInitialDetentIndex: 1,
+            sheetGrabberVisible: true,
+            sheetCornerRadius: 28,
+          }}
+        />
+        <Stack.Screen name="journal/collaborate" />
+        <Stack.Screen name="journal/shared/[id]" />
         <Stack.Screen name="task/[id]" options={{ presentation: "modal" }} />
         <Stack.Screen name="health/[metric]" options={{ presentation: "modal" }} />
         <Stack.Screen name="profile" options={{ presentation: "modal" }} />

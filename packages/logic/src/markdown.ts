@@ -5,13 +5,14 @@
 
 // A link to one of the user's own to-dos, notes or journal days: `[words](/dashboard/todo?task=<id> "To-do · Buy a rose · due 7 Aug 2026")`.
 // Only these in-app paths are accepted (never an arbitrary relative URL), and the optional title becomes the hover card.
-const ITEM_PATH = "\\/dashboard\\/(?:todo\\?task|notes\\?note|journal\\?d)=[A-Za-z0-9%._-]{1,64}";
+const ITEM_PATH = "\\/dashboard\\/(?:(?:todo\\?task|notes\\?note|journal\\?d)=[A-Za-z0-9%._-]{1,64}|health(?:\\?d=\\d{4}-\\d{2}-\\d{2})?)";
 const ITEM_LINK = new RegExp(`\\[([^\\]]+)\\]\\((${ITEM_PATH})(?: "([^"]{0,200})")?\\)`);
 const ITEM_LINK_SPLIT = `\\[[^\\]]+\\]\\(${ITEM_PATH}(?: "[^"]{0,200}")?\\)`;
 
 export type Inline =
   | { type: "text"; text: string }
   | { type: "strong"; text: string }
+  | { type: "em"; text: string }
   | { type: "code"; text: string }
   | { type: "item"; text: string; href: string; tip?: string }
   | { type: "link"; text: string; href: string };
@@ -27,12 +28,16 @@ export type Block =
   | { type: "hr" }
   | { type: "p"; text: string };
 
+// *Emphasis*: one asterisk each side, hugging the words (so "5 * 3 * 2" is not italic), after bold has had its turn.
+const EM = "\\*(?=[^*\\s])[^*\\n]*[^*\\s]\\*|\\*[^*\\s]\\*";
+
 export function parseInline(text: string): Inline[] {
   return text
-    .split(new RegExp(`(\\*\\*[^*]+\\*\\*|\`[^\`]+\`|\\[[^\\]]+\\]\\(https?:\\/\\/[^)\\s]+\\)|${ITEM_LINK_SPLIT})`, "g"))
+    .split(new RegExp(`(\\*\\*[^*]+\\*\\*|${EM}|\`[^\`]+\`|\\[[^\\]]+\\]\\(https?:\\/\\/[^)\\s]+\\)|${ITEM_LINK_SPLIT})`, "g"))
     .filter((p) => p !== "")
     .map((p): Inline => {
       if (/^\*\*[^*]+\*\*$/.test(p)) return { type: "strong", text: p.slice(2, -2) };
+      if (/^\*[^*]+\*$/.test(p)) return { type: "em", text: p.slice(1, -1) };
       if (/^`[^`]+`$/.test(p)) return { type: "code", text: p.slice(1, -1) };
       const item = ITEM_LINK.exec(p);
       if (item && item.index === 0 && item[0] === p) return { type: "item", text: item[1]!, href: item[2]!, tip: item[3] };
@@ -111,10 +116,32 @@ export function parseMarkdown(text: string): Block[] {
   return out;
 }
 
-/** Where an in-app link from the web points on mobile: `/dashboard/todo?task=<id>` → a task, note or journal day. */
-export function itemTarget(href: string): { kind: "task" | "note" | "journal"; id: string } | null {
+/**
+ * Where an in-app link from the web points on mobile: `/dashboard/todo?task=<id>` → a task, note or journal day, and
+ * `/dashboard/health[?d=<day>]` → the Health page (for that day when one is given; `id` is then "" or the day).
+ */
+export function itemTarget(href: string): { kind: "task" | "note" | "journal" | "health"; id: string } | null {
+  const h = /^\/dashboard\/health(?:\?d=(\d{4}-\d{2}-\d{2}))?$/.exec(href);
+  if (h) return { kind: "health", id: h[1] ?? "" };
   const m = /^\/dashboard\/(todo\?task|notes\?note|journal\?d)=(.+)$/.exec(href);
   if (!m) return null;
   const id = decodeURIComponent(m[2]!);
   return { kind: m[1] === "todo?task" ? "task" : m[1] === "notes?note" ? "note" : "journal", id };
 }
+
+/** Whether `href` is an address the Markdown dialect turns into a tap: a web link (http/https) or one of the app's own pages. */
+export function isLinkAddress(href: string): boolean {
+  const t = href.trim();
+  if (!t || /[\s()]/.test(t)) return false;
+  const kind = parseInline(`[x](${t})`)[0]?.type;
+  return kind === "link" || kind === "item";
+}
+
+/** `[label](href)` for the editor's Add link; brackets in the label are dropped so they can't break the syntax. */
+export const linkMarkdown = (label: string, href: string) => `[${label.replace(/[[\]]/g, "").trim() || href.trim()}](${href.trim()})`;
+
+/** Ready-made links to the app's own pages for the editor's Add link, for the given day. They are always valid addresses. */
+export const appLinkShortcuts = (today: string) => [
+  { label: "Health", href: `/dashboard/health?d=${today}` },
+  { label: "Journal", href: `/dashboard/journal?d=${today}` },
+];

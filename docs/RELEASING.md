@@ -16,7 +16,7 @@ Tags must look like `v1.2.3`. A tag with a suffix (`v1.2.3-beta.1`) is published
 
 ## How people get the update
 
-On Android the app asks GitHub for the latest release each time it opens (`apps/mobile/src/features/updates`). If its tag is newer than the installed version, a dialog offers **Update**, which opens the release's APK; the phone downloads it and offers to install it over the old one. That works because every build is signed with the same key and `versionCode` rises with each run. Pre-releases, drafts and releases without an `.apk` are never offered. The first build that contains this check is v1.0.2; earlier installs have to be updated by hand once.
+On Android the app asks GitHub for the latest release each time it opens, and **Settings → About and updates → Check for updates** asks on demand (`apps/mobile/src/features/updates`). If the tag is newer than the installed version, a sheet offers **Update now**: the app downloads the APK itself with a progress bar and then opens Android's installer (the first time, Android asks to allow installs from the app, which needs `REQUEST_INSTALL_PACKAGES`). If the download fails there is a "Download in the browser" fallback. That works because every build is signed with the same key and `versionCode` rises with each run. Pre-releases, drafts and releases without an `.apk` are never offered. The first build that contains this check is v1.0.2; earlier installs have to be updated by hand once.
 
 Add a line to the web changelog (`apps/web/src/features/changelog/releases.ts`) in the same change as the tag.
 
@@ -29,9 +29,9 @@ Add a line to the web changelog (`apps/web/src/features/changelog/releases.ts`) 
 
 ## Settings (repository → Settings → Secrets and variables → Actions)
 
-| Name                                                                                | Kind     | Purpose                                                                      |
-| ----------------------------------------------------------------------------------- | -------- | ---------------------------------------------------------------------------- |
-| `EXPO_PUBLIC_API_URL`                                                               | variable | The web app's address, compiled into the app. Required.                      |
+| Name                                                                                                | Kind     | Purpose                                                                  |
+| --------------------------------------------------------------------------------------------------- | -------- | ------------------------------------------------------------------------ |
+| `EXPO_PUBLIC_API_URL`                                                                               | variable | The web app's address, compiled into the app. Required.                  |
 | `ANDROID_KEYSTORE_BASE64`, `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS`, `ANDROID_KEY_PASSWORD` | secrets  | Optional release key. Without them the APK is signed with the debug key. |
 
 A debug-signed APK installs on any phone (allow installs from the browser or Files app) but cannot be uploaded to Google Play. To sign properly, create a keystore once and store it as secrets:

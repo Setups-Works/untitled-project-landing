@@ -3,13 +3,15 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { MaxContentWidth, Palette, Space } from "@/constants/theme";
 
+export type ScreenEdges = ("top" | "bottom" | "left" | "right")[];
+
 type Props = {
   children: React.ReactNode;
   /** Scrolls the content; pass onRefresh to add pull-to-refresh. */
   scroll?: boolean;
   onRefresh?: () => void;
   refreshing?: boolean;
-  edges?: ("top" | "bottom" | "left" | "right")[];
+  edges?: ScreenEdges;
   contentStyle?: StyleProp<ViewStyle>;
 };
 

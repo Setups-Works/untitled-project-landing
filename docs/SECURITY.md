@@ -43,7 +43,7 @@ Rotation: change the value in `.env.selfhost` / your secret manager and recreate
 
 - RLS on every table (see `DATA_MODEL.md`). New tables without RLS must not merge.
 - Private Storage bucket for user files with owner-folder policies; files are served through short-lived signed URLs.
-- Journal entries are private to their author even in shared workspaces.
+- Journal entries are private to their author even in shared workspaces. **Shared journals** are a separate, opt-in thing: they live in their own tables, a person sees one only as its owner or after accepting an invitation, and the role (owner / editor / viewer) is enforced by row-level security, not by the UI. Members never see each other's email, only username and name. Inviting is rate limited, a journal holds at most 20 people, and a stranger who guesses a journal id gets "not found". Files attached to shared entries are readable only by members of that journal and uploadable only by their author.
 - The admin Usage page reads only ids/counts — never user content. Admin tools must not expose note/journal/chat content.
 - Audit log: every admin action recorded in `admin_audit` (service-role only).
 
@@ -51,6 +51,7 @@ Rotation: change the value in `.env.selfhost` / your secret manager and recreate
 
 - Chats are private unless `share_token` is set (32 random hex chars). The public page `/share/[token]` queries by exact token on the server; no anon RLS policy exists that would allow listing shared chats.
 - The page is `noindex` with `referrer: no-referrer`; it shows no owner identity. "Stop sharing" clears the token immediately.
+- A single **journal entry** can be shared the same way (`journal_entries.share_token`, page `/share/journal/[token]`): a random 32-hex token, looked up by exact match on the server, read-only, no name or email, files signed only when they sit in the author's own folder, switched off instantly, and turning it on again makes a new token. Nothing else in the journal is reachable from the link.
 
 ## Uploads
 

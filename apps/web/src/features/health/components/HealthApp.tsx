@@ -1,6 +1,7 @@
 "use client";
 
 import { faFire, faHeart, faHeartPulse, faLocationDot, faMoon, faShoePrints } from "@fortawesome/free-solid-svg-icons";
+import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { isoDate } from "../../../lib/dates";
 import {
@@ -12,6 +13,7 @@ import {
   HEALTH_SPAN,
   healthRatio as ratio,
   metricsRecorded,
+  rangeForDay,
   rangeMeta,
   SOURCE_LABEL,
   summarizeHealth,
@@ -28,7 +30,9 @@ const SECTION_LABEL = "text-[11px] font-semibold tracking-[0.1em] text-fg-faint 
 
 export default function HealthApp() {
   const { days, isPending, isError } = useHealthDays(HEALTH_SPAN);
-  const [range, setRange] = useState<HealthRange>("today");
+  // `?d=YYYY-MM-DD` (the link a health note carries) opens that day.
+  const day = useSearchParams().get("d");
+  const [range, setRange] = useState<HealthRange>(() => rangeForDay(day, isoDate()));
   const today = isoDate();
   const meta = rangeMeta(range, today);
   // Days with any reading get a dot in the calendar.

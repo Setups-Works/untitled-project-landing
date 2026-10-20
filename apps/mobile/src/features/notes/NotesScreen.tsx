@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Icon } from "@/components/ui/Icon";
 import { Markdown } from "@/components/ui/Markdown";
+import { DeleteSheet } from "@/components/ui/DeleteSheet";
 import { Sheet } from "@/components/ui/Sheet";
 import { Screen } from "@/components/ui/Screen";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/States";
@@ -292,14 +293,16 @@ export function NotesScreen({ edges }: { edges?: ("top" | "bottom" | "left" | "r
         ) : null}
       </Sheet>
 
-      <Sheet visible={deleteNote !== null} onClose={() => setDeleteNote(null)} title="Delete this note?">
-        <AppText variant="body" color={Palette.fgMuted} style={styles.deleteMessage}>
-          “{deleteNote ? noteTitle(deleteNote) : ""}” and its attachments will be permanently deleted. This can’t be undone.
-        </AppText>
-        {error ? <Banner kind="error">{error}</Banner> : null}
-        <Button title="Delete note" kind="danger" icon="trash" loading={remove.isPending} onPress={() => void confirmDelete()} />
-        <Button title="Cancel" kind="secondary" onPress={() => setDeleteNote(null)} />
-      </Sheet>
+      <DeleteSheet
+        visible={deleteNote !== null}
+        title="Delete this note?"
+        message={`“${deleteNote ? noteTitle(deleteNote) : ""}” and its attachments will be permanently deleted. This can’t be undone.`}
+        confirmLabel="Delete note"
+        error={error}
+        loading={remove.isPending}
+        onConfirm={() => void confirmDelete()}
+        onClose={() => setDeleteNote(null)}
+      />
     </Screen>
   );
 }

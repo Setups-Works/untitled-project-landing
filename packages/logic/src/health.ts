@@ -50,6 +50,13 @@ export const HEALTH_RANGES: { key: HealthPreset; label: string; days: number; ph
 ];
 
 export const dayRange = (iso: string): HealthDayRange => `day:${iso}`;
+
+/** The range a `?d=YYYY-MM-DD` address opens on the Health page: that day, "today" for today, and today for anything missing or in the future. */
+export const rangeForDay = (iso: string | null | undefined, today: string): HealthRange =>
+  iso && /^\d{4}-\d{2}-\d{2}$/.test(iso) && iso < today ? dayRange(iso) : "today";
+
+/** The in-app link to the Health page, for a day when one is given. Notes use it to point back at the figures they summarise. */
+export const healthLink = (day?: string) => (day ? `/dashboard/health?d=${day}` : "/dashboard/health");
 /** The picked day (YYYY-MM-DD) of a `day:` range, or null for a quick filter. */
 export const pickedDay = (range: HealthRange): string | null => (range.startsWith("day:") ? range.slice(4) : null);
 /** Accepts only a real range from outside input (a link's query string), never an arbitrary string. */

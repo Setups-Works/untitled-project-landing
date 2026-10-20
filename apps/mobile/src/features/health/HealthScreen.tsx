@@ -8,6 +8,7 @@ import {
   healthPrompt,
   healthRatio,
   metricsRecorded,
+  rangeForDay,
   rangeMeta,
   SOURCE_LABEL,
   summarizeHealth,
@@ -16,7 +17,7 @@ import {
   type HealthRange,
 } from "@untitled/logic";
 import type { Tone } from "@untitled/types";
-import { router } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { useMemo, useState } from "react";
 import { StyleSheet, Switch, View, useWindowDimensions } from "react-native";
 import Svg, { Circle } from "react-native-svg";
@@ -52,7 +53,14 @@ export function HealthScreen() {
   const daysQ = useHealthDays();
   const { width } = useWindowDimensions();
   const wide = width >= WIDE;
-  const [range, setRange] = useState<HealthRange>("today");
+  // `/health?d=YYYY-MM-DD` (the link a health note carries) opens that day, also when the screen is already open.
+  const { d } = useLocalSearchParams<{ d?: string }>();
+  const [range, setRange] = useState<HealthRange>(() => rangeForDay(d, isoDate()));
+  const [seenDay, setSeenDay] = useState(d);
+  if (d !== seenDay) {
+    setSeenDay(d);
+    if (d) setRange(rangeForDay(d, isoDate()));
+  }
   // Stored data plus what the phone just read, so partial or not-yet-saved data still shows.
   const days = useMemo(() => mergeDays(daysQ.data ?? [], conn.phoneDays), [daysQ.data, conn.phoneDays]);
   const hasData = days.some((d) => Object.entries(d).some(([k, v]) => typeof v === "number" && k !== "day"));
@@ -162,13 +170,14 @@ export function HealthScreen() {
                   )}
                 </Card>
                 {sum.recorded === 0 ? (
-                  <View style={styles.tiles}>
+                  // Full width on its own: inside the wrapping tile row it shrank to its text and sat off to the left.
+                  <Card tone="mint" style={wide ? styles.tiles : styles.full}>
                     <EmptyState
                       icon="calendar-day"
                       title={`Nothing recorded ${multi ? "in this period" : meta.label === "Today" || meta.label === "Yesterday" ? meta.label.toLowerCase() : `on ${meta.label}`}`}
                       hint="Pull down to sync, or pick another day."
                     />
-                  </View>
+                  </Card>
                 ) : (
                   <View style={styles.tiles}>
                     <Tile

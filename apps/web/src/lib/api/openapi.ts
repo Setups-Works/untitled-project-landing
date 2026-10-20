@@ -1,4 +1,12 @@
 import { z } from "zod";
+import {
+  entryCreate,
+  entryUpdate,
+  inviteBody,
+  journalName,
+  respondBody,
+  roleBody,
+} from "../../server/services/collaboration/collaboration.schema";
 import { healthSyncInput } from "../../server/services/health/health.schema";
 import { RESOURCES } from "./resources";
 
@@ -42,7 +50,8 @@ const dbResponse = z.object({
 });
 const chatRequest = z.object({
   chatId: uuid,
-  provider: z.string().regex(/^[a-z0-9_-]{1,40}$/),
+  // `provider` or `provider:model` (the model picker lists one entry per model, see /api/v1/ai/status).
+  provider: z.string().regex(/^[a-z0-9_-]{1,40}(:[A-Za-z0-9._/-]{1,100})?$/),
   localDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
 });
 const actionsRequest = z.object({ messageId: uuid, which: z.union([z.number().int().min(0).max(20), z.literal("all")]).default(0) });
@@ -82,6 +91,60 @@ const healthDay = z.object({
 });
 const healthListResponse = z.object({ data: z.array(healthDay) });
 const healthSavedResponse = z.object({ data: z.object({ saved: z.number().int() }) });
+const sjRole = z.enum(["owner", "editor", "viewer"]);
+const sjPerson = z.object({ id: uuid, username: z.string().nullable(), name: z.string(), image: z.string().nullable() });
+const sjJournal = z.object({
+  id: uuid,
+  name: z.string(),
+  role: sjRole,
+  owner: sjPerson,
+  member_count: z.number().int(),
+  entry_count: z.number().int(),
+  last_entry_at: z.string().nullable(),
+  created_at: z.string(),
+});
+const sjInvite = z.object({
+  id: uuid,
+  journal_id: uuid,
+  journal_name: z.string(),
+  role: z.enum(["editor", "viewer"]),
+  invitee: sjPerson,
+  inviter: sjPerson,
+  created_at: z.string(),
+});
+const sjDetail = sjJournal.extend({
+  me: uuid,
+  members: z.array(z.object({ person: sjPerson, role: sjRole, joined_at: z.string() })),
+  invites: z.array(sjInvite),
+});
+const sjEntry = z.object({
+  id: uuid,
+  journal_id: uuid,
+  entry_date: z.string(),
+  body: z.string(),
+  kind: z.enum(["text", "voice"]),
+  attachments: z.array(z.object({ path: z.string(), name: z.string(), type: z.string(), size: z.number() })),
+  created_at: z.string(),
+  updated_at: z.string(),
+  author: sjPerson,
+});
+const accountSettings = z.object({
+  data: z.object({
+    id: uuid,
+    email: z.string(),
+    name: z.string(),
+    username: z.string().nullish(),
+    providers: z.array(z.string()),
+    hasPassword: z.boolean(),
+    preferences: z.record(z.string(), z.unknown()),
+  }),
+});
+const accountAction = z.discriminatedUnion("action", [
+  z.object({ action: z.literal("reset-workspace"), confirmation: z.string().max(20) }),
+  z.object({ action: z.literal("delete-account"), confirmation: z.string().max(254) }),
+]);
+const chatShareRequest = z.object({ shared: z.boolean() });
+const chatShareResponse = z.object({ data: z.object({ share_token: z.string().nullable() }) });
 const okResponse = z.object({ ok: z.literal(true) });
 const errorResponse = z.object({ error: z.string() });
 
@@ -99,6 +162,21 @@ const schemas = {
   HealthSyncRequest: healthSyncInput,
   HealthListResponse: healthListResponse,
   HealthSavedResponse: healthSavedResponse,
+  JournalShareRequest: z.object({ shared: z.boolean() }),
+  AccountSettings: accountSettings,
+  AccountAction: accountAction,
+  ChatShareRequest: chatShareRequest,
+  ChatShareResponse: chatShareResponse,
+  SharedJournal: sjJournal,
+  SharedJournalDetail: sjDetail,
+  SharedJournalInvite: sjInvite,
+  SharedJournalEntry: sjEntry,
+  SharedJournalName: journalName,
+  SharedJournalInviteRequest: inviteBody,
+  SharedJournalRoleRequest: roleBody,
+  SharedJournalRespondRequest: respondBody,
+  SharedJournalEntryInput: entryCreate,
+  SharedJournalEntryUpdate: entryUpdate,
   Ok: okResponse,
   Error: errorResponse,
 };
@@ -109,6 +187,111 @@ const body = (name: keyof typeof schemas) => ({ required: true, content: json(na
 const err = (description: string) => ({ description, content: json("Error") });
 const common = { "401": err("Not signed in."), "403": err("Request did not come from this site, or the resource is not yours.") };
 const secured = [{ cookieAuth: [] }];
+
+/**
+ * Shared journals (features/collaboration): create journals, invite people by username, answer invitations, manage roles, write entries.
+ * Every answer is `{ data }`; permissions are decided by row-level security, and a journal you aren't in is simply "not found".
+ */
+function sharedJournalPaths() {
+  const tags = ["Shared journals"];
+  const idParam = { name: "id", in: "path", required: true, schema: { type: "string", format: "uuid" } };
+  const sub = (name: string) => ({ name, in: "path", required: true, schema: { type: "string", format: "uuid" } });
+  const data = (inner: object, description = "OK") => ({
+    description,
+    content: { "application/json": { schema: { type: "object", properties: { data: inner } } } },
+  });
+  const list = (name: keyof typeof schemas) => data({ type: "array", items: ref(name) });
+  const one = (name: keyof typeof schemas, description?: string) => data(ref(name), description);
+  const empty = data({ type: "null" });
+  const fail = { "400": err("Invalid input."), "404": err("Not found, or you are not in that journal."), ...common };
+  const op = (summary: string, ok: object, extra: Record<string, unknown> = {}, status = "200") => ({
+    tags,
+    summary,
+    security: secured,
+    ...extra,
+    responses: { [status]: ok, ...fail },
+  });
+  return {
+    "/api/v1/shared-journals": {
+      get: op("The journals you own or belong to", list("SharedJournal")),
+      post: op(
+        "Start a shared journal (you are its owner)",
+        one("SharedJournalDetail", "Created"),
+        { requestBody: body("SharedJournalName") },
+        "201",
+      ),
+    },
+    "/api/v1/shared-journals/{id}": {
+      get: op("One journal with its people (open invitations only for the owner)", one("SharedJournalDetail"), { parameters: [idParam] }),
+      patch: op("Rename (owner)", one("SharedJournalDetail"), { parameters: [idParam], requestBody: body("SharedJournalName") }),
+      delete: op("Delete the journal, its entries and files (owner)", empty, { parameters: [idParam] }),
+    },
+    "/api/v1/shared-journals/{id}/invites": {
+      post: op(
+        "Invite someone by username (owner)",
+        data({ type: "object", properties: { id: { type: "string", format: "uuid" } } }, "Sent"),
+        {
+          parameters: [idParam],
+          requestBody: body("SharedJournalInviteRequest"),
+          description:
+            "They are added only after they accept. 404: no such username. 409: already in the journal, already invited, or the journal is full. 429: too many invitations.",
+        },
+        "201",
+      ),
+    },
+    "/api/v1/shared-journals/{id}/invites/{inviteId}": {
+      delete: op("Withdraw an invitation that has not been answered (owner)", empty, { parameters: [idParam, sub("inviteId")] }),
+    },
+    "/api/v1/shared-journals/{id}/members/{userId}": {
+      patch: op("Change someone's role (owner)", empty, {
+        parameters: [idParam, sub("userId")],
+        requestBody: body("SharedJournalRoleRequest"),
+      }),
+      delete: op("Remove someone (owner), or leave by passing your own id", empty, { parameters: [idParam, sub("userId")] }),
+    },
+    "/api/v1/shared-journals/{id}/entries": {
+      get: op(
+        "A page of entries, newest day first",
+        data({ type: "object", properties: { entries: { type: "array", items: ref("SharedJournalEntry") }, more: { type: "boolean" } } }),
+        {
+          parameters: [
+            idParam,
+            {
+              name: "cursor",
+              in: "query",
+              description: "The oldest day you already have (YYYY-MM-DD).",
+              schema: { type: "string", format: "date" },
+            },
+            { name: "limit", in: "query", schema: { type: "integer", minimum: 1, maximum: 200, default: 100 } },
+          ],
+        },
+      ),
+      post: op(
+        "Add an entry (owner or editor)",
+        one("SharedJournalEntry", "Created"),
+        { parameters: [idParam], requestBody: body("SharedJournalEntryInput") },
+        "201",
+      ),
+    },
+    "/api/v1/shared-journals/{id}/entries/{entryId}": {
+      patch: op("Edit your own entry", one("SharedJournalEntry"), {
+        parameters: [idParam, sub("entryId")],
+        requestBody: body("SharedJournalEntryUpdate"),
+      }),
+      delete: op("Delete your own entry, or any entry as the owner", empty, { parameters: [idParam, sub("entryId")] }),
+    },
+    "/api/v1/shared-journal-invites": {
+      get: op("Invitations to shared journals that are waiting for your answer", list("SharedJournalInvite")),
+    },
+    "/api/v1/shared-journal-invites/{id}": {
+      post: op(
+        "Accept or decline an invitation addressed to you",
+        data({ type: "object", properties: { journalId: { type: "string", format: "uuid" } } }),
+        { parameters: [idParam], requestBody: body("SharedJournalRespondRequest") },
+      ),
+    },
+  };
+}
 
 export function buildOpenApi() {
   const components: Record<string, unknown> = {};
@@ -231,7 +414,11 @@ export function buildOpenApi() {
           summary: "Your recent daily health totals, newest first",
           security: secured,
           parameters: [{ name: "days", in: "query", schema: { type: "integer", minimum: 1, maximum: 90, default: 14 } }],
-          responses: { "200": { description: "OK", content: json("HealthListResponse") }, "401": common["401"], "500": err("Could not load.") },
+          responses: {
+            "200": { description: "OK", content: json("HealthListResponse") },
+            "401": common["401"],
+            "500": err("Could not load."),
+          },
         },
         put: {
           tags: ["Health"],
@@ -248,6 +435,76 @@ export function buildOpenApi() {
           },
         },
       },
+      "/api/v1/account/settings": {
+        get: {
+          tags: ["Account"],
+          summary: "Your account facts and profile preferences (the app's settings bootstrap)",
+          security: secured,
+          responses: {
+            "200": { description: "OK", content: json("AccountSettings") },
+            "401": common["401"],
+            "500": err("Could not load."),
+          },
+        },
+      },
+      "/api/v1/account/actions": {
+        post: {
+          tags: ["Account"],
+          summary: "Reset your workspace or delete your account, after typing the confirmation",
+          description: "reset-workspace needs the word “reset”; delete-account needs your email address. Both are permanent.",
+          security: secured,
+          requestBody: body("AccountAction"),
+          responses: {
+            "200": { description: "Done", content: json("Ok") },
+            "400": err("Invalid input, or the confirmation doesn’t match."),
+            ...common,
+            "500": err("Could not complete."),
+          },
+        },
+      },
+      "/api/v1/chats/{id}/share": {
+        post: {
+          tags: ["Chat"],
+          summary: "Turn the public link of one of your chats on or off",
+          security: secured,
+          parameters: [{ name: "id", in: "path", required: true, schema: { type: "string", format: "uuid" } }],
+          requestBody: body("ChatShareRequest"),
+          responses: {
+            "200": { description: "OK", content: json("ChatShareResponse") },
+            "400": err("Invalid input."),
+            ...common,
+            "404": err("Chat not found."),
+          },
+        },
+      },
+      "/api/v1/journal/{id}/share": {
+        post: {
+          tags: ["Journal"],
+          summary: "Turn the public link of one of your entries on or off",
+          description:
+            "On makes a new secret token (the page is /share/journal/{token}, read-only, no name); off clears it and ends the old link at once.",
+          security: secured,
+          parameters: [{ name: "id", in: "path", required: true, schema: { type: "string", format: "uuid" } }],
+          requestBody: body("JournalShareRequest"),
+          responses: {
+            "200": {
+              description: "OK",
+              content: {
+                "application/json": {
+                  schema: {
+                    type: "object",
+                    properties: { data: { type: "object", properties: { share_token: { type: ["string", "null"] } } } },
+                  },
+                },
+              },
+            },
+            "400": err("Invalid input."),
+            ...common,
+            "404": err("Entry not found."),
+          },
+        },
+      },
+      ...sharedJournalPaths(),
       "/api/v1/auth-config": {
         get: {
           tags: ["Config"],

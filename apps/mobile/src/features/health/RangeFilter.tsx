@@ -1,23 +1,20 @@
 import { dayRange, fromIso, HEALTH_RANGES, rangeMeta, stepRange, type HealthPreset, type HealthRange } from "@untitled/logic";
 import { useMemo, useState } from "react";
-import { Platform, Pressable, StyleSheet, View } from "react-native";
+import { StyleSheet } from "react-native";
 
-import { AppText } from "@/components/ui/AppText";
 import { Button } from "@/components/ui/Button";
-import { Card } from "@/components/ui/Card";
 import { CalendarGrid } from "@/components/ui/DatePicker";
-import { Icon } from "@/components/ui/Icon";
+import { DayNav } from "@/components/ui/DayNav";
 import { Segmented } from "@/components/ui/Segmented";
 import { Sheet } from "@/components/ui/Sheet";
-import { Palette, Radius } from "@/constants/theme";
 import { isoDate } from "@/lib/dates";
 
 const shortDate = (iso: string) => fromIso(iso).toLocaleDateString(undefined, { day: "numeric", month: "short" });
 
 /**
- * The Health filter, laid out like the Journal's: quick pills (Today / Yesterday / 7 days / 30 days) and a date card with ‹ calendar ›
- * to step one day or jump to any day (days that have data get a dot; the future can't be picked). The date card shows the weekday and
- * date and, on the right, how many figures were recorded that day (or how many days had data in a longer window).
+ * The Health filter, laid out like the Journal's: quick pills (Today / Yesterday / 7 days / 30 days) and the shared day navigator (‹ date ›)
+ * to step one day or jump to any day from the calendar (days that have data get a dot; the future can't be picked). Under the date it
+ * says how many figures were recorded that day (or how many days had data in a longer window).
  */
 export function RangeFilter({
   value,
@@ -58,53 +55,16 @@ export function RangeFilter({
           onChange={onChange}
         />
       )}
-      <Card tone="sand" style={styles.dateCard}>
-        <View style={styles.dateNav}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Previous day"
-            accessibilityState={{ disabled: !back }}
-            disabled={!back}
-            onPress={() => back && onChange(back)}
-            style={[styles.navButton, !back ? styles.disabled : null]}
-          >
-            <Icon name="chevron-left" size={18} color={Palette.fgMuted} />
-          </Pressable>
-          <View style={styles.flex} />
-          <Pressable accessibilityRole="button" accessibilityLabel="Open health calendar" onPress={() => setOpen(true)} style={styles.navButton}>
-            <Icon name="calendar-days" size={17} color={Palette.fgMuted} />
-          </Pressable>
-          <View style={styles.flex} />
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Next day"
-            accessibilityState={{ disabled: !forward }}
-            disabled={!forward}
-            onPress={() => forward && onChange(forward)}
-            style={[styles.navButton, !forward ? styles.disabled : null]}
-          >
-            <Icon name="chevron-right" size={18} color={Palette.fgMuted} />
-          </Pressable>
-        </View>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={`${weekday}, ${title}${count === null ? "" : `, ${count} recorded`}. Choose date.`}
-          onPress={() => setOpen(true)}
-          style={styles.selectedDate}
-        >
-          <View style={styles.selectedDateLabel}>
-            <AppText variant="label" color={Palette.greenFg}>
-              {weekday}
-            </AppText>
-            <AppText variant="bodyStrong" style={styles.selectedDateText}>
-              {title}
-            </AppText>
-          </View>
-          <AppText variant="body" color={Palette.fgSubtle}>
-            {count === null ? "" : count}
-          </AppText>
-        </Pressable>
-      </Card>
+      <DayNav
+        label={single ? `${weekday}, ${title}` : title}
+        hint={count ? `${count} recorded` : undefined}
+        accessibilityLabel={`${weekday}, ${title}${count === null ? "" : `, ${count} recorded`}. Choose date.`}
+        prevDisabled={!back}
+        nextDisabled={!forward}
+        onPrev={() => back && onChange(back)}
+        onNext={() => forward && onChange(forward)}
+        onOpen={() => setOpen(true)}
+      />
 
       <Sheet visible={open} onClose={() => setOpen(false)} title="Choose a day">
         <CalendarGrid
@@ -131,26 +91,4 @@ export function RangeFilter({
   );
 }
 
-const styles = StyleSheet.create({
-  flex: { flex: 1 },
-  // Same measurements as the Journal's date card, so the two screens read as one.
-  dateCard: { gap: 12, padding: 14, borderRadius: Radius.r4, overflow: Platform.OS === "android" ? "visible" : "hidden" },
-  dateNav: { flexDirection: "row", alignItems: "center", paddingHorizontal: 4 },
-  navButton: { width: 42, height: 42, borderRadius: Radius.pill, alignItems: "center", justifyContent: "center" },
-  disabled: { opacity: 0.35 },
-  selectedDate: {
-    minHeight: 76,
-    borderRadius: Radius.r3,
-    borderWidth: 2,
-    borderColor: Palette.greenFg,
-    backgroundColor: Palette.greenBg,
-    paddingHorizontal: 16,
-    paddingVertical: 10,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-  },
-  selectedDateLabel: { gap: 4 },
-  selectedDateText: { fontSize: 19, lineHeight: 24 },
-  todayButton: { marginTop: 12 },
-});
+const styles = StyleSheet.create({ todayButton: { marginTop: 12 } });

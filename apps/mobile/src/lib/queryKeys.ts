@@ -3,6 +3,7 @@ export const qk = {
   tasks: ["tasks"] as const,
   notes: ["notes"] as const,
   journal: ["journal"] as const,
+  sharedJournals: ["shared-journals"] as const,
   settings: ["settings"] as const,
   health: ["health"] as const,
   calendar: ["calendar"] as const,

@@ -5,12 +5,13 @@ import { Linking, ScrollView, StyleSheet, Text, View } from "react-native";
 import { AppText } from "./AppText";
 import { Font, Palette, Radius } from "@/constants/theme";
 
-/** Opens a web link in the browser, and an in-app item link (to-do, note, journal day) on the matching mobile screen. */
+/** Opens a web link in the browser, and an in-app item link (to-do, note, journal day, Health) on the matching mobile screen. */
 function openItem(href: string) {
   const t = itemTarget(href);
   if (!t) return;
   if (t.kind === "task") router.push({ pathname: "/task/[id]", params: { id: t.id } });
   else if (t.kind === "note") router.push({ pathname: "/note/[id]", params: { id: t.id } });
+  else if (t.kind === "health") router.navigate(t.id ? { pathname: "/health", params: { d: t.id } } : "/health");
   else router.navigate("/journal");
 }
 
@@ -21,6 +22,12 @@ function InlineText({ text, color }: { text: string; color: string }) {
         if (p.type === "strong")
           return (
             <Text key={i} style={styles.strong}>
+              {p.text}
+            </Text>
+          );
+        if (p.type === "em")
+          return (
+            <Text key={i} style={styles.em}>
               {p.text}
             </Text>
           );
@@ -53,7 +60,7 @@ function InlineText({ text, color }: { text: string; color: string }) {
 
 const textAlign = (a: Align) => a;
 
-function BlockView({ b, color }: { b: Block; color: string }) {
+function BlockView({ b, color, serif = false }: { b: Block; color: string; serif?: boolean }) {
   switch (b.type) {
     case "heading":
       return (
@@ -128,7 +135,7 @@ function BlockView({ b, color }: { b: Block; color: string }) {
       );
     default:
       return (
-        <AppText variant="body" color={color} selectable>
+        <AppText variant="body" color={color} selectable style={serif ? styles.serif : undefined}>
           <InlineText text={b.text} color={color} />
         </AppText>
       );
@@ -145,11 +152,12 @@ function safeParse(text: string): Block[] {
 }
 
 /** The web's Markdown dialect, drawn with native views. Parsing is shared with the web app (`@untitled/logic`). */
-export function Markdown({ text, color = Palette.fg }: { text: string; color?: string }) {
+/** `serif` sets paragraphs in the display serif at a reading size, for journal-style pages. */
+export function Markdown({ text, color = Palette.fg, serif = false }: { text: string; color?: string; serif?: boolean }) {
   return (
     <View style={styles.wrap}>
       {safeParse(text).map((b, i) => (
-        <BlockView key={i} b={b} color={color} />
+        <BlockView key={i} b={b} color={color} serif={serif} />
       ))}
     </View>
   );
@@ -158,6 +166,8 @@ export function Markdown({ text, color = Palette.fg }: { text: string; color?: s
 const styles = StyleSheet.create({
   wrap: { gap: 8 },
   strong: { ...Font.sansSemi },
+  em: { fontStyle: "italic" },
+  serif: { ...Font.serif, fontSize: 22, lineHeight: 30 },
   inlineCode: { ...Font.mono, fontSize: 13, backgroundColor: Palette.surfaceSunken },
   link: { color: Palette.greenFg, textDecorationLine: "underline", ...Font.sansMedium },
   h3: { fontSize: 20, lineHeight: 24 },

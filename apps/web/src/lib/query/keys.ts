@@ -18,6 +18,14 @@ export const qk = {
     day: (date: string) => ["journal", "day", date] as const,
     counts: ["journal", "counts"] as const,
   },
+  sharedJournals: {
+    all: ["shared-journals"] as const,
+    list: ["shared-journals", "list"] as const,
+    invites: ["shared-journals", "invites"] as const, // invitations waiting for the signed-in person
+    detail: (id: string) => ["shared-journals", "detail", id] as const,
+    entries: (id: string) => ["shared-journals", "entries", id] as const,
+  },
+  signedUrls: (bucket: string, paths: string[]) => ["signed-urls", bucket, paths] as const, // expiring links for stored files
   chats: {
     all: ["chats"] as const,
     list: ["chats", "list"] as const,

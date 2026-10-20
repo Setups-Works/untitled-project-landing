@@ -76,6 +76,7 @@ const journalRow = z.object({
   body: z.string(),
   kind: z.enum(["text", "voice"]),
   attachments: z.array(attachment),
+  share_token: z.string().nullable(),
   created_at: z.string(),
   updated_at: z.string(),
 });
@@ -123,7 +124,7 @@ export const RESOURCES: ResourceDef[] = [
     table: "journal_entries",
     tag: "Journal",
     singular: "journal entry",
-    columns: "id,entry_date,body,kind,attachments,created_at,updated_at",
+    columns: "id,entry_date,body,kind,attachments,share_token,created_at,updated_at",
     order: [
       { column: "entry_date", ascending: false },
       { column: "created_at", ascending: false },

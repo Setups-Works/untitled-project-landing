@@ -2,7 +2,7 @@
   "expo": {
     "name": "untitled project",
     "slug": "untitled-project-mobile",
-    "version": "1.0.0",
+    "version": "2.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "untitled",
@@ -19,7 +19,8 @@
         "android.permission.health.READ_ACTIVE_CALORIES_BURNED",
         "android.permission.health.READ_HEART_RATE",
         "android.permission.health.READ_RESTING_HEART_RATE",
-        "android.permission.health.READ_SLEEP"
+        "android.permission.health.READ_SLEEP",
+        "android.permission.REQUEST_INSTALL_PACKAGES"
       ],
       "adaptiveIcon": {
         "backgroundColor": "#efece3",
@@ -59,6 +60,110 @@
           "android": {
             "minSdkVersion": 26
           }
+        }
+      ],
+      [
+        "expo-widgets",
+        {
+          "widgets": [
+            {
+              "name": "TasksWidget",
+              "displayName": "Today’s tasks",
+              "description": "Your to-dos for today",
+              "ios": {
+                "supportedFamilies": [
+                  "systemSmall",
+                  "systemMedium",
+                  "systemLarge"
+                ]
+              }
+            },
+            {
+              "name": "QuickWidget",
+              "displayName": "Quick write",
+              "description": "Start a journal entry, note or task",
+              "ios": {
+                "supportedFamilies": [
+                  "systemSmall",
+                  "systemMedium"
+                ]
+              }
+            },
+            {
+              "name": "HealthWidget",
+              "displayName": "Health today",
+              "description": "Steps and more from Health",
+              "ios": {
+                "supportedFamilies": [
+                  "systemSmall",
+                  "systemMedium"
+                ]
+              }
+            },
+            {
+              "name": "JournalWidget",
+              "displayName": "Journal",
+              "description": "Your latest entry and writing streak",
+              "ios": {
+                "supportedFamilies": [
+                  "systemSmall",
+                  "systemMedium",
+                  "systemLarge"
+                ]
+              }
+            }
+          ]
+        }
+      ],
+      [
+        "react-native-android-widget",
+        {
+          "widgets": [
+            {
+              "name": "TasksWidget",
+              "label": "Today’s tasks",
+              "description": "Your to-dos for today",
+              "minWidth": "180dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 3,
+              "targetCellHeight": 2,
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 1800000
+            },
+            {
+              "name": "QuickWidget",
+              "label": "Quick write",
+              "description": "Start a journal entry, note or task",
+              "minWidth": "250dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 4,
+              "targetCellHeight": 2,
+              "resizeMode": "horizontal",
+              "updatePeriodMillis": 0
+            },
+            {
+              "name": "HealthWidget",
+              "label": "Health today",
+              "description": "Steps and more from Health",
+              "minWidth": "180dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 3,
+              "targetCellHeight": 2,
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 1800000
+            },
+            {
+              "name": "JournalWidget",
+              "label": "Journal",
+              "description": "Your latest entry and writing streak",
+              "minWidth": "250dp",
+              "minHeight": "110dp",
+              "targetCellWidth": 4,
+              "targetCellHeight": 2,
+              "resizeMode": "horizontal|vertical",
+              "updatePeriodMillis": 1800000
+            }
+          ]
         }
       ]
     ],

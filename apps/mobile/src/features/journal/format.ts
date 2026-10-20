@@ -24,11 +24,3 @@ export function prefixLines(text: string, sel: Selection, prefix: string): Edit 
   const delta = next.length - (to - from);
   return { text: text.slice(0, from) + next + text.slice(to), selection: { start: Math.max(from, sel.start + (all ? -prefix.length : prefix.length)), end: sel.end + delta } };
 }
-
-/** `[selected words](https://)` with the caret after `https://`, ready to type the address. */
-export function insertLink(text: string, sel: Selection): Edit {
-  const label = text.slice(sel.start, sel.end) || "link";
-  const link = `[${label}](https://)`;
-  const urlStart = sel.start + label.length + 3;
-  return { text: text.slice(0, sel.start) + link + text.slice(sel.end), selection: { start: urlStart + "https://".length, end: urlStart + "https://".length } };
-}

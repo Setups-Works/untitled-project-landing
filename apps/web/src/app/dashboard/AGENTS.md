@@ -5,7 +5,7 @@
 ## Today
 
 - `layout.tsx` (server): auth gate (`currentUser()` → redirect to `/login`), loads active **announcements**, renders `AppNav` (top bar, universal search, account menu, settings popup) + `AnnouncementBanner`.
-- `page.tsx` Home → `HomeView`; `journal/`, `chat/`, `notes/`, `todo/` each render one client view (wrapped in `ClientOnly` / `Suspense`).
+- `page.tsx` Home → `HomeView`; `journal/`, `chat/`, `notes/`, `todo/` each render one client view; `journal/collaborate` and `journal/shared/[id]` render the collaboration feature (shared journals) (wrapped in `ClientOnly` / `Suspense`).
 - `settings/actions.ts`: server action `deleteMyAccount` (service role; typed-email confirmation; blocks `ADMIN_EMAILS` accounts).
 - Settings is a **popup** (opened from the avatar menu), not a route.
 

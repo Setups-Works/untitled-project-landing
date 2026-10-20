@@ -1,1 +1,1 @@
-export { JournalScreen as default } from "@/features/journal/JournalScreen";
+export { JournalTabs as default } from "@/features/journal/JournalTabs";

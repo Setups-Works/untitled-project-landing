@@ -15,6 +15,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { AppText } from "./AppText";
 import { Button } from "./Button";
+import { DeleteSheet } from "./DeleteSheet";
 import { Icon } from "./Icon";
 import { Font, Palette, Radius, Shadow, Tints } from "@/constants/theme";
 import { useRuntimePrefs } from "@/lib/preferences";
@@ -174,7 +175,10 @@ export function useConfirm() {
     });
   }, []);
 
-  const dialog = pending ? (
+  // Deleting asks with the app's one delete dialog (DeleteSheet); other confirmations keep the centred dialog.
+  const dialog = pending?.danger ? (
+    <DeleteSheet visible title={pending.title} message={pending.body} confirmLabel={pending.confirmLabel} onConfirm={() => settle(true)} onClose={() => settle(false)} />
+  ) : pending ? (
     <ConfirmDialog
       title={pending.title}
       body={pending.body}

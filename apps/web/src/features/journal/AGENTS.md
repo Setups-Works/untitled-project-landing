@@ -4,7 +4,9 @@
 
 **Today (legacy):** `components/app/{JournalView,JournalCalendar}.tsx`, `useRecorder.ts`.
 
-**Backed by:** `journal_entries`, bucket `note-files` (`<uid>/journal/<entry>/…`). **Private to the author** — must stay so even inside shared workspaces.
+**Backed by:** `journal_entries`, bucket `note-files` (`<uid>/journal/<entry>/…`). **Private to the author** — must stay so even inside shared workspaces. Writing together happens in **shared journals** (`features/collaboration`, separate tables); never mix the two.
+
+**Sharing one entry:** `components/ShareEntryDialog.tsx` (link on/off, copy, picture preview, share/download), `hooks/useEntryShare.ts`, `lib/entryCard.ts` (canvas picture). Service `server/services/journal`, route `POST /api/v1/journal/[id]/share`, public page `/share/journal/[token]`. The picture's layout and text rules are shared with the app in `packages/logic/src/entryCard.ts`.
 
 **Rules**
 

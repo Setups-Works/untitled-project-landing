@@ -1,6 +1,6 @@
 # apps/web/src/server/services
 
-**Purpose:** The application's business logic. One folder per domain: `ai/`, `composio/`, `notes/`, `tasks/`, `calendar/`, `automation/` (and later `workspace/`, `journal/`, `email/`, `search/`, `notifications/`, `meetings/`, `billing/`).
+**Purpose:** The application's business logic. One folder per domain: `ai/`, `collaboration/`, `journal/`, `composio/`, `notes/`, `tasks/`, `calendar/`, `automation/` (and later `workspace/`, `journal/`, `email/`, `search/`, `notifications/`, `meetings/`, `billing/`).
 
 ## File layout per domain
 

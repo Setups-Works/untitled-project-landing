@@ -8,6 +8,8 @@
 api/v1/
   notes/route.ts, notes/[id]/route.ts
   tasks/…  journal/…  chats/…  search/route.ts
+  journal/[id]/share   (turn the public link of one entry on or off)
+  shared-journals/…  shared-journal-invites/…   (built: collaboration, via server/api/handler.ts and the collaboration service)
   workspaces/…  integrations/…  ai/{chat,providers,messages,actions}/route.ts
   billing/webhook/route.ts        (Stripe, signature-verified)
   jobs/<name>/route.ts            (CRON_SECRET only)

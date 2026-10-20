@@ -33,6 +33,7 @@ function ItemLink({ href, text, tip }: { href: string; text: string; tip?: strin
 function inline(text: string): ReactNode[] {
   return parseInline(text).map((p: Inline, i) => {
     if (p.type === "strong") return <strong key={i}>{p.text}</strong>;
+    if (p.type === "em") return <em key={i}>{p.text}</em>;
     if (p.type === "code") return <code key={i}>{p.text}</code>;
     if (p.type === "item") return <ItemLink key={i} text={p.text} href={p.href} tip={p.tip} />;
     if (p.type === "link")

@@ -11,3 +11,5 @@
 - Only daily aggregates are stored, never raw samples. Never log values.
 - "Not set up" means no rows. The web cannot know the phone's permission state; the phone screen handles that.
 - Mobile: `apps/mobile/src/features/health` (`source.ios.ts` HealthKit, `source.android.ts` Health Connect). Needs a development build, not Expo Go.
+
+**Links:** `/dashboard/health?d=YYYY-MM-DD` opens the page on that day (the app: `/health?d=…`). Notes the assistant writes about health end with `[Open in Health](…)`; the shared Markdown parser (`packages/logic/src/markdown.ts`) accepts only this path (and `/dashboard/health`) besides to-do, note and journal links, and both apps turn it into a tap.

@@ -106,10 +106,20 @@ export function itemHandlers(def: ResourceDef) {
       }
       const values: Row = { ...p.data };
       if (!Object.keys(values).length) return fail("Nothing to change.", 400);
+      // When the list of files changes, the ones that were taken out are deleted from storage once the change is saved.
+      const nextFiles = (p.data as { attachments?: { path: string }[] }).attachments;
+      const before = nextFiles
+        ? ((await userDb(user.id).from<Row>(def.table).select("attachments").eq("id", id.data).maybeSingle()).data?.attachments as { path?: string }[] | undefined)
+        : undefined;
       if (hasStamp) values.updated_at = new Date().toISOString();
       if (def.key === "tasks" && "done" in values && !("done_at" in values)) values.done_at = values.done ? new Date().toISOString() : null;
       const { data, error } = await userDb(user.id).from<Row>(def.table).update(values).eq("id", id.data).select(def.columns).maybeSingle();
       if (error) return fail(`Couldn’t change that ${def.singular}.`, 400);
+      if (data && nextFiles && Array.isArray(before)) {
+        const keep = new Set(nextFiles.map((f) => f.path));
+        const gone = before.map((f) => f.path).filter((k): k is string => typeof k === "string" && !keep.has(k) && ownsKey(user.id, k));
+        if (gone.length) await deleteObjects("note-files", gone).catch(() => undefined);
+      }
       return data ? json({ data }) : fail("Not found.", 404);
     },
 

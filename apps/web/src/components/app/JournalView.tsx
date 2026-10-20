@@ -1,8 +1,19 @@
 "use client";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { FontAwesomeIcon as FA } from "@fortawesome/react-fontawesome";
-import { faArrowUp, faChevronLeft, faChevronRight, faPaperclip, faPen, faTableColumns, faTrash } from "@fortawesome/free-solid-svg-icons";
+import {
+  faArrowUp,
+  faChevronLeft,
+  faChevronRight,
+  faPaperclip,
+  faPen,
+  faShareNodes,
+  faTableColumns,
+  faTrash,
+  faUserGroup,
+} from "@fortawesome/free-solid-svg-icons";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "../../lib/api/client";
 import { qk } from "../../lib/query/keys";
@@ -21,8 +32,11 @@ import RecordButton from "../ui/RecordButton";
 import { useDraftFiles, useDraftText } from "../../hooks/useDraft";
 import { useRecorder } from "./useRecorder";
 import { ctxProps, useCtxActions } from "../../lib/context-actions";
+import { isEnabled } from "../../config/features";
+import { useCollaborationRealtime, useMyInvites } from "../../features/collaboration";
+import { ShareEntryDialog } from "../../features/journal";
 
-const COLS = "id,entry_date,body,created_at,updated_at,kind,attachments";
+const COLS = "id,entry_date,body,created_at,updated_at,kind,attachments,share_token";
 const DAY_TONES = TONES.filter((t) => t !== "sand");
 /** A stable colour for a date (its day-of-month picks the tint), so neighbouring days differ and a date never changes colour. */
 const dayTone = (iso: string) => DAY_TONES[Number(iso.slice(8, 10)) % DAY_TONES.length];
@@ -36,6 +50,10 @@ const parse = (iso: string) => {
 
 export default function JournalView() {
   const sb = useMemo(api, []);
+  const collab = isEnabled("sharedJournals");
+  // Invitations waiting for an answer show as a badge on the Collaborate button; they arrive live.
+  useCollaborationRealtime();
+  const waiting = useMyInvites().data?.length ?? 0;
   const today = useMemo(() => isoDate(), []);
   const { ask, dialog } = useConfirm();
   const [date, setDate] = useState(today);
@@ -68,6 +86,7 @@ export default function JournalView() {
   const [files, setFiles] = useDraftFiles(`journal:${date}`);
   const [busy, setBusy] = useState(false);
   const [editing, setEditing] = useState<string | null>(null);
+  const [sharing, setSharing] = useState<Entry | null>(null);
   const [draft, setDraft] = useState("");
   const [urls, setUrls] = useState<Record<string, string>>({});
   const uid = useRef("");
@@ -229,6 +248,7 @@ export default function JournalView() {
   return (
     <div className="jr" data-side={side}>
       {dialog}
+      {sharing && <ShareEntryDialog key={sharing.id} entry={sharing} onClose={() => setSharing(null)} />}
       <aside className="jr-side ap-card at-sand" aria-label="Journal days">
         <button
           className="ne-btn jr-toggle"
@@ -277,13 +297,23 @@ export default function JournalView() {
       </aside>
 
       <section className="jr-main ap-card at-violet" aria-label={title}>
-        <header className="jr-head">
+        <header className="jr-head flex items-start justify-between gap-3">
           <div>
             <h1 className="h3">
               {title} {date === today && <span className="jr-today">Today</span>}
             </h1>
             <small>{ready ? `${n} ${n === 1 ? "entry" : "entries"}` : " "}</small>
           </div>
+          {collab && (
+            <Link href="/dashboard/journal/collaborate" className="btn btn-secondary btn-sm">
+              <FA icon={faUserGroup} aria-hidden /> Collaborate
+              {waiting > 0 && (
+                <span className="at-amber tint rounded-pill px-2 py-px text-[11px] font-semibold" aria-label={`${waiting} waiting`}>
+                  {waiting}
+                </span>
+              )}
+            </Link>
+          )}
         </header>
 
         <div className="jr-list" aria-live="polite">
@@ -306,6 +336,9 @@ export default function JournalView() {
                     }}
                   >
                     <FA icon={faPen} />
+                  </button>
+                  <button className="icon-btn" aria-label="Share entry" onClick={() => setSharing(e)}>
+                    <FA icon={faShareNodes} />
                   </button>
                   <button className="icon-btn" aria-label="Delete entry" onClick={() => remove(e)}>
                     <FA icon={faTrash} />

@@ -8,6 +8,7 @@ export const FEATURES = {
   notes: true,
   tasks: true,
   journal: true,
+  sharedJournals: true, // journals several people write in, by invitation
   chat: true,
   chatSharing: true,
   universalSearch: true,

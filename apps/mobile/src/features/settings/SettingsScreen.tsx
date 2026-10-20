@@ -3,15 +3,15 @@ import * as DocumentPicker from "expo-document-picker";
 import { Image } from "expo-image";
 import { router } from "expo-router";
 import { useEffect, useRef, useState } from "react";
-import type Svg from "react-native-svg";
-import { GIFT_FILE_NAME, giftShareText } from "@untitled/logic";
+import { giftShareText } from "@untitled/logic";
 import { Pressable, ScrollView, Share, StyleSheet, Switch, View } from "react-native";
 
 import { AppText } from "@/components/ui/AppText";
 import { Banner } from "@/components/ui/Banner";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
-import { GiftCard, giftCardPng } from "@/components/ui/GiftCard";
+import { DeleteSheet } from "@/components/ui/DeleteSheet";
+import { GiftCard, captureGiftCard } from "@/components/ui/GiftCard";
 import { Icon } from "@/components/ui/Icon";
 import { Screen } from "@/components/ui/Screen";
 import { Sheet } from "@/components/ui/Sheet";
@@ -21,6 +21,7 @@ import { mobileEnv } from "@/config/env";
 import { dbQuery } from "@/features/chat/db";
 import { useAccountSettings } from "./queries";
 import { SETTINGS_SECTIONS, type SettingsPrefs, type SettingsSection } from "./types";
+import { useUpdate } from "@/features/updates/UpdateProvider";
 import { useAppState, useAuth } from "@/providers/AppState";
 import { shareImageWithText } from "@/lib/shareImage";
 import { createUploadId } from "@/lib/uploadId";
@@ -41,9 +42,10 @@ export function SettingsScreen() {
   const { user, signOut, preferences: prefs, setPreferences } = useAppState();
   const auth = useAuth();
   const settingsQ = useAccountSettings();
+  const update = useUpdate();
   const [section, setSection] = useState<SettingsSection>("profile");
   const [busy, setBusy] = useState("");
-  const giftRef = useRef<Svg>(null);
+  const giftRef = useRef<View>(null);
   const [notice, setNotice] = useState<Notice>(null);
 
   const account = settingsQ.data;
@@ -115,16 +117,15 @@ export function SettingsScreen() {
 
   /** Shares the card as an image with a short message (react-native-share sends both on iOS and Android). */
   async function shareGift() {
-    const svg = giftRef.current;
-    if (!svg) return;
+    const card = giftRef.current;
+    if (!card) return;
     setBusy("gift");
     try {
-      const png = await giftCardPng(svg);
+      const imageUri = await captureGiftCard(card);
       const { textShared } = await shareImageWithText({
         title: "Welcome to untitled project",
         message: giftShareText(name || email, mobileEnv.apiBaseUrl),
-        pngBase64: png,
-        filename: GIFT_FILE_NAME.replace(/\.png$/, ""),
+        imageUri,
       });
       if (!textShared) setNotice({ kind: "info", text: "The card image was shared. Adding the message too needs the installed app build, not Expo Go." });
     } catch (e) {
@@ -449,6 +450,28 @@ export function SettingsScreen() {
         </Card>
       ) : null}
 
+      {section === "about" ? (
+        <Card tone="blue" style={styles.card}>
+          <SectionHeading title="About and updates" />
+          <Fact label="Version" value={update.version ?? "—"} />
+          {update.supported ? (
+            <>
+              <Button
+                title={update.state.phase === "checking" ? "Checking…" : "Check for updates"}
+                kind="secondary"
+                icon="rotate"
+                loading={update.state.phase === "checking"}
+                onPress={() => void update.check()}
+              />
+              {update.state.phase === "upToDate" ? <Banner kind="success">You’re on the latest version.</Banner> : null}
+              {update.state.phase === "error" && !update.state.release ? <Banner kind="error">{update.state.message}</Banner> : null}
+            </>
+          ) : (
+            <AppText variant="small" color={Palette.fgSubtle}>Updates for this app come from the store on your phone.</AppText>
+          )}
+        </Card>
+      ) : null}
+
       {section === "danger" ? (
         <>
           <Card tone="gold" style={styles.card}>
@@ -477,25 +500,24 @@ export function SettingsScreen() {
           if (choice === "todoView") void savePreferences({ todoView: value as SettingsPrefs["todoView"] });
         }}
       />
-      <Sheet visible={dangerReview !== null} title={dangerReview?.action === "delete-account" ? "Delete your account?" : "Reset your workspace?"} onClose={() => setDangerReview(null)}>
-        <AppText variant="body" color={Palette.fgMuted}>
-          {dangerReview?.action === "delete-account"
+      <DeleteSheet
+        visible={dangerReview !== null}
+        title={dangerReview?.action === "delete-account" ? "Delete your account?" : "Reset your workspace?"}
+        message={
+          dangerReview?.action === "delete-account"
             ? "Your account and all its content will be permanently deleted. This cannot be undone."
-            : "Your notes, tasks, lists, journal entries, chats and attached files will be permanently deleted. Your account stays."}
-        </AppText>
-        <Button
-          title={dangerReview?.action === "delete-account" ? "Permanently delete account" : "Delete everything"}
-          kind="danger"
-          loading={busy === dangerReview?.action}
-          onPress={() => {
-            if (!dangerReview) return;
-            const review = dangerReview;
-            setDangerReview(null);
-            void runAccountAction(review.action, review.confirmation);
-          }}
-        />
-        <Button title="Cancel" kind="secondary" onPress={() => setDangerReview(null)} />
-      </Sheet>
+            : "Your notes, tasks, lists, journal entries, chats and attached files will be permanently deleted. Your account stays."
+        }
+        confirmLabel={dangerReview?.action === "delete-account" ? "Permanently delete account" : "Delete everything"}
+        loading={busy === dangerReview?.action}
+        onConfirm={() => {
+          if (!dangerReview) return;
+          const review = dangerReview;
+          setDangerReview(null);
+          void runAccountAction(review.action, review.confirmation);
+        }}
+        onClose={() => setDangerReview(null)}
+      />
       <Sheet visible={globalSignOutReview} title="Sign out everywhere?" onClose={() => setGlobalSignOutReview(false)}>
         <AppText variant="body" color={Palette.fgMuted}>You’ll be signed out on this device and every other device. You can log back in any time.</AppText>
         <Button title="Sign out everywhere" kind="secondary" loading={busy === "global"} onPress={() => void signOutEverywhere()} />

@@ -8,3 +8,6 @@ export * from "./audio";
 export * from "./updates";
 export * from "./sleep";
 export * from "./giftCard";
+export * from "./sharedJournals";
+export * from "./entryCard";
+export * from "./widgets";

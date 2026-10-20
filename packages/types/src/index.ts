@@ -44,9 +44,55 @@ export type JournalEntry = {
   body: string;
   kind: "text" | "voice";
   attachments: Attachment[];
+  /** Set while the entry has a public link (32 hex characters); null when it is private. */
+  share_token: string | null;
   created_at: string;
   updated_at: string;
 };
+
+/** What a person is allowed to do in a shared journal. The owner created it; editors write; viewers only read. */
+export type SharedJournalRole = "owner" | "editor" | "viewer";
+/** The role someone is invited as (the owner is never invited). */
+export type SharedJournalInviteRole = Exclude<SharedJournalRole, "owner">;
+
+/** The bit of a person other people may see: who they are, never their email. */
+export type JournalPerson = { id: string; username: string | null; name: string; image: string | null };
+
+/** A journal several people write in, as the signed-in person sees it. */
+export type SharedJournal = {
+  id: string;
+  name: string;
+  /** The signed-in person's role in it. */
+  role: SharedJournalRole;
+  owner: JournalPerson;
+  member_count: number;
+  entry_count: number;
+  last_entry_at: string | null;
+  created_at: string;
+};
+
+export type SharedJournalMember = { person: JournalPerson; role: SharedJournalRole; joined_at: string };
+
+/** An invitation as the owner sees it (who was invited) or the invitee sees it (which journal, from whom). */
+export type SharedJournalInvite = {
+  id: string;
+  journal_id: string;
+  journal_name: string;
+  role: SharedJournalInviteRole;
+  invitee: JournalPerson;
+  inviter: JournalPerson;
+  created_at: string;
+};
+
+export type SharedJournalDetail = SharedJournal & {
+  /** The signed-in person's own id, to tell which row in `members` is them. */
+  me: string;
+  members: SharedJournalMember[];
+  /** Pending invitations; only the owner receives this list. */
+  invites: SharedJournalInvite[];
+};
+
+export type SharedJournalEntry = Omit<JournalEntry, "share_token"> & { journal_id: string; author: JournalPerson };
 
 /** A calendar event. Times are UTC timestamps; an all-day event runs from midnight to midnight in the owner's local time. */
 export type CalendarEvent = {

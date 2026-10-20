@@ -1,25 +1,29 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import type { Attachment, JournalEntry } from "@untitled/types";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Platform, Pressable, StyleSheet, View } from "react-native";
+import { Pressable, StyleSheet, View } from "react-native";
+
+import { router, useLocalSearchParams } from "expo-router";
 
 import { useJournal, useJournalActions, useJournalDay } from "./queries";
-import { EntryEditor } from "./EntryEditor";
+import { EntryEditor } from "@/components/ui/EntryEditor";
+import { EntryEditSheet } from "./EntryEditSheet";
+import { EntryShareSheet } from "./EntryShareSheet";
+import { FeedEntry } from "./FeedEntry";
 import { MAX_UPLOAD_BYTES, uploadJournalFile } from "./files";
 import { pickFiles, type PendingFile } from "@/features/chat/files";
 import { useRecorder } from "@/features/chat/useRecorder";
 import { AppText } from "@/components/ui/AppText";
-import { AttachmentGallery } from "@/components/ui/AttachmentGallery";
 import { Button } from "@/components/ui/Button";
 import { CalendarGrid } from "@/components/ui/DatePicker";
-import { Card } from "@/components/ui/Card";
 import { useConfirm } from "@/components/ui/Confirm";
+import { Card } from "@/components/ui/Card";
+import { DayNav } from "@/components/ui/DayNav";
 import { Icon } from "@/components/ui/Icon";
-import { Markdown } from "@/components/ui/Markdown";
 import { Sheet } from "@/components/ui/Sheet";
-import { Screen } from "@/components/ui/Screen";
+import { Screen, type ScreenEdges } from "@/components/ui/Screen";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/States";
-import { Palette, Radius } from "@/constants/theme";
+import { Font, Palette, Radius, Space, toneAt } from "@/constants/theme";
 import { useAppState } from "@/providers/AppState";
 import { errorMessage } from "@/lib/api";
 import { addDays, dayLabel, isoDate, timeOf } from "@/lib/dates";
@@ -51,7 +55,7 @@ function readPendingFiles(raw: string | null): PendingFile[] {
   }
 }
 
-export function JournalScreen() {
+export function JournalScreen({ edges }: { edges?: ScreenEdges } = {}) {
   const { user } = useAppState();
   const allQ = useJournal();
   const [date, setDate] = useState(isoDate);
@@ -68,8 +72,15 @@ export function JournalScreen() {
   const [draftLoadedFor, setDraftLoadedFor] = useState("");
   const [busy, setBusy] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editDraft, setEditDraft] = useState("");
-  const [viewingEntry, setViewingEntry] = useState<JournalEntry | null>(null);
+  // `/journal?new=1` (from the Quick write widget) opens the writing page straight away; closing it clears the address again.
+  const { new: openNew } = useLocalSearchParams<{ new?: string }>();
+  const writing = newEntryOpen || openNew === "1";
+  const closeNewEntry = () => {
+    setNewEntryOpen(false);
+    if (openNew) router.setParams({ new: undefined });
+  };
+  const [actionEntry, setActionEntry] = useState<JournalEntry | null>(null);
+  const [shareEntry, setShareEntry] = useState<JournalEntry | null>(null);
   const rec = useRecorder((file) => setFiles((current) => [...current, file]), setError);
   const [pendingEntryId, setPendingEntryId] = useState<string | null>(null);
   const [pendingEntryDate, setPendingEntryDate] = useState<string | null>(null);
@@ -128,8 +139,6 @@ export function JournalScreen() {
     day: "numeric",
     ...(selectedDate.getFullYear() !== new Date().getFullYear() ? { year: "numeric" } : {}),
   });
-  const compactTitle = selectedDate.toLocaleDateString(undefined, { day: "numeric", month: "long" });
-  const weekday = selectedDate.toLocaleDateString(undefined, { weekday: "short" }).toUpperCase();
   const canAdd = (draft.trim().length > 0 || files.length > 0) && !busy && !loadingDraft && !rec.recording;
 
   async function attach(type?: string) {
@@ -189,7 +198,7 @@ export function JournalScreen() {
         setPendingEntryId(null);
         setPendingEntryDate(null);
         setUploadedFiles([]);
-        setNewEntryOpen(false);
+        closeNewEntry();
       }
     } catch (e) {
       setError(errorMessage(e, "Couldn’t save that entry."));
@@ -211,127 +220,72 @@ export function JournalScreen() {
     });
   }
 
-  function saveEdit(entry: JournalEntry) {
-    update.mutate(
-      { id: entry.id, body: editDraft },
-      {
-        onSuccess: () => {
-          setEditingId(null);
-          setEditDraft("");
-        },
-        onError: (e) => setError(errorMessage(e, "Couldn’t save that change.")),
-      },
-    );
-  }
+  const dayName = date === today ? "Today" : selectedDate.toLocaleDateString(undefined, { weekday: "long" });
 
   return (
-    <Screen onRefresh={() => void refresh()} refreshing={refreshing}>
-      <Card tone="sand" style={styles.dateCard}>
-        <View style={styles.dateNav}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Previous day"
-            onPress={() => { setEditingId(null); setDate((current) => addDays(current, -1)); }}
-            style={styles.navButton}
-          >
-            <Icon name="chevron-left" size={18} color={Palette.fgMuted} />
-          </Pressable>
-          <View style={styles.flex} />
-          <Pressable accessibilityRole="button" accessibilityLabel="Open journal calendar" onPress={() => setCalendarOpen(true)} style={styles.navButton}>
-            <Icon name="calendar-days" size={17} color={Palette.fgMuted} />
-          </Pressable>
-          <View style={styles.flex} />
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Next day"
-            accessibilityState={{ disabled: date >= today }}
-            disabled={date >= today}
-            onPress={() => { setEditingId(null); setDate((current) => addDays(current, 1)); }}
-            style={[styles.navButton, date >= today ? styles.disabled : null]}
-          >
-            <Icon name="chevron-right" size={18} color={Palette.fgMuted} />
-          </Pressable>
-        </View>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={`${weekday}, ${compactTitle}, ${entries.length} entries. Choose date.`}
-          onPress={() => setCalendarOpen(true)}
-          style={styles.selectedDate}
-        >
-          <View style={styles.selectedDateLabel}>
-            <AppText variant="label" color={Palette.greenFg}>{weekday}</AppText>
-            <AppText variant="bodyStrong" style={styles.selectedDateText}>{compactTitle}</AppText>
-          </View>
-          <AppText variant="body" color={Palette.fgSubtle}>{dayQ.isPending ? "" : entries.length}</AppText>
-        </Pressable>
-      </Card>
-      <Button title="New entry" icon="plus" onPress={() => setNewEntryOpen(true)} style={styles.newEntryButton} />
-
-      <Card tone="violet" style={styles.dayCard}>
-        <View style={styles.dayTitleBlock}>
-          <View style={styles.titleRow}>
-            <AppText variant="title" style={styles.dayTitle} accessibilityRole="header">{title}</AppText>
-            {date === today ? (
-              <View style={styles.todayPill}>
-                <AppText variant="label" color={Palette.onDark}>Today</AppText>
-              </View>
-            ) : null}
-          </View>
-          <AppText variant="body" color={Palette.fgSubtle}>
+    <Screen edges={edges} onRefresh={() => void refresh()} refreshing={refreshing}>
+      <View style={styles.header}>
+        <View style={styles.headTitle}>
+          <AppText variant="title" numberOfLines={1} accessibilityRole="header">
+            {dayName}
+          </AppText>
+          <AppText variant="small" color={Palette.fgSubtle}>
             {dayQ.isPending ? " " : `${entries.length} ${entries.length === 1 ? "entry" : "entries"}`}
           </AppText>
         </View>
-
-        {dayQ.isPending ? <LoadingState label="Loading entries…" /> : dayQ.isError ? (
-          <ErrorState message={errorMessage(dayQ.error)} onRetry={() => void dayQ.refetch()} />
-        ) : entries.length ? (
-          <View style={styles.entries}>
-            {entries.map((entry) => (
-                <Card
-                  key={entry.id}
-                  accessibilityLabel={`Open journal entry at ${timeOf(entry.created_at)}`}
-                  onPress={() => setViewingEntry(entry)}
-                  style={styles.entryCard}
-                >
-                  <View style={styles.entryMeta}>
-                    <AppText variant="small" color={Palette.fgSubtle}>{timeOf(entry.created_at)}</AppText>
-                    <View style={styles.entryActions}>
-                      <Pressable
-                        accessibilityRole="button"
-                        accessibilityLabel="Edit entry"
-                        onPress={() => {
-                          setError("");
-                          setEditingId(entry.id);
-                          setEditDraft(entry.body);
-                        }}
-                        style={styles.entryAction}
-                      >
-                        <Icon name="pen" size={17} color={Palette.fgSubtle} />
-                      </Pressable>
-                      <Pressable accessibilityRole="button" accessibilityLabel="Delete entry" onPress={() => removeEntry(entry)} style={styles.entryAction}>
-                        <Icon name="trash-can" size={17} color={Palette.fgSubtle} />
-                      </Pressable>
-                    </View>
-                  </View>
-                  {entry.body ? <Markdown text={entry.body} /> : null}
-                  <AttachmentGallery attachments={entry.attachments} />
-                </Card>
-            ))}
-          </View>
-        ) : (
-          <AppText variant="small" color={Palette.fgSubtle} style={styles.emptyLine}>
-            {date === today ? "Nothing written yet today. What’s on your mind?" : "No entries on this day."}
+        <Pressable accessibilityRole="button" accessibilityLabel="New entry" onPress={() => setNewEntryOpen(true)} style={styles.add}>
+          <Icon name="plus" size={14} color={Palette.onDark} />
+          <AppText variant="bodyStrong" color={Palette.onDark}>
+            Add
           </AppText>
-        )}
-      </Card>
+        </Pressable>
+      </View>
+
+      <DayNav
+        label={title}
+        accessibilityLabel={`${title}. Choose date.`}
+        nextDisabled={date >= today}
+        onPrev={() => {
+          setEditingId(null);
+          setDate((current) => addDays(current, -1));
+        }}
+        onNext={() => {
+          setEditingId(null);
+          setDate((current) => addDays(current, 1));
+        }}
+        onOpen={() => setCalendarOpen(true)}
+      />
+
+      {dayQ.isPending ? (
+        <LoadingState label="Loading entries…" />
+      ) : dayQ.isError ? (
+        <ErrorState message={errorMessage(dayQ.error)} onRetry={() => void dayQ.refetch()} />
+      ) : entries.length ? (
+        <View style={styles.feed}>
+          {entries.map((entry, index) => (
+            <FeedEntry
+              key={entry.id}
+              entry={entry}
+              tone={toneAt(index)}
+              onOpen={() => router.push({ pathname: "/journal/[id]", params: { id: entry.id } })}
+              onMenu={() => setActionEntry(entry)}
+            />
+          ))}
+        </View>
+      ) : (
+        <Card tone="sand" onPress={() => setNewEntryOpen(true)} accessibilityLabel="Write an entry" style={styles.empty}>
+          <AppText style={styles.emptyText}>{date === today ? "Nothing written yet today. What’s on your mind?" : "No entries on this day."}</AppText>
+        </Card>
+      )}
 
       {!allQ.isPending && !allQ.isError && allQ.data?.length === 0 ? (
-        <EmptyState icon="book-open" title="Your journal is ready" hint="Write a line above. One sentence is enough." />
+        <EmptyState icon="book-open" title="Your journal is ready" hint="Write a line. One sentence is enough." />
       ) : null}
 
       <EntryEditor
-        visible={newEntryOpen}
-        dayLabel={`${dayLabel(date, today)} · ${selectedDate.toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" })}`}
+        visible={writing}
+        inputLabel="Journal entry"
+        label={`${dayLabel(date, today)} · ${selectedDate.toLocaleDateString(undefined, { weekday: "long", month: "short", day: "numeric" })}`}
         draft={draft}
         onDraft={setDraft}
         files={files}
@@ -345,24 +299,19 @@ export function JournalScreen() {
         saving={busy}
         error={error}
         onSave={() => void addEntry()}
-        onClose={() => setNewEntryOpen(false)}
+        onClose={closeNewEntry}
       />
 
-      {/* Editing an entry uses the same writing page, without the record and attach buttons (an entry's files aren't changed here). */}
-      <EntryEditor
-        visible={editingEntry !== undefined}
-        dayLabel={editingEntry ? `Editing · ${dayLabel(editingEntry.entry_date, today)} · ${timeOf(editingEntry.created_at)}` : ""}
-        draft={editDraft}
-        onDraft={setEditDraft}
-        canSave={!!editingEntry && editDraft !== editingEntry.body && !update.isPending}
-        saving={update.isPending}
-        error={error}
-        onSave={() => editingEntry && saveEdit(editingEntry)}
-        onClose={() => {
-          setEditingId(null);
-          setEditDraft("");
-        }}
-      />
+      {/* Editing an entry uses the same writing page, with its files: each can be removed, and more can be added. */}
+      {editingEntry ? (
+        <EntryEditSheet
+          key={editingEntry.id}
+          entry={editingEntry}
+          onClose={() => setEditingId(null)}
+          onSaved={() => setEditingId(null)}
+          onDeleted={() => setEditingId(null)}
+        />
+      ) : null}
 
       <Sheet visible={calendarOpen} onClose={() => setCalendarOpen(false)} title="Choose a day">
         <CalendarGrid
@@ -377,58 +326,62 @@ export function JournalScreen() {
         <Button title="Today" kind="secondary" icon="calendar-day" onPress={() => { setDate(today); setCalendarOpen(false); }} style={styles.todayButton} />
       </Sheet>
 
-      <Sheet
-        visible={viewingEntry !== null}
-        onClose={() => setViewingEntry(null)}
-        title={viewingEntry ? `${dayLabel(viewingEntry.entry_date)} · ${timeOf(viewingEntry.created_at)}` : undefined}
-      >
-        {viewingEntry ? (
-          <View style={styles.entryDetail}>
-            <Card tone="violet" style={styles.entryDetailCard}>
-              {viewingEntry.body ? <Markdown text={viewingEntry.body} /> : null}
-              <AttachmentGallery attachments={viewingEntry.attachments} />
-            </Card>
-            <Button
-              title="Edit entry"
-              icon="pen"
-              onPress={() => {
-                setEditingId(viewingEntry.id);
-                setEditDraft(viewingEntry.body);
-                setViewingEntry(null);
-              }}
-            />
-          </View>
-        ) : null}
+      <Sheet visible={actionEntry !== null} onClose={() => setActionEntry(null)} title="Entry">
+        <Pressable
+          accessibilityRole="button"
+          style={styles.actionRow}
+          onPress={() => {
+            const entry = actionEntry;
+            setActionEntry(null);
+            if (entry) {
+              setError("");
+              setEditingId(entry.id);
+            }
+          }}
+        >
+          <AppText variant="body">Edit</AppText>
+          <Icon name="pen" size={15} color={Palette.fgMuted} />
+        </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          style={styles.actionRow}
+          onPress={() => {
+            const entry = actionEntry;
+            setActionEntry(null);
+            if (entry) setShareEntry(entry);
+          }}
+        >
+          <AppText variant="body">Share</AppText>
+          <Icon name="share-nodes" size={15} color={Palette.fgMuted} />
+        </Pressable>
+        <Pressable
+          accessibilityRole="button"
+          style={styles.actionRow}
+          onPress={() => {
+            const entry = actionEntry;
+            setActionEntry(null);
+            if (entry) void removeEntry(entry);
+          }}
+        >
+          <AppText variant="body" color={Palette.clayFg}>
+            Delete
+          </AppText>
+          <Icon name="trash-can" size={15} color={Palette.clayFg} />
+        </Pressable>
       </Sheet>
+      {shareEntry ? <EntryShareSheet key={shareEntry.id} entry={shareEntry} onClose={() => setShareEntry(null)} /> : null}
       {dialog}
     </Screen>
   );
 }
 
 const styles = StyleSheet.create({
-  flex: { flex: 1 },
-  dateCard: { gap: 12, padding: 14, borderRadius: Radius.r4 },
-  dateNav: { flexDirection: "row", alignItems: "center", paddingHorizontal: 4 },
-  navButton: { width: 42, height: 42, borderRadius: Radius.pill, alignItems: "center", justifyContent: "center" },
-  disabled: { opacity: 0.35 },
-  selectedDate: { minHeight: 76, borderRadius: Radius.r3, borderWidth: 2, borderColor: Palette.greenFg, backgroundColor: Palette.greenBg, paddingHorizontal: 16, paddingVertical: 10, flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  selectedDateLabel: { gap: 4 },
-  selectedDateText: { fontSize: 19, lineHeight: 24 },
-  newEntryButton: { alignSelf: "stretch" },
-  // overflow:"hidden" clips the tinted bg to the rounded corners on iOS.
-  // On Android, borderRadius clips natively and overflow:"hidden" suppresses elevation on child cards.
-  dayCard: { gap: 0, padding: 0, borderRadius: Radius.r4, overflow: Platform.OS === "android" ? "visible" : "hidden" },
-  dayTitleBlock: { paddingHorizontal: 20, paddingTop: 20, paddingBottom: 16, gap: 8, borderBottomWidth: 1, borderBottomColor: Palette.line },
-  titleRow: { flexDirection: "row", alignItems: "center", flexWrap: "wrap", gap: 12 },
-  dayTitle: { flexShrink: 1 },
-  todayPill: { minHeight: 34, paddingHorizontal: 16, borderRadius: Radius.pill, backgroundColor: Palette.fillDark, alignItems: "center", justifyContent: "center" },
-  entries: { gap: 12, padding: 14 },
-  entryCard: { gap: 14, padding: 18, borderRadius: Radius.r3 },
-  entryDetail: { gap: 12 },
-  entryDetailCard: { gap: 12 },
-  entryMeta: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  entryActions: { flexDirection: "row", alignItems: "center", gap: 12 },
-  entryAction: { width: 36, height: 36, borderRadius: Radius.pill, alignItems: "center", justifyContent: "center" },
-  emptyLine: { paddingVertical: 8 },
+  header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: Space.md },
+  headTitle: { flex: 1, minWidth: 0 },
+  add: { flexDirection: "row", alignItems: "center", gap: 6, height: 44, paddingHorizontal: Space.lg, borderRadius: Radius.pill, backgroundColor: Palette.fillDark },
+  feed: { gap: Space.md },
+  empty: { padding: Space.xl, borderRadius: Radius.r3 },
+  emptyText: { ...Font.serif, fontSize: 24, lineHeight: 32, color: Palette.fgSubtle },
+  actionRow: { minHeight: 48, flexDirection: "row", alignItems: "center", justifyContent: "space-between", paddingHorizontal: 4 },
   todayButton: { marginTop: 12 },
 });

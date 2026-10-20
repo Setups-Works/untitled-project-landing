@@ -9,7 +9,11 @@ import { createUploadId } from "@/lib/uploadId";
 
 /** Upload a journal attachment into the same private owner/entry folder used by the web journal. */
 export async function uploadJournalFile(userId: string, entryId: string, file: PendingFile): Promise<Attachment> {
-  const path = `${userId}/journal/${entryId}/${createUploadId()}-${safeName(file.name)}`;
+  return putFile(`${userId}/journal/${entryId}/${createUploadId()}-${safeName(file.name)}`, file);
+}
+
+/** Uploads one picked file to a storage path and returns its attachment record. Throws a message fit to show when storage refuses it. */
+export async function putFile(path: string, file: PendingFile): Promise<Attachment> {
   const body = await (await fetch(file.uri)).blob();
   if (body.size > MAX_UPLOAD_BYTES) throw new Error("Files can be up to 10 MB.");
   const cookie = await authClient?.getCookie();
