@@ -453,7 +453,7 @@ export function SettingsScreen() {
       {section === "about" ? (
         <Card tone="blue" style={styles.card}>
           <SectionHeading title="About and updates" />
-          <Fact label="Version" value={update.version ?? "—"} />
+          <Fact label="Version" value={update.version} />
           {update.supported ? (
             <>
               <Button
