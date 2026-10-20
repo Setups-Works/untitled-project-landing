@@ -8,6 +8,7 @@ import {
   faCircleCheck,
   faDatabase,
   faDownload,
+  faShareNodes,
   faEye,
   faEyeSlash,
   faFileLines,
@@ -31,7 +32,7 @@ import { CATEGORIES } from "../../lib/notes";
 import { writePrefs, type Prefs } from "../../lib/prefs";
 import { deleteMyAccount } from "../../app/dashboard/settings/actions";
 import { useConfirm } from "../ui/Confirm";
-import GiftCard, { saveGiftCard } from "./GiftCard";
+import GiftCard, { saveGiftCard, shareGiftCard } from "./GiftCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/Tabs";
 
 type Tab = "profile" | "prefs" | "appearance" | "security" | "data" | "danger";
@@ -543,6 +544,9 @@ export default function SettingsView({ account, prefs: initial }: { account: Acc
                 <GiftCard name={account.name || account.email} />
                 <button type="button" className="btn btn-secondary btn-sm" onClick={() => void saveGiftCard(account.name || account.email)}>
                   <FA icon={faDownload} /> Download card
+                </button>
+                <button type="button" className="btn btn-secondary btn-sm" onClick={() => void shareGiftCard(account.name || account.email)}>
+                  <FA icon={faShareNodes} /> Share card
                 </button>
               </div>
             </div>

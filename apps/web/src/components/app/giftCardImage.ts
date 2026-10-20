@@ -1,20 +1,19 @@
 // design-ok-file: flattens the art-directed foil card (same literal gradients as GiftCard.module.css) to a PNG — a canvas, not UI chrome.
 /** Draws the welcome card to a PNG (same layers as GiftCard, flattened) and saves it. Browser only. */
 
-const W = 1712; // 2x a credit card at 856 px wide, ratio 1.586
-const H = 1080;
+import { GIFT_FACE, GIFT_FILE_NAME, GIFT_H, GIFT_LAYERS, GIFT_RADIUS, GIFT_TEXT, GIFT_W, filmStops, giftNameSpacing, gradientLine, type GiftStop } from "@untitled/logic";
 
-function linear(ctx: CanvasRenderingContext2D, angleDeg: number, stops: [number, string][], w = W, h = H) {
-  const a = (angleDeg * Math.PI) / 180;
-  const dx = Math.sin(a);
-  const dy = -Math.cos(a);
-  const half = (Math.abs(w * dx) + Math.abs(h * dy)) / 2;
-  const g = ctx.createLinearGradient(w / 2 - dx * half, h / 2 - dy * half, w / 2 + dx * half, h / 2 + dy * half);
+const W = GIFT_W;
+const H = GIFT_H;
+
+function linear(ctx: CanvasRenderingContext2D, angleDeg: number, stops: GiftStop[]) {
+  const { x1, y1, x2, y2 } = gradientLine(angleDeg, W, H);
+  const g = ctx.createLinearGradient(x1, y1, x2, y2);
   for (const [o, c] of stops) g.addColorStop(o, c);
   return g;
 }
 
-function radial(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, stops: [number, string][]) {
+function radial(ctx: CanvasRenderingContext2D, x: number, y: number, r: number, stops: GiftStop[]) {
   const g = ctx.createRadialGradient(x, y, 0, x, y, r);
   for (const [o, c] of stops) g.addColorStop(o, c);
   return g;
@@ -59,139 +58,102 @@ function spacedWidth(ctx: CanvasRenderingContext2D, text: string, spacing: numbe
   return w - spacing;
 }
 
-export async function downloadGiftCard(name: string, fonts: { serif: string; mono: string }) {
+/** Draws the card (layers from @untitled/logic) onto a canvas and returns it. */
+export async function renderGiftCard(name: string, fonts: { serif: string; mono: string }) {
   await document.fonts?.ready;
   const canvas = document.createElement("canvas");
   canvas.width = W;
   canvas.height = H;
   const ctx = canvas.getContext("2d");
-  if (!ctx) return false;
+  if (!ctx) return null;
 
-  const r = 40;
-  roundRect(ctx, 0, 0, W, H, r);
+  roundRect(ctx, 0, 0, W, H, GIFT_RADIUS);
   ctx.clip();
+  const L = GIFT_LAYERS;
 
   // Foil base, then the rainbow band, the colour film, the pearl highlight and the specular sheen.
-  ctx.fillStyle = linear(ctx, 135, [
-    [0, "#eeeeee"],
-    [0.4, "#dcdcdc"],
-    [0.72, "#c9c9c9"],
-    [1, "#e8e8e8"],
-  ]);
+  ctx.fillStyle = linear(ctx, L.base.angle, L.base.stops);
   ctx.fillRect(0, 0, W, H);
-
-  ctx.fillStyle = linear(ctx, 112, [
-    [0.3, "rgba(0,220,255,0)"],
-    [0.38, "rgba(0,220,255,0.06)"],
-    [0.46, "rgba(80,255,190,0.05)"],
-    [0.54, "rgba(190,255,80,0.03)"],
-    [0.62, "rgba(255,230,70,0.03)"],
-    [0.7, "rgba(255,70,180,0.06)"],
-    [0.8, "rgba(150,90,255,0.06)"],
-    [0.9, "rgba(60,120,255,0.04)"],
-    [1, "rgba(60,120,255,0)"],
-  ]);
+  ctx.fillStyle = linear(ctx, L.rainbow.angle, L.rainbow.stops);
   ctx.fillRect(0, 0, W, H);
 
   ctx.globalCompositeOperation = "screen";
-  const film: [number, number, string][] = [
-    [0.16, 0.28, "255,70,180"],
-    [0.66, 0.18, "0,220,255"],
-    [0.78, 0.7, "80,255,190"],
-    [0.38, 0.82, "150,90,255"],
-  ];
-  for (const [fx, fy, c] of film) {
-    ctx.fillStyle = radial(ctx, fx * W, fy * H, W * 0.5, [
-      [0, `rgba(${c},0.14)`],
-      [0.4, `rgba(${c},0.05)`],
-      [1, `rgba(${c},0)`],
-    ]);
+  for (const f of L.film) {
+    ctx.fillStyle = radial(ctx, f.x * W, f.y * H, W * 0.5, filmStops(f.rgb));
     ctx.fillRect(0, 0, W, H);
   }
 
   ctx.globalCompositeOperation = "soft-light";
-  ctx.fillStyle = linear(ctx, 112, [
-    [0, "rgba(220,230,238,0.5)"],
-    [0.3, "rgba(220,230,238,0)"],
-    [0.5, "rgba(84,108,128,0.35)"],
-    [0.72, "rgba(215,226,235,0.5)"],
-    [1, "rgba(215,226,235,0.1)"],
-  ]);
+  ctx.fillStyle = linear(ctx, L.pearl.angle, L.pearl.stops);
   ctx.fillRect(0, 0, W, H);
 
   ctx.globalCompositeOperation = "screen";
-  ctx.fillStyle = linear(ctx, 120, [
-    [0, "rgba(220,230,238,0)"],
-    [0.3, "rgba(226,235,242,0.42)"],
-    [0.52, "rgba(37,52,66,0.2)"],
-    [0.66, "rgba(0,124,255,0.04)"],
-    [0.76, "rgba(255,0,147,0.04)"],
-    [0.88, "rgba(223,232,239,0.28)"],
-    [1, "rgba(220,230,238,0)"],
-  ]);
+  ctx.fillStyle = linear(ctx, L.sheen.angle, L.sheen.stops);
   ctx.fillRect(0, 0, W, H);
-  ctx.fillStyle = radial(ctx, W * 0.62, H * 0.38, W * 0.4, [
-    [0, "rgba(226,235,242,0.4)"],
-    [0.25, "rgba(205,218,228,0.14)"],
-    [1, "rgba(226,237,246,0)"],
-  ]);
+  ctx.fillStyle = radial(ctx, W * L.glare.x, H * L.glare.y, W * L.glare.r, L.glare.stops);
   ctx.fillRect(0, 0, W, H);
   ctx.globalCompositeOperation = "source-over";
 
   // Logo (top left) and the small labels.
-  const padX = W * 0.08;
-  const top = H * 0.17;
+  const F = GIFT_FACE;
   ctx.textBaseline = "alphabetic";
   ctx.shadowColor = "rgba(255,255,255,0.7)";
   ctx.shadowOffsetY = 4;
   ctx.shadowBlur = 0;
-  ctx.fillStyle = "#1f6b4a";
+  ctx.fillStyle = F.dot;
   ctx.beginPath();
-  ctx.arc(padX + 22, top - 18, 22, 0, Math.PI * 2);
+  ctx.arc(F.padX + 22, F.top - 18, 22, 0, Math.PI * 2);
   ctx.fill();
-  ctx.fillStyle = "rgba(27,28,20,0.78)";
-  ctx.font = `90px ${fonts.serif}`;
-  ctx.letterSpacing = "-0.9px";
-  ctx.fillText("untitled project", padX + 66, top);
+  ctx.fillStyle = F.ink;
+  ctx.font = `${F.brandSize}px ${fonts.serif}`;
+  ctx.letterSpacing = `${F.brandSpacing}px`;
+  ctx.fillText(GIFT_TEXT.brand, F.padX + 66, F.top);
   ctx.letterSpacing = "0px";
 
-  ctx.fillStyle = "rgba(27,28,20,0.45)";
-  ctx.font = `40px ${fonts.mono}`;
-  const tag = "WELCOME GIFT";
-  spaced(ctx, tag, W - padX - spacedWidth(ctx, tag, 7.2), top - 6, 7.2);
-  spaced(ctx, "YOUR WORKSPACE, YOUR WAY", padX, H - H * 0.13, 7.2);
+  ctx.fillStyle = F.inkSoft;
+  ctx.font = `${F.smallSize}px ${fonts.mono}`;
+  spaced(ctx, GIFT_TEXT.tag, W - F.padX - spacedWidth(ctx, GIFT_TEXT.tag, F.smallSpacing), F.top - 6, F.smallSpacing);
+  spaced(ctx, GIFT_TEXT.foot, F.padX, F.footY, F.smallSpacing);
 
   // Engraved name: shrink to fit, a light lower edge and a dark upper edge make it look cut into the foil.
   const label = name.trim().toUpperCase();
-  let size = 135;
-  const maxW = W - padX * 2;
-  const space = () => size * 0.06;
+  let size: number = F.nameSize;
   ctx.font = `${size}px ${fonts.serif}`;
-  while (size > 32 && spacedWidth(ctx, label, space()) > maxW) {
+  while (size > F.nameMinSize && spacedWidth(ctx, label, giftNameSpacing(size)) > F.maxNameWidth) {
     size -= 2;
     ctx.font = `${size}px ${fonts.serif}`;
   }
-  const y = H * 0.58;
+  const space = giftNameSpacing(size);
   ctx.shadowColor = "transparent";
-  ctx.fillStyle = "rgba(255,255,255,0.85)";
-  spaced(ctx, label, padX, y + 4, space());
-  ctx.fillStyle = "rgba(0,0,0,0.3)";
-  spaced(ctx, label, padX, y - 4, space());
-  ctx.fillStyle = "rgba(36,46,58,0.66)";
-  spaced(ctx, label, padX, y, space());
+  ctx.fillStyle = F.engrave.light;
+  spaced(ctx, label, F.padX, F.nameY + F.engrave.offset, space);
+  ctx.fillStyle = F.engrave.dark;
+  spaced(ctx, label, F.padX, F.nameY - F.engrave.offset, space);
+  ctx.fillStyle = F.engrave.core;
+  spaced(ctx, label, F.padX, F.nameY, space);
 
   // 1px rim, like the on-screen card's inset border.
-  ctx.strokeStyle = "rgba(255,255,255,0.5)";
+  ctx.strokeStyle = F.rim;
   ctx.lineWidth = 3;
-  roundRect(ctx, 1.5, 1.5, W - 3, H - 3, r);
+  roundRect(ctx, 1.5, 1.5, W - 3, H - 3, GIFT_RADIUS);
   ctx.stroke();
+  return canvas;
+}
 
-  const blob = await new Promise<Blob | null>((res) => canvas.toBlob(res, "image/png"));
+/** The card as a PNG file, ready to download or share. */
+export async function giftCardBlob(name: string, fonts: { serif: string; mono: string }) {
+  const canvas = await renderGiftCard(name, fonts);
+  if (!canvas) return null;
+  return new Promise<Blob | null>((res) => canvas.toBlob(res, "image/png"));
+}
+
+export async function downloadGiftCard(name: string, fonts: { serif: string; mono: string }) {
+  const blob = await giftCardBlob(name, fonts);
   if (!blob) return false;
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = "untitled-project-gift-card.png";
+  a.download = GIFT_FILE_NAME;
   document.body.appendChild(a);
   a.click();
   a.remove();

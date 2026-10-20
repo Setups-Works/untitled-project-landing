@@ -2,23 +2,27 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as DocumentPicker from "expo-document-picker";
 import { Image } from "expo-image";
 import { router } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import type Svg from "react-native-svg";
+import { GIFT_FILE_NAME, giftShareText } from "@untitled/logic";
 import { Pressable, ScrollView, Share, StyleSheet, Switch, View } from "react-native";
 
 import { AppText } from "@/components/ui/AppText";
 import { Banner } from "@/components/ui/Banner";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { GiftCard, giftCardPng } from "@/components/ui/GiftCard";
 import { Icon } from "@/components/ui/Icon";
 import { Screen } from "@/components/ui/Screen";
 import { Sheet } from "@/components/ui/Sheet";
 import { TextField } from "@/components/ui/TextField";
-import { Font, Palette, Radius, Tints } from "@/constants/theme";
+import { Palette, Radius, Tints } from "@/constants/theme";
 import { mobileEnv } from "@/config/env";
 import { dbQuery } from "@/features/chat/db";
 import { useAccountSettings } from "./queries";
 import { SETTINGS_SECTIONS, type SettingsPrefs, type SettingsSection } from "./types";
 import { useAppState, useAuth } from "@/providers/AppState";
+import { shareImageWithText } from "@/lib/shareImage";
 import { createUploadId } from "@/lib/uploadId";
 import { api, errorMessage } from "@/lib/api";
 import { NOTE_CATEGORIES } from "@/lib/preferences";
@@ -39,6 +43,7 @@ export function SettingsScreen() {
   const settingsQ = useAccountSettings();
   const [section, setSection] = useState<SettingsSection>("profile");
   const [busy, setBusy] = useState("");
+  const giftRef = useRef<Svg>(null);
   const [notice, setNotice] = useState<Notice>(null);
 
   const account = settingsQ.data;
@@ -105,6 +110,27 @@ export function SettingsScreen() {
       setNotice({ kind: "error", text: "Couldn’t save that preference." });
     } finally {
       setPrefSaving(false);
+    }
+  }
+
+  /** Shares the card as an image with a short message (react-native-share sends both on iOS and Android). */
+  async function shareGift() {
+    const svg = giftRef.current;
+    if (!svg) return;
+    setBusy("gift");
+    try {
+      const png = await giftCardPng(svg);
+      const { textShared } = await shareImageWithText({
+        title: "Welcome to untitled project",
+        message: giftShareText(name || email, mobileEnv.apiBaseUrl),
+        pngBase64: png,
+        filename: GIFT_FILE_NAME.replace(/\.png$/, ""),
+      });
+      if (!textShared) setNotice({ kind: "info", text: "The card image was shared. Adding the message too needs the installed app build, not Expo Go." });
+    } catch (e) {
+      setNotice({ kind: "error", text: errorMessage(e) });
+    } finally {
+      setBusy("");
     }
   }
 
@@ -355,13 +381,8 @@ export function SettingsScreen() {
           <View style={styles.divider} />
           <AppText variant="bodyStrong">Welcome gift card</AppText>
           <AppText variant="small" color={Palette.fgSubtle}>Your account has been part of your workspace since {createdLabel}.</AppText>
-          <View style={styles.giftCard}>
-            <AppText variant="small" color={Palette.greenFg}>● untitled project</AppText>
-            <AppText variant="heading" style={styles.giftName}>{name || email || "Your name"}</AppText>
-            <AppText variant="label" color={Palette.fgSubtle}>YOUR WORKSPACE, YOUR WAY</AppText>
-            <AppText variant="small" color={Palette.fgSubtle}>WELCOME GIFT</AppText>
-          </View>
-          <Button title="Share welcome message" kind="secondary" icon="gift" onPress={() => void Share.share({ title: "Welcome to untitled project", message: `Welcome to untitled project, ${name || email}. Your account has been part of your workspace since ${createdLabel}.` })} />
+          <GiftCard ref={giftRef} name={name || email || "Your name"} />
+          <Button title="Share card" kind="secondary" icon="gift" loading={busy === "gift"} onPress={() => void shareGift()} />
         </Card>
       ) : null}
 
@@ -535,8 +556,6 @@ const styles = StyleSheet.create({
   flex: { flex: 1 },
   buttonRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 8 },
   divider: { height: 1, backgroundColor: Palette.line, marginVertical: 4 },
-  giftCard: { minHeight: 150, justifyContent: "space-between", padding: 18, borderRadius: Radius.r3, borderWidth: 1, borderColor: Tints.violet.line, backgroundColor: Tints.violet.bg },
-  giftName: { ...Font.serif, fontSize: 28 },
   segment: { flexDirection: "row", gap: 6, padding: 4, borderRadius: Radius.pill, backgroundColor: Palette.surfaceSunken },
   segmentItem: { flex: 1, alignItems: "center", justifyContent: "center", minHeight: 40, borderRadius: Radius.pill },
   segmentItemActive: { backgroundColor: Palette.surface },

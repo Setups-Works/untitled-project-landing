@@ -23,6 +23,18 @@ export type Release = {
 export const RELEASES: Release[] = [
   {
     date: "2026-10-20",
+    title: "Share your welcome card",
+    summary: "The welcome gift card looks the same on the web and in the app, and you can share it as an image with a caption.",
+    tone: "violet",
+    appVersion: "v1.0.7",
+    changes: [
+      { kind: "new", platform: "app", text: "The welcome gift card in Settings is now the same iridescent foil card as on the web, with your name engraved on it." },
+      { kind: "new", platform: "app", text: "Share card sends the card as an image together with a caption." },
+      { kind: "new", platform: "web", text: "Share the card from the welcome screen or Settings. On phones it opens the share sheet with the image and caption; on desktop it downloads the image." },
+    ],
+  },
+  {
+    date: "2026-10-20",
     title: "Pick your AI model",
     summary: "The chat now shows which model answers and lets you choose any free model. Chat actions are easier to reach.",
     tone: "mint",
