@@ -49,6 +49,7 @@ export function serverEnv() {
       region: optional("S3_REGION") ?? "us-east-1",
       autoCreateBuckets: optional("S3_AUTO_CREATE_BUCKETS")?.toLowerCase() !== "false",
     },
+    azureStorageConnection: optional("AZURE_STORAGE_CONNECTION_STRING"),
     smtpUrl: optional("SMTP_URL"),
     authSecret: optional("BETTER_AUTH_SECRET"),
     authUrl: optional("BETTER_AUTH_URL") ?? optional("NEXT_PUBLIC_SITE_URL") ?? "http://localhost:3000",

@@ -49,6 +49,10 @@ R2 provides an S3-compatible API, so the application can use it without changing
 
 Create two R2 buckets named `avatars` and `note-files`, then create an S3 API token with **Object Read & Write** scoped to those buckets. In Azure App Service settings, set `S3_ENDPOINT` to `https://<ACCOUNT_ID>.r2.cloudflarestorage.com`, set `S3_REGION=auto`, set `S3_ACCESS_KEY` and `S3_SECRET_KEY` to the token credentials, and set `S3_AUTO_CREATE_BUCKETS=false`. Pre-creating the buckets lets the app use a bucket-scoped token without account-wide bucket-management access. Keep the credentials in Azure settings, never in client code. See [R2 S3 API compatibility](https://developers.cloudflare.com/r2/api/s3/api/) and [R2 authentication](https://developers.cloudflare.com/r2/api/tokens/).
 
+## Using Azure Blob Storage
+
+If the app already runs on Azure, files can live in a Blob Storage account instead of an S3 store. Create a storage account (Standard, LRS, hot tier; a new Azure free account includes 5 GB for 12 months), open **Security + networking → Access keys**, and copy a **connection string**. In App Service settings (or `.env.local`) set `AZURE_STORAGE_CONNECTION_STRING` to it. When it is set the app uses Blob Storage and ignores the `S3_*` variables. The `avatars` and `note-files` containers are created on first use (set `S3_AUTO_CREATE_BUCKETS=false` to create them yourself) and stay private: files are only served through the app's own `/api/v1/storage` routes. Existing files are not copied over; move them with AzCopy or Storage Explorer if you switch an existing deployment.
+
 ## Production checklist
 
 - Strong random values for every secret in `.env.selfhost` (`openssl rand -hex 24`); `BETTER_AUTH_URL` = the public https address.

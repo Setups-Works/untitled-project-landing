@@ -10,9 +10,10 @@ import {
   S3Client,
 } from "@aws-sdk/client-s3";
 import { requireEnv, serverEnv } from "../config/env";
+import { azDelete, azDeleteMany, azGet, azPurge, azPut, azure } from "./storageAzure";
 
 /**
- * Object storage over the S3 API (SeaweedFS in Docker; MinIO, Garage, Cloudflare R2 or AWS S3 work by changing S3_* variables).
+ * Object storage: Azure Blob Storage when AZURE_STORAGE_CONNECTION_STRING is set, otherwise the S3 API (SeaweedFS in Docker; MinIO, Garage, Cloudflare R2 or AWS S3 work by changing S3_* variables).
  * The browser never talks to the object store: files go through /api/v1/storage/*, which checks the signed-in user first.
  * Every object key starts with the owner's user id — that prefix is the permission rule.
  */
@@ -22,6 +23,8 @@ export const BUCKETS = {
 } as const;
 export type BucketName = keyof typeof BUCKETS;
 export const isBucket = (b: string): b is BucketName => Object.hasOwn(BUCKETS, b);
+
+const NAMES = Object.keys(BUCKETS);
 
 const g = globalThis as unknown as { __s3?: S3Client; __buckets?: Promise<void> };
 
@@ -65,6 +68,7 @@ export function validKey(key: string) {
 export const ownsKey = (userId: string, key: string) => key.startsWith(`${userId}/`);
 
 export async function putObject(bucket: BucketName, key: string, body: Uint8Array, contentType: string) {
+  if (azure()) return azPut(NAMES, bucket, key, body, contentType);
   await ready();
   await s3().send(
     new PutObjectCommand({ Bucket: bucket, Key: key, Body: body, ContentType: contentType, CacheControl: "private, max-age=3600" }),
@@ -73,11 +77,13 @@ export async function putObject(bucket: BucketName, key: string, body: Uint8Arra
 
 /** Remove one file from an owner-scoped storage path. */
 export async function deleteObject(bucket: BucketName, key: string) {
+  if (azure()) return azDelete(NAMES, bucket, key);
   await ready();
   await s3().send(new DeleteObjectCommand({ Bucket: bucket, Key: key }));
 }
 
 export async function getObject(bucket: BucketName, key: string, range?: string) {
+  if (azure()) return azGet(NAMES, bucket, key, range);
   await ready();
   const r = await s3().send(new GetObjectCommand({ Bucket: bucket, Key: key, ...(range ? { Range: range } : {}) }));
   return {
@@ -91,6 +97,7 @@ export async function getObject(bucket: BucketName, key: string, range?: string)
 /** Deletes the given keys (up to 1000). */
 export async function deleteObjects(bucket: BucketName, keys: string[]) {
   if (!keys.length) return;
+  if (azure()) return azDeleteMany(NAMES, bucket, keys.slice(0, 1000));
   await ready();
   await s3().send(
     new DeleteObjectsCommand({ Bucket: bucket, Delete: { Objects: keys.slice(0, 1000).map((Key) => ({ Key })), Quiet: true } }),
@@ -99,6 +106,7 @@ export async function deleteObjects(bucket: BucketName, keys: string[]) {
 
 /** Deletes everything under a prefix (all of one user's files). Returns how many were removed. */
 export async function purgePrefix(bucket: BucketName, prefix: string) {
+  if (azure()) return azPurge(NAMES, bucket, prefix);
   await ready();
   let removed = 0;
   let token: string | undefined;
