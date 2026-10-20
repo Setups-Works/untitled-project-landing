@@ -10,6 +10,7 @@ import {
   faBookOpen,
   faCheck,
   faDownload,
+  faShareNodes,
   faComments,
   faListCheck,
   faMagnifyingGlass,
@@ -23,7 +24,7 @@ import { isoDate } from "../../lib/dates";
 import { CATEGORIES } from "../../lib/notes";
 import { ONBOARDING_STEPS, type Onboarding } from "../../lib/onboarding";
 import type { Prefs } from "../../lib/prefs";
-import GiftCard, { saveGiftCard } from "./GiftCard";
+import GiftCard, { saveGiftCard, shareGiftCard } from "./GiftCard";
 
 export const OPEN_ONBOARDING_EVENT = "up:open-onboarding";
 
@@ -188,6 +189,9 @@ export default function Onboarding({
               <div style={{ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: 10 }}>
                 <button className="btn btn-secondary" onClick={() => void saveGiftCard(display.trim() || "Welcome")}>
                   <FA icon={faDownload} /> Download card
+                </button>
+                <button className="btn btn-secondary" onClick={() => void shareGiftCard(display.trim() || "Welcome")}>
+                  <FA icon={faShareNodes} /> Share
                 </button>
                 <button className="btn btn-primary" onClick={closeGift} autoFocus>
                   Open my dashboard <FA icon={faArrowRight} />

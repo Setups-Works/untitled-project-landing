@@ -7,3 +7,4 @@ export * from "./health";
 export * from "./audio";
 export * from "./updates";
 export * from "./sleep";
+export * from "./giftCard";

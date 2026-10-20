@@ -1,7 +1,8 @@
 "use client";
 import { useEffect, useRef } from "react";
 import styles from "./GiftCard.module.css";
-import { downloadGiftCard } from "./giftCardImage";
+import { GIFT_FILE_NAME, giftShareText } from "@untitled/logic";
+import { downloadGiftCard, giftCardBlob } from "./giftCardImage";
 
 const clamp = (v: number, min: number, max: number) => Math.min(Math.max(v, min), max);
 const pct = (v: number) => `${Number((v * 100).toFixed(3))}%`;
@@ -24,6 +25,26 @@ function fontStack(variable: string, fallback: string) {
 /** Saves the card as a PNG, using the page's own serif and mono fonts so it matches what is on screen. */
 export function saveGiftCard(name: string) {
   return downloadGiftCard(name, { serif: fontStack("--serif", "Georgia, serif"), mono: fontStack("--mono", "monospace") });
+}
+
+/**
+ * Shares the card as an image together with a short message. Where the browser can't share files (most desktops),
+ * the card is downloaded instead. Returns whether something was shared or saved; cancelling the share sheet is not an error.
+ */
+export async function shareGiftCard(name: string) {
+  const blob = await giftCardBlob(name, { serif: fontStack("--serif", "Georgia, serif"), mono: fontStack("--mono", "monospace") });
+  if (!blob) return false;
+  const file = new File([blob], GIFT_FILE_NAME, { type: "image/png" });
+  const data: ShareData = { files: [file], title: "Welcome to untitled project", text: giftShareText(name, window.location.origin) };
+  if (typeof navigator.share === "function" && navigator.canShare?.(data)) {
+    try {
+      await navigator.share(data);
+      return true;
+    } catch (e) {
+      return (e as Error).name === "AbortError";
+    }
+  }
+  return saveGiftCard(name);
 }
 
 export default function GiftCard({ name }: { name: string }) {
