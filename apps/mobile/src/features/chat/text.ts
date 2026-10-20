@@ -19,7 +19,11 @@ export function ageShort(iso: string, now = Date.now()) {
 export function groupByDate(chats: Chat[], now = new Date()): { label: string; items: Chat[] }[] {
   const start = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
   const out = new Map<string, Chat[]>();
+  // Pinned chats get their own section first; Map keeps insertion order.
+  const pinned = chats.filter((chat) => chat.pinned);
+  if (pinned.length) out.set("Pinned", pinned);
   for (const chat of chats) {
+    if (chat.pinned) continue;
     const time = new Date(chat.updated_at).getTime();
     const label =
       time >= start

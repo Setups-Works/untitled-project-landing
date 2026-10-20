@@ -117,7 +117,7 @@ export function Composer({ busy, providers, provider, onProvider, onSend, onErro
         </View>
       </GlassSurface>
 
-      <Sheet visible={menu} onClose={() => setMenu(false)} title="AI">
+      <Sheet visible={menu} onClose={() => setMenu(false)} title="AI model" scroll>
         {providers.map((p) => {
           const on = p.id === provider;
           return (

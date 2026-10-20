@@ -22,10 +22,10 @@
       body { display: grid; place-items: center; }
       .story { width: 1080px; height: 1920px; position: relative; overflow: hidden; isolation: isolate; background: var(--page); }
       .ambient { position: absolute; z-index: -1; inset: -12%; background: radial-gradient(ellipse at 2% 28%, rgba(220,239,230,.92), transparent 38%), radial-gradient(ellipse at 97% 43%, rgba(236,229,242,.8), transparent 37%), radial-gradient(ellipse at 60% 100%, rgba(250,233,189,.72), transparent 43%); }
-      .top { position: absolute; top: 72px; left: 80px; right: 80px; display: flex; align-items: center; justify-content: space-between; z-index: 3; }
-      .wordmark { display: flex; align-items: center; gap: 12px; padding: 8px 20px 8px 14px; border: 1px solid rgba(255,255,255,.88); border-radius: 999px; background: rgba(255,255,255,.44); box-shadow: inset 0 1px 0 rgba(255,255,255,.7); font: 400 23px/1 var(--serif); letter-spacing: -.02em; }
-      .mark { width: 10px; height: 10px; flex: 0 0 10px; border-radius: 50%; background: var(--green); box-shadow: 0 0 0 4px var(--green-soft); }
-      .series { color: var(--quiet); font-size: 15px; font-weight: 500; letter-spacing: .13em; text-transform: uppercase; }
+      .top { position: absolute; top: 64px; left: 80px; right: 80px; display: flex; align-items: center; justify-content: space-between; z-index: 3; }
+      .wordmark { display: flex; align-items: center; gap: 14px; padding: 12px 28px 12px 20px; border: 1.5px solid rgba(255,255,255,.92); border-radius: 999px; background: rgba(255,255,255,.55); box-shadow: inset 0 1px 0 rgba(255,255,255,.8), 0 6px 20px rgba(0,0,0,.04); font: 400 36px/1 var(--serif); letter-spacing: -.02em; }
+      .ghost-mark { width: 42px; height: 42px; object-fit: contain; }
+      .series { color: var(--quiet); font-size: 19px; font-weight: 500; letter-spacing: .12em; text-transform: uppercase; }
       .slide { position: absolute; inset: 0; display: none; }
       .slide.active { display: block; }
       .copy { position: absolute; top: 207px; left: 80px; right: 80px; z-index: 2; }
@@ -56,10 +56,9 @@
       .integration-status.live { color: var(--green); background: rgba(31,93,73,.09); }
       .integration-status.soon { color: var(--muted); background: rgba(126,126,114,.12); }
       .slide-six-footer { position: absolute; bottom: 118px; left: 80px; right: 80px; display: flex; justify-content: center; color: var(--quiet); font-size: 17px; }
-      .footer { position: absolute; bottom: 56px; left: 80px; right: 80px; display: flex; align-items: center; justify-content: space-between; z-index: 2; color: var(--quiet); font-size: 19px; }
-      .handle { color: var(--green); font-size: 20px; font-weight: 600; letter-spacing: .025em; }
-      .brand-credit { display: inline-flex; align-items: center; gap: 14px; color: var(--quiet); font-size: 19px; letter-spacing: .015em; }
-      .brand-credit img { display: block; width: 116px; height: auto; }
+      .footer { position: absolute; bottom: 52px; left: 80px; right: 80px; display: flex; align-items: center; justify-content: space-between; z-index: 2; color: var(--quiet); font-size: 24px; }
+      .handle { color: var(--green); font-size: 32px; font-weight: 600; letter-spacing: .02em; }
+      .footer-ghost { width: 64px; height: 64px; object-fit: contain; display: block; filter: drop-shadow(0 4px 14px rgba(0,0,0,.08)); }
       .controls { position: absolute; inset: 0; z-index: 5; display: flex; justify-content: space-between; align-items: center; pointer-events: none; }
       .controls button { width: 58px; height: 58px; margin: 18px; border: 0; border-radius: 50%; color: var(--ink); background: rgba(255,255,255,.78); font-size: 30px; cursor: pointer; pointer-events: auto; box-shadow: 0 6px 22px rgba(40,35,10,.1); }
       .export-mode .controls { display: none !important; }
@@ -69,36 +68,36 @@
   <body>
     <main class="story" aria-label="Instagram story slides for the Untitled project app">
       <div class="ambient"></div>
-      <header class="top"><div class="wordmark"><span class="mark" aria-hidden="true"></span><span>untitled project</span></div><span class="series">Your personal workspace</span></header>
+      <header class="top"><div class="wordmark"><img class="ghost-mark" src="assets/ghost.png" alt="" /><span>untitled project</span></div><span class="series">Your personal workspace</span></header>
 
       <section class="slide active" data-slide="1" aria-label="Home screen">
         <div class="copy"><div class="eyebrow">One personal workspace</div><h1>Your day, <em>in focus.</em></h1><p class="lead">Tasks, notes, journal entries, and conversations—organized in one workspace that’s yours.</p></div>
         <div class="phone"><div class="screen-window"><img class="screen-shot" src="assets/screens/01-home.png" alt="App home screen showing the journal streak, a to-do, notes, and navigation" /></div><img class="phone-frame" src="assets/iphone-15-frame.png" alt="" /></div>
-        <div class="footer"><span class="handle">untitled project</span><span class="brand-credit"><span>A product of</span><img src="assets/setups-works-logo.png" alt="Setups Works" /></span></div>
+        <div class="footer"><span class="handle">untitled project</span><img class="footer-ghost" src="assets/ghost.png" alt="" /></div>
       </section>
 
       <section class="slide" data-slide="2" aria-label="To-do screen">
         <div class="copy"><div class="eyebrow">To-do</div><h1>Make room for <em>what matters.</em></h1><p class="lead">Turn priorities into clear next steps, organize your day, and see what’s coming up.</p></div>
         <div class="phone"><div class="screen-window"><img class="screen-shot" src="assets/screens/02-todo.png" alt="To-do screen with inbox filters and daily tasks" /></div><img class="phone-frame" src="assets/iphone-15-frame.png" alt="" /></div>
-        <div class="footer"><span class="handle">untitled project</span><span class="brand-credit"><span>A product of</span><img src="assets/setups-works-logo.png" alt="Setups Works" /></span></div>
+        <div class="footer"><span class="handle">untitled project</span><img class="footer-ghost" src="assets/ghost.png" alt="" /></div>
       </section>
 
       <section class="slide" data-slide="3" aria-label="Notes screen">
         <div class="copy"><div class="eyebrow">Notes</div><h1>Ideas, <em>ready when you are.</em></h1><p class="lead">Capture thoughts, keep useful details organized, and find your notes when you need them.</p></div>
         <div class="phone"><div class="screen-window"><img class="screen-shot" src="assets/screens/03-notes.png" alt="Notes screen showing saved notes and filters" /></div><img class="phone-frame" src="assets/iphone-15-frame.png" alt="" /></div>
-        <div class="footer"><span class="handle">untitled project</span><span class="brand-credit"><span>A product of</span><img src="assets/setups-works-logo.png" alt="Setups Works" /></span></div>
+        <div class="footer"><span class="handle">untitled project</span><img class="footer-ghost" src="assets/ghost.png" alt="" /></div>
       </section>
 
       <section class="slide" data-slide="4" aria-label="Journal screen">
         <div class="copy"><div class="eyebrow">Journal</div><h1>A personal record of <em>your days.</em></h1><p class="lead">Write, add photos, or save voice notes to reflect on your life over time.</p></div>
         <div class="phone"><div class="screen-window"><img class="screen-shot" src="assets/screens/04-journal.png" alt="Journal screen with a selected date, voice entry, and photo entry" /></div><img class="phone-frame" src="assets/iphone-15-frame.png" alt="" /></div>
-        <div class="footer"><span class="handle">untitled project</span><span class="brand-credit"><span>A product of</span><img src="assets/setups-works-logo.png" alt="Setups Works" /></span></div>
+        <div class="footer"><span class="handle">untitled project</span><img class="footer-ghost" src="assets/ghost.png" alt="" /></div>
       </section>
 
       <section class="slide" data-slide="5" aria-label="Chat screen">
         <div class="copy"><div class="eyebrow">AI chat</div><h1>Get from question to <em>next step.</em></h1><p class="lead">Explore an idea, work through a question, and keep useful answers close to your personal workspace.</p></div>
         <div class="phone chat"><div class="screen-window"><img class="screen-shot" src="assets/screens/05-chat.png" alt="Chat screen with a workout conversation" /></div><img class="phone-frame" src="assets/iphone-15-frame.png" alt="" /></div>
-        <div class="footer"><span class="handle">untitled project</span><span class="brand-credit"><span>A product of</span><img src="assets/setups-works-logo.png" alt="Setups Works" /></span></div>
+        <div class="footer"><span class="handle">untitled project</span><img class="footer-ghost" src="assets/ghost.png" alt="" /></div>
       </section>
       <section class="slide" data-slide="6" aria-label="Connected services">
         <div class="copy integration-copy"><div class="eyebrow">Integrations</div><h1>Your tools, <em>in one workspace.</em></h1><p class="lead">Connect everyday services to bring more of your personal and professional routines together.</p></div>
@@ -132,7 +131,7 @@
           </div></section>
         </div>
         <div class="slide-six-footer">Connect the tools that fit your day.</div>
-        <div class="footer"><span class="handle">untitled project</span><span class="brand-credit"><span>A product of</span><img src="assets/setups-works-logo.png" alt="Setups Works" /></span></div>
+        <div class="footer"><span class="handle">untitled project</span><img class="footer-ghost" src="assets/ghost.png" alt="" /></div>
       </section>
       <div class="controls" aria-label="Story preview controls"><button type="button" id="prev" aria-label="Previous slide">‹</button><button type="button" id="next" aria-label="Next slide">›</button></div>
     </main>

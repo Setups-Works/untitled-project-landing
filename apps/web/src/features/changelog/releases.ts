@@ -22,6 +22,20 @@ export type Release = {
  */
 export const RELEASES: Release[] = [
   {
+    date: "2026-10-20",
+    title: "Pick your AI model",
+    summary: "The chat now shows which model answers and lets you choose any free model. Chat actions are easier to reach.",
+    tone: "mint",
+    appVersion: "v1.0.6",
+    changes: [
+      { kind: "new", platform: "web", text: "The chat shows the model’s name and lets you pick from every free model available, instead of a single provider." },
+      { kind: "new", platform: "app", text: "The same model picker in the Android app, with the model name next to the message box." },
+      { kind: "new", platform: "app", text: "Press and hold a chat in Recent chats to pin, rename, share, export, clear or delete it." },
+      { kind: "improved", platform: "app", text: "Pinned chats sit in their own section at the top of Recent chats." },
+      { kind: "improved", platform: "app", text: "The chat actions menu has a solid background, so it is easier to read." },
+    ],
+  },
+  {
     date: "2026-10-17",
     title: "Health drafts that show up",
     summary: "Saving a health summary as a note now works, and missing figures are no longer reported as zero.",

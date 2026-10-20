@@ -162,7 +162,10 @@ export function RecentChatsDrawer({ visible, activeId, onClose, onSelect, onNew,
                               accessibilityRole="button"
                               accessibilityLabel={`Open chat: ${prettyTitle(c.title)}`}
                               accessibilityState={{ selected: on }}
+                              accessibilityHint="Long press for more actions"
                               onPress={() => { closeActions(); onSelect(c.id); }}
+                              onLongPress={() => openActions(c)}
+                              delayLongPress={350}
                               style={[styles.item, on ? styles.itemOn : null]}
                             >
                               {c.pinned ? <Icon name="thumbtack" size={13} color={Palette.greenFg} /> : null}
@@ -277,7 +280,7 @@ const styles = StyleSheet.create({
   newChatButton: { width: "100%" },
   list: { paddingHorizontal: 12, paddingTop: 4, paddingBottom: 24, gap: 2 },
   groupTitle: { paddingHorizontal: 12, paddingTop: 18, paddingBottom: 8 },
-  item: { flexDirection: "row", alignItems: "center", gap: 10, minHeight: 48, paddingHorizontal: 12, borderRadius: Radius.r2 },
+  item: { flex: 1, flexDirection: "row", alignItems: "center", gap: 10, minHeight: 48, paddingHorizontal: 12, borderRadius: Radius.r2 },
   row: { flexDirection: "row", alignItems: "center", borderRadius: Radius.r2 },
   more: { width: 40, height: 44, alignItems: "center", justifyContent: "center" },
   moreOn: { backgroundColor: Palette.glassHi, borderRadius: Radius.pill, borderWidth: 1, borderColor: Palette.line },
@@ -295,9 +298,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 8,
     borderRadius: Radius.r3,
-    backgroundColor: Palette.glassHi,
+    backgroundColor: Palette.surface,
     borderWidth: 1,
-    borderColor: Palette.glassRing,
+    borderColor: Palette.line,
     ...Shadow.e2,
   },
 });

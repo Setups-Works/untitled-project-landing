@@ -1,5 +1,5 @@
 import "server-only";
-import { AiProviderError, getProvider, type AiChunk, type AiMessage } from "../../providers/ai";
+import { AiProviderError, parseChoice, type AiChunk, type AiMessage } from "../../providers/ai";
 import { redis } from "../../redis";
 import { userDb } from "../../db/builders";
 import { calendarFor } from "../../../lib/dates";
@@ -95,9 +95,12 @@ export async function startChatReply(opts: {
   localDate: string;
   signal?: AbortSignal;
 }): Promise<ChatReply> {
-  const provider = getProvider(opts.providerId);
+  const { provider, model } = parseChoice(opts.providerId);
   if (!provider || provider.runtime !== "server" || !provider.isAvailable())
     return { ok: false, status: 400, error: "That AI isn’t available on this server." };
+  // Only models the provider itself lists may be used, so a crafted id can't pick an arbitrary model.
+  if (model && !(await provider.models?.().catch(() => []))?.some((m) => m.id === model))
+    return { ok: false, status: 400, error: "That model isn’t available." };
   if (!(await underRateLimit(opts.userId)))
     return { ok: false, status: 429, error: "You’re sending messages very fast. Wait a moment and try again." };
 
@@ -118,7 +121,7 @@ export async function startChatReply(opts: {
     { role: "system", content: `${CHAT_PROMPT.system} ${calendarFor(opts.localDate)}${health ? `\n${health}` : ""}` },
     ...rows.map((m) => ({ role: m.role, content: m.body.slice(0, LIMITS.charsPerMessage) })),
   ];
-  const it = provider.stream({ messages, signal: opts.signal })[Symbol.asyncIterator]();
+  const it = provider.stream({ messages, model, signal: opts.signal })[Symbol.asyncIterator]();
 
   // Pull the first piece before replying, so a configuration or rate-limit problem becomes a proper error response.
   let step: IteratorResult<AiChunk>;

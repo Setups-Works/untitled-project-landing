@@ -5,27 +5,31 @@ import { AiProviderError, type AiChunk, type AiProvider, type AiRequest } from "
 const BASE = "https://api.groq.com/openai/v1";
 // Models that don't answer chat messages (speech, text-to-speech, safety classifiers, …).
 const NOT_CHAT = /whisper|orpheus|tts|guard|safeguard|embed|allam/i;
-const g = globalThis as unknown as { __groqModel?: { id: string; at: number } };
+const g = globalThis as unknown as { __groqModels?: { ids: string[]; at: number } };
 
 /**
- * The model Groq answers with. Groq retires and adds models often, so none is hard-coded: GROQ_MODEL wins when set;
- * otherwise we ask Groq which models this key can use and take the largest chat model (largest context window, then the
- * biggest "<n>b" size). The answer is cached for 10 minutes.
+ * The chat models this key can use. Groq retires and adds models often, so none is hard-coded: we ask Groq and keep the
+ * answer for 10 minutes. Largest context window first, then the biggest "<n>b" size, so the first entry is the best default.
  */
-async function resolveModel(key: string, signal?: AbortSignal): Promise<string> {
-  const fixed = process.env.GROQ_MODEL?.trim();
-  if (fixed) return fixed;
-  if (g.__groqModel && Date.now() - g.__groqModel.at < 10 * 60_000) return g.__groqModel.id;
+async function chatModels(key: string, signal?: AbortSignal): Promise<string[]> {
+  if (g.__groqModels && Date.now() - g.__groqModels.at < 10 * 60_000) return g.__groqModels.ids;
   const res = await fetch(`${BASE}/models`, { headers: { authorization: `Bearer ${key}` }, signal });
-  if (!res.ok) throw new AiProviderError("Couldn’t read Groq’s model list.", "groq", res.status === 429 ? "rate_limited" : "failed");
+  if (!res.ok) throw new AiProviderError("Couldn’t read the model list.", "groq", res.status === 429 ? "rate_limited" : "failed");
   const { data } = (await res.json()) as { data?: { id: string; active?: boolean; context_window?: number }[] };
   const size = (id: string) => Number(id.match(/(\d+(?:\.\d+)?)b\b/i)?.[1] ?? 0);
-  const best = (data ?? [])
+  const ids = (data ?? [])
     .filter((m) => m.active !== false && !NOT_CHAT.test(m.id))
-    .sort((a, b) => (b.context_window ?? 0) - (a.context_window ?? 0) || size(b.id) - size(a.id) || a.id.localeCompare(b.id))[0];
-  if (!best) throw new AiProviderError("This Groq key has no chat model available.", "groq", "not_configured");
-  g.__groqModel = { id: best.id, at: Date.now() };
-  return best.id;
+    .sort((a, b) => (b.context_window ?? 0) - (a.context_window ?? 0) || size(b.id) - size(a.id) || a.id.localeCompare(b.id))
+    .map((m) => m.id);
+  if (!ids.length) throw new AiProviderError("This key has no chat model available.", "groq", "not_configured");
+  g.__groqModels = { ids, at: Date.now() };
+  return ids;
+}
+
+/** GROQ_MODEL wins when set; otherwise the best model the key can use. */
+async function resolveModel(key: string, signal?: AbortSignal): Promise<string> {
+  const fixed = process.env.GROQ_MODEL?.trim();
+  return fixed || (await chatModels(key, signal))[0];
 }
 
 type Delta = {
@@ -41,17 +45,21 @@ type Delta = {
  */
 export const groqProvider: AiProvider = {
   id: "groq",
-  label: "Groq",
-  get note() {
-    const fixed = process.env.GROQ_MODEL?.trim();
-    return fixed ? `Fast replies from ${fixed}` : "Fast replies from the best model on your Groq account";
-  },
+  label: "Default model",
+  note: "Free model",
   runtime: "server",
   isAvailable: () => Boolean(serverEnv().groqApiKey),
 
+  async models(signal) {
+    const key = serverEnv().groqApiKey;
+    if (!key) return [];
+    // The org prefix ("openai/gpt-oss-120b") is noise in a picker; the model name is what people recognise.
+    return (await chatModels(key, signal)).map((id) => ({ id, label: id.split("/").pop() ?? id }));
+  },
+
   async *stream(req: AiRequest): AsyncGenerator<AiChunk> {
     const key = serverEnv().groqApiKey;
-    if (!key) throw new AiProviderError("Groq isn’t configured on this server.", "groq", "not_configured");
+    if (!key) throw new AiProviderError("The AI isn’t configured on this server.", "groq", "not_configured");
 
     let res: Response;
     try {
@@ -82,13 +90,13 @@ export const groqProvider: AiProvider = {
     } catch (e) {
       if ((e as Error).name === "AbortError") return;
       if (e instanceof AiProviderError) throw e;
-      throw new AiProviderError("Couldn’t reach Groq.", "groq", "failed");
+      throw new AiProviderError("Couldn’t reach the AI.", "groq", "failed");
     }
 
     if (!res.ok || !res.body) {
       // Never include the provider's response body in what we throw: it can echo parts of the request.
       throw new AiProviderError(
-        res.status === 429 ? "Groq is rate limiting requests. Try again in a moment." : "Groq couldn’t answer that.",
+        res.status === 429 ? "The AI is rate limiting requests. Try again in a moment." : "The AI couldn’t answer that.",
         "groq",
         res.status === 429 ? "rate_limited" : "failed",
       );

@@ -21,6 +21,8 @@ export type AiUsage = { inputTokens: number; outputTokens: number };
 /** Streamed pieces of an answer. `done` arrives once, last, with token usage when the provider reports it. */
 export type AiChunk = { type: "text"; text: string } | { type: "done"; usage?: AiUsage };
 
+export type AiModel = { id: string; label: string };
+
 export interface AiProvider {
   /** Stable id stored in the database (e.g. "groq"). Never rename it once data exists. */
   readonly id: string;
@@ -34,6 +36,8 @@ export interface AiProvider {
   readonly runtime: "server" | "client";
   /** False until the provider is implemented and configured. The UI greys unavailable providers out. */
   isAvailable(): boolean;
+  /** The models a person can pick from, when the provider offers several. Absent = one fixed model. */
+  models?(signal?: AbortSignal): Promise<AiModel[]>;
   /** Stream an answer. Throws `AiProviderError` on failure. */
   stream(req: AiRequest): AsyncIterable<AiChunk>;
 }

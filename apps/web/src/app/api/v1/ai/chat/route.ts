@@ -8,7 +8,7 @@ export const runtime = "nodejs";
 
 const body = z.object({
   chatId: z.string().uuid(),
-  provider: z.string().regex(/^[a-z0-9_-]{1,40}$/),
+  provider: z.string().regex(/^[a-z0-9_-]{1,40}(:[A-Za-z0-9._\/-]{1,100})?$/),
   localDate: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
 });
 
