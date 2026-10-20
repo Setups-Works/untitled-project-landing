@@ -23,6 +23,18 @@ export type Release = {
 export const RELEASES: Release[] = [
   {
     date: "2026-10-21",
+    title: "Ask the assistant to show your things",
+    summary: "Say “show my journal from yesterday” and the chat answers with cards you can open. Shared links also look cleaner.",
+    tone: "mint",
+    appVersion: "v2.0.1",
+    changes: [
+      { kind: "new", platform: "web", text: "Ask the assistant to show your journal, to-dos, notes or health (for example “show my journal from yesterday”) and it answers with cards and an Open button. It never reads your data: the app fetches it." },
+      { kind: "new", platform: "app", text: "The same cards in the app’s chat, in the app’s own colours." },
+      { kind: "improved", platform: "web", text: "Links to a shared chat or journal entry show only a small header, without the website’s menu and footer." },
+    ],
+  },
+  {
+    date: "2026-10-21",
     title: "Version 2.0: write together, widgets and in-app updates",
     summary: "Shared journals with invitations, home-screen widgets, a redesigned journal, sharing an entry as a link or picture, and updating the Android app from inside it.",
     tone: "gold",
@@ -38,8 +50,6 @@ export const RELEASES: Release[] = [
       { kind: "new", platform: "web", text: "A note about your health ends with an “Open in Health” link that jumps to that day on the Health page." },
       { kind: "new", platform: "app", text: "The same link in the app opens Health on the right day." },
       { kind: "fixed", platform: "app", text: "The Health day picker matches the Journal’s, and “Nothing recorded” is centred instead of squeezed to one side." },
-      { kind: "new", platform: "web", text: "Ask the assistant to show your journal, to-dos, notes or health (for example “show my journal from yesterday”) and it answers with cards and an Open button. It never reads your data: the app fetches it." },
-      { kind: "new", platform: "app", text: "The same cards in the app’s chat, in the app’s own colours." },
       { kind: "new", platform: "app", text: "Update the app from inside it: Settings → About and updates checks GitHub, downloads the new version with a progress bar and opens the installer." },
       { kind: "new", platform: "app", text: "Add a link from the writing page: type an address, or pick Health or Journal to link to those pages in the app." },
       { kind: "improved", platform: "app", text: "The Journal is a timeline of coloured cards with a new day picker. Swipe sideways to move between your journal and your shared journals." },
