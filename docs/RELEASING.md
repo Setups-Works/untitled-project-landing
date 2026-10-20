@@ -18,6 +18,8 @@ Tags must look like `v1.2.3`. A tag with a suffix (`v1.2.3-beta.1`) is published
 
 On Android the app asks GitHub for the latest release each time it opens, and **Settings → About and updates → Check for updates** asks on demand (`apps/mobile/src/features/updates`). If the tag is newer than the installed version, a sheet offers **Update now**: the app downloads the APK itself with a progress bar and then opens Android's installer (the first time, Android asks to allow installs from the app, which needs `REQUEST_INSTALL_PACKAGES`). If the download fails there is a "Download in the browser" fallback. That works because every build is signed with the same key and `versionCode` rises with each run. Pre-releases, drafts and releases without an `.apk` are never offered. The first build that contains this check is v1.0.2; earlier installs have to be updated by hand once.
 
+**An AI agent doing a release follows [RELEASE_FOR_AGENTS.md](RELEASE_FOR_AGENTS.md)** (version files, changelog, migrations, push, tag).
+
 Add a line to the web changelog (`apps/web/src/features/changelog/releases.ts`) in the same change as the tag.
 
 ## What the workflow does (`.github/workflows/release-android.yml`)

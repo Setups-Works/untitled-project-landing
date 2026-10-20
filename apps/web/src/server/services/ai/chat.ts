@@ -21,7 +21,8 @@ export function settleBlocks(full: string, previous: string): string {
   const plain = (s: string) =>
     s
       .replace(DRAFT_BLOCK, "")
-      .replace(/<create-item>[\s\S]*$/, "") // a block that was never closed (the answer ran out of room)
+      .replace(/<show-item>[\s\S]*?<\/show-item>/g, "") // cards to show are not part of a saved note
+      .replace(/<(create|show)-item>[\s\S]*$/, "") // a block that was never closed (the answer ran out of room)
       .replace(/<created-item>[\s\S]*?<\/created-item>/g, "")
       .replace(/\n{3,}/g, "\n\n")
       .trim()

@@ -13,6 +13,8 @@
 - Meter usage (`ai_usage`) and enforce plan limits _before_ calling a provider.
 - "No AI" mode when no provider is available — never an error screen.
 
+**Showing the user's own items:** the assistant can't see journal, to-dos or notes. When asked to show them it adds `<show-item>` blocks (journal for a day, to-dos by scope, notes by words, health for a day); the web (`components/app/chat/shown`) and the app (`features/chat/shown`) read the real items from the signed-in person's own data and draw them as cards with an Open button. Parsing: `packages/validation/src/chatActions.ts` (`showItemSchema`, at most 3 per reply); scopes and matching: `packages/logic/src/showItems.ts`. No content is ever sent to the provider for this.
+
 **Rules**
 
 - Only this service talks to `AiProvider`s. Features call the orchestrator, not Groq/Puter.

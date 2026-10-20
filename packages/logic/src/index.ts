@@ -11,3 +11,4 @@ export * from "./giftCard";
 export * from "./sharedJournals";
 export * from "./entryCard";
 export * from "./widgets";
+export * from "./showItems";

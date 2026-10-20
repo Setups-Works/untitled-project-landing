@@ -56,11 +56,16 @@ describe("chat drafts", () => {
   });
 
   it("keeps a multi-line note whose body has real line breaks inside the JSON string", () => {
-    const note = '<create-item>{"kind":"note","title":"Health summary","body":"- Steps: 2,835\n- Sleep: not recorded\n\ttabbed"}</create-item>';
+    const note =
+      '<create-item>{"kind":"note","title":"Health summary","body":"- Steps: 2,835\n- Sleep: not recorded\n\ttabbed"}</create-item>';
     const r = parseChatActions(`Here's a draft note.\n${note}`);
     expect(r.body).toBe("Here's a draft note.");
     expect(r.proposals).toHaveLength(1);
-    expect(r.proposals[0]?.action).toMatchObject({ kind: "note", title: "Health summary", body: "- Steps: 2,835\n- Sleep: not recorded\n\ttabbed" });
+    expect(r.proposals[0]?.action).toMatchObject({
+      kind: "note",
+      title: "Health summary",
+      body: "- Steps: 2,835\n- Sleep: not recorded\n\ttabbed",
+    });
   });
 
   it("repairs only what is inside strings, and leaves valid blocks alone", () => {
@@ -72,5 +77,32 @@ describe("chat drafts", () => {
   it("reads confirmed drafts as created", () => {
     const done = `<created-item>${JSON.stringify({ kind: "task", path: "/dashboard/todo?task=1", action: { kind: "task", title: "Buy milk", description: "", due_date: null } })}</created-item>`;
     expect(parseChatActions(done).proposals[0]?.created?.path).toBe("/dashboard/todo?task=1");
+  });
+});
+
+describe("show blocks", () => {
+  const block = (o: object) => `<show-item>${JSON.stringify(o)}</show-item>`;
+
+  it("reads what the assistant asks the app to show and strips the markup from the text", () => {
+    const text = `Here is yesterday.\n${block({ kind: "journal", date: "2026-10-20" })}\n${block({ kind: "tasks", scope: "today" })}`;
+    const r = parseChatActions(text);
+    expect(r.body).toBe("Here is yesterday.");
+    expect(r.shows).toEqual([
+      { kind: "journal", date: "2026-10-20" },
+      { kind: "tasks", scope: "today" },
+    ]);
+    expect(r.proposals).toEqual([]);
+  });
+
+  it("drops invalid, surplus and unfinished blocks without leaking markup", () => {
+    const four = Array.from({ length: 4 }, (_, i) => block({ kind: "health", date: `2026-10-0${i + 1}` })).join("");
+    expect(parseChatActions(`x${four}`).shows).toHaveLength(3);
+    expect(parseChatActions(`x${block({ kind: "journal", date: "yesterday" })}`).shows).toEqual([]);
+    expect(parseChatActions(`x${block({ kind: "other" })}`).shows).toEqual([]);
+    expect(parseChatActions('Here.<show-item>{"kind":"journal","da').body).toBe("Here.");
+  });
+
+  it("allows a notes query to be left out", () => {
+    expect(parseChatActions(block({ kind: "notes" })).shows).toEqual([{ kind: "notes" }]);
   });
 });

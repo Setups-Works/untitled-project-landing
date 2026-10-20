@@ -16,6 +16,7 @@ import { useDraftText } from "../../hooks/useDraft";
 import { useAiProviders } from "../../features/ai/useAiProviders";
 import Markdown from "./Markdown";
 import ChatActionProposal from "./chat/ChatActionProposal";
+import ShownItems from "./chat/shown/ShownItems";
 
 const CHAT_KEY = "up_widget_chat";
 const MSG_COLS = "id,role,body,created_at,attachments";
@@ -243,6 +244,7 @@ export default function ChatWidget() {
               return (
                 <div key={m.id} className="max-w-[92%] self-start rounded-r3 rounded-bl-r1 bg-surface px-4 py-3 text-sm shadow-e1">
                   {parsed.body && <Markdown text={parsed.body} />}
+                  {parsed.shows.length > 0 && <ShownItems shows={parsed.shows} />}
                   {parsed.proposals.length > 0 && chatId && (
                     <ChatActionProposal proposals={parsed.proposals} messageId={m.id} chatId={chatId} />
                   )}

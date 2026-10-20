@@ -37,6 +37,7 @@ import ChatRail from "./ChatRail";
 import Composer from "./Composer";
 import ShareDialog from "./ShareDialog";
 import ChatActionProposal from "./ChatActionProposal";
+import ShownItems from "./shown/ShownItems";
 import { parseChatAction, parseChatActions } from "../../../lib/chat-actions";
 import { isoDate } from "../../../lib/dates";
 import { useCtxActions } from "../../../lib/context-actions";
@@ -614,6 +615,7 @@ export default function ChatApp({ name }: { name: string }) {
                       {parsed ? (
                         <>
                           {parsed.body && <Markdown text={parsed.body} />}
+                          {parsed.shows.length > 0 && <ShownItems shows={parsed.shows} />}
                           {parsed.proposals.length > 0 && (
                             <ChatActionProposal proposals={parsed.proposals} messageId={m.id} chatId={activeId!} />
                           )}

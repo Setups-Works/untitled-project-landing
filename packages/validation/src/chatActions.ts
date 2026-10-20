@@ -26,6 +26,24 @@ export const chatActionSchema = z.discriminatedUnion("kind", [
 
 export type ChatAction = z.infer<typeof chatActionSchema>;
 
+/**
+ * Something the assistant asks the app to SHOW (not create): the person's own journal for a day, a group of their to-dos, notes that
+ * match some words, or a day of health figures. The assistant never sees that data; it only names what to show, and the app reads the
+ * real items itself and draws them as cards with an Open button. So a show block can't leak or invent content.
+ */
+export const showItemSchema = z.discriminatedUnion("kind", [
+  z.object({ kind: z.literal("journal"), date }),
+  z.object({ kind: z.literal("tasks"), scope: z.enum(["today", "overdue", "upcoming", "open"]) }),
+  z.object({ kind: z.literal("notes"), query: z.string().trim().max(100).optional() }),
+  z.object({ kind: z.literal("health"), date }),
+]);
+
+export type ShowItem = z.infer<typeof showItemSchema>;
+
+/** Most cards one reply may ask for. */
+export const MAX_SHOWS = 3;
+const SHOW = /<show-item>\s*([\s\S]*?)\s*<\/show-item>/g;
+
 /** What a draft turned into once the user confirmed it. */
 export type CreatedItem = { kind: ChatAction["kind"]; path: string; id?: string };
 
@@ -135,17 +153,28 @@ function readBlock(tag: string, json: string): { action: ChatAction; created: Cr
  * Invalid or surplus blocks are dropped, and the internal protocol is never shown as text. Only drafts the assistant itself
  * wrote are honoured here; a block inside the user's own messages is never parsed (see chat.ts), so pasted text can't create items.
  */
-export function parseChatActions(text: string): { body: string; proposals: ChatProposal[] } {
+export function parseChatActions(text: string): { body: string; proposals: ChatProposal[]; shows: ShowItem[] } {
   const proposals: ChatProposal[] = [];
-  let body = text.replace(BLOCK, (_all, tag: string, json: string) => {
-    const b = readBlock(tag, json);
-    if (b && proposals.length < MAX_PROPOSALS) proposals.push({ index: proposals.length, ...b });
-    return "";
-  });
+  const shows: ShowItem[] = [];
+  let body = text
+    .replace(SHOW, (_all, json: string) => {
+      try {
+        const r = showItemSchema.safeParse(parseJson(json));
+        if (r.success && shows.length < MAX_SHOWS) shows.push(r.data);
+      } catch {
+        /* invalid model output stays inert */
+      }
+      return "";
+    })
+    .replace(BLOCK, (_all, tag: string, json: string) => {
+      const b = readBlock(tag, json);
+      if (b && proposals.length < MAX_PROPOSALS) proposals.push({ index: proposals.length, ...b });
+      return "";
+    });
   // A reply cut off in the middle of a block must not leak raw markup.
-  const open = body.search(/<create-item>|<created-item>/);
+  const open = body.search(/<create-item>|<created-item>|<show-item>/);
   if (open >= 0) body = body.slice(0, open);
-  return { body: body.replace(/\n{3,}/g, "\n\n").trimEnd(), proposals };
+  return { body: body.replace(/\n{3,}/g, "\n\n").trimEnd(), proposals, shows };
 }
 
 /** Back-compat helper: the first draft that has not been created yet. */

@@ -3,11 +3,12 @@ import { useQueryClient } from "@tanstack/react-query";
 import { router } from "expo-router";
 import { FlatList, Keyboard, KeyboardAvoidingView, Platform, Pressable, StyleSheet, View } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { parseChatActions, stripRefs, type ChatProposal } from "@untitled/validation";
+import { parseChatActions, stripRefs, type ChatProposal, type ShowItem } from "@untitled/validation";
 
 import { Composer } from "./Composer";
 import { uploadChatFile, type PendingFile } from "./files";
 import { useAiProviders } from "./providers";
+import { ShownItems } from "./shown/ShownItems";
 import { useChatActions, useMessages } from "./queries";
 import { streamReply } from "./streamReply";
 import { prettyTitle } from "./text";
@@ -224,10 +225,10 @@ function Bubble({
 }) {
   const mine = role === "user";
   // Only the assistant's own messages are parsed for drafts; text a user types can never create items.
-  const { body, proposals } = mine ? { body: text, proposals: [] as ChatProposal[] } : parseChatActions(text);
+  const { body, proposals, shows } = mine ? { body: text, proposals: [] as ChatProposal[], shows: [] as ShowItem[] } : parseChatActions(text);
   return (
     <View style={[styles.bubbleRow, mine ? styles.mine : styles.theirs]}>
-      <Surface mine={mine} wide={proposals.length > 0}>
+      <Surface mine={mine} wide={proposals.length > 0 || shows.length > 0}>
         {body && !(attachments.length && body === "Attachment") ? (
           mine ? (
             <AppText variant="body" color={Palette.onDark} selectable>
@@ -238,6 +239,7 @@ function Bubble({
           )
         ) : null}
         {attachments.length ? <AttachmentGallery attachments={attachments} /> : null}
+        {shows.length ? <ShownItems shows={shows} /> : null}
         {proposals.length && messageId && chatId ? <Drafts proposals={proposals} messageId={messageId} chatId={chatId} /> : null}
       </Surface>
     </View>

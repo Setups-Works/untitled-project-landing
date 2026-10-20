@@ -38,6 +38,8 @@ export const RELEASES: Release[] = [
       { kind: "new", platform: "web", text: "A note about your health ends with an “Open in Health” link that jumps to that day on the Health page." },
       { kind: "new", platform: "app", text: "The same link in the app opens Health on the right day." },
       { kind: "fixed", platform: "app", text: "The Health day picker matches the Journal’s, and “Nothing recorded” is centred instead of squeezed to one side." },
+      { kind: "new", platform: "web", text: "Ask the assistant to show your journal, to-dos, notes or health (for example “show my journal from yesterday”) and it answers with cards and an Open button. It never reads your data: the app fetches it." },
+      { kind: "new", platform: "app", text: "The same cards in the app’s chat, in the app’s own colours." },
       { kind: "new", platform: "app", text: "Update the app from inside it: Settings → About and updates checks GitHub, downloads the new version with a progress bar and opens the installer." },
       { kind: "new", platform: "app", text: "Add a link from the writing page: type an address, or pick Health or Journal to link to those pages in the app." },
       { kind: "improved", platform: "app", text: "The Journal is a timeline of coloured cards with a new day picker. Swipe sideways to move between your journal and your shared journals." },

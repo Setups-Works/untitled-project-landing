@@ -139,6 +139,7 @@ Three developers and several AI agents write UI here. To keep it one product, th
 | `docs/DESIGN_LANGUAGE.md`   | **You build or change any UI** — fonts, colours, glass, buttons, tints, reference screens, mistakes to avoid, how it is enforced                                                |
 | `docs/CONVENTIONS.md`       | Naming, UI patterns, error handling, testing                                                                                                                                    |
 | `docs/AI_WORKFLOW.md`       | **You are an AI agent taking a Jira task** — the exact loop, the Jira helper (`node scripts/jira/jira.mjs`) and what you must not do (never merge; never handle tokens in chat) |
+| `docs/RELEASE_FOR_AGENTS.md` | **You are asked to release, bump the version, write the changelog, tag or push** — the exact checklist (version files, changelog entry, migrations first, commit → push → tag, watching the runs) |
 | `docs/JIRA_GUIDE.md`        | You write or refine tasks                                                                                                                                                       |
 | `docs/JIRA_BACKLOG.md`      | You want the full task list offline                                                                                                                                             |
 

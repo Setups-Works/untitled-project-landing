@@ -12,6 +12,11 @@ export const qk = {
   },
   taskLists: ["task-lists"] as const,
   notes: { all: ["notes"] as const },
+  // What a chat reply asked the app to show as cards (kept apart from the pages' own caches, which select other columns).
+  chatShow: {
+    journal: (date: string) => ["chat-show", "journal", date] as const,
+    notes: ["chat-show", "notes"] as const,
+  },
   journal: {
     all: ["journal"] as const,
     home: (today: string) => ["journal", "home", today] as const, // today's latest entries (Home card)

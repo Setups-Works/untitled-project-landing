@@ -17,7 +17,7 @@ describe("parseChatActions", () => {
   });
 
   it("returns plain text untouched, with no drafts", () => {
-    expect(parseChatActions("Just an answer.")).toEqual({ body: "Just an answer.", proposals: [] });
+    expect(parseChatActions("Just an answer.")).toEqual({ body: "Just an answer.", proposals: [], shows: [] });
   });
 
   it("drops invalid JSON and invalid drafts without showing the markup", () => {
