@@ -23,6 +23,19 @@ export type Release = {
 export const RELEASES: Release[] = [
   {
     date: "2026-10-21",
+    title: "AI in your notes, a fuller assistant and email invites",
+    summary: "Improve or summarise a note with AI, do more from the chat bubble, and invite people to a shared journal by email.",
+    tone: "violet",
+    changes: [
+      { kind: "new", platform: "web", text: "AI actions in the note editor: improve the writing, fix spelling and grammar, make it shorter or longer, summarise, find action items, continue writing, or ask for anything. It works on your selection or the whole note, and nothing changes until you press Replace or Insert below." },
+      { kind: "improved", platform: "web", text: "The chat bubble now does what the full chat does: attach files, record voice notes, choose the AI, browse recent chats, and rename, pin, share, export, clear or delete a conversation." },
+      { kind: "new", platform: "web", text: "Invite someone to a shared journal by their email address as well as their username. They get an email with a link to accept." },
+      { kind: "new", platform: "web", text: "Every section of Settings has its own address, such as /dashboard/settings/security, so you can bookmark or share it." },
+      { kind: "fixed", platform: "web", text: "Profile pictures now show in shared journals instead of initials, and the people and role badge line up in the journal header." },
+    ],
+  },
+  {
+    date: "2026-10-21",
     title: "Ask the assistant to show your things",
     summary: "Say “show my journal from yesterday” and the chat answers with cards you can open. Shared links also look cleaner.",
     tone: "mint",
