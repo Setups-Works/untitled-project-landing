@@ -23,6 +23,15 @@ export type Release = {
 export const RELEASES: Release[] = [
   {
     date: "2026-10-21",
+    title: "Switch between your journal and shared journals",
+    summary: "Personal and Collaboration now sit side by side at the top of the Journal pages, like the Plan pages.",
+    tone: "blue",
+    changes: [
+      { kind: "improved", platform: "web", text: "A Personal / Collaboration switch at the top of the Journal pages replaces the Collaborate button and the back link. Invitations waiting for your answer show as a number on Collaboration." },
+    ],
+  },
+  {
+    date: "2026-10-21",
     title: "AI in your notes, a fuller assistant and email invites",
     summary: "Improve or summarise a note with AI, do more from the chat bubble, and invite people to a shared journal by email.",
     tone: "violet",

@@ -1,9 +1,8 @@
 "use client";
-import Link from "next/link";
 import { SHARED_JOURNAL as LIMIT } from "@untitled/logic";
 import { useState } from "react";
 import { FontAwesomeIcon as FA } from "@fortawesome/react-fontawesome";
-import { faArrowLeft, faPlus } from "@fortawesome/free-solid-svg-icons";
+import { faPlus } from "@fortawesome/free-solid-svg-icons";
 import { usePrompt } from "../../../components/ui/Confirm";
 import { useCollaborationActions, useCollaborationRealtime, useMyInvites, useSharedJournals } from "../hooks/useSharedJournals";
 import type { SharedJournal } from "../types";
@@ -71,12 +70,6 @@ export default function CollaborationApp() {
       {managing && <ManageDialog id={managing} onClose={() => setManaging(null)} />}
 
       <header className="mb-[18px] flex flex-col gap-3.5">
-        <Link
-          href="/dashboard/journal"
-          className="inline-flex w-fit items-center gap-1.5 text-[13.5px] text-fg-muted transition-colors hover:text-fg"
-        >
-          <FA icon={faArrowLeft} aria-hidden /> Journal
-        </Link>
         <div className="flex items-start justify-between gap-3">
           <div className="min-w-0">
             <h1 className="font-serif text-[clamp(30px,3.4vw,42px)] leading-[1.04] font-normal tracking-[-0.03em] text-balance">
