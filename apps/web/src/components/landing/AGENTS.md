@@ -43,7 +43,7 @@ numbers that the docs and code don't support, and don't invent testimonials.
   column; the slide nearest the left edge is active and the rest recede). The playable miniatures inside its cards (slash menu, tickable tasks, recording, calendar overlay,
   ask → preview → confirm, ⌘K search) live in `BentoTiles.tsx`. Built features get a live tile; anything not built goes in the dashed
   "On the way" strip. Tile scenes are looping GSAP timelines: always `kill()` them in the cleanup and show a still state when `calm`.
-- `Blocks.tsx` — step cards, day timeline, access matrix, plan comparison. `Faq.tsx`, `IntegrationsTabs.tsx`, `Nav.tsx`, `Logo.tsx`.
+- `Blocks.tsx` — step cards, day timeline, access matrix, plan comparison. `Faq.tsx`, `IntegrationsCarousel.tsx`, `Nav.tsx`, `Logo.tsx`.
 
 ## Gotchas
 

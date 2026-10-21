@@ -1,15 +1,14 @@
 "use client";
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef } from "react";
 import { FontAwesomeIcon as FA } from "@fortawesome/react-fontawesome";
 import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import Glass from "../Glass";
 import { CALENDAR_POINTS, CHAT_POINTS, JOURNAL_POINTS, NOTE_POINTS, TASK_POINTS } from "../content";
 import { Eyebrow, Lead, Title, WRAP } from "../Kit";
-import { showNow, useMotion } from "../motion";
-import { Parallax } from "../Parallax";
+import { useMotion } from "../motion";
+import PhoneHalf from "./PhoneHalf";
 import { R, Reveal } from "../Reveal";
 import { Tip } from "../Tip";
-import { CalendarMock, ChatMock, JournalMock, NoteMock, TaskMock } from "./Mocks";
 import type { Tone } from "../../../lib/tones";
 
 type Point = [IconDefinition, string, string];
@@ -22,8 +21,9 @@ type Item = {
   quiet: string;
   lead: string;
   points: Point[];
-  visual: ReactNode;
   flip?: boolean;
+  /** A phone screenshot tucked into the panel's bottom edge, showing its top half. */
+  phone?: { src: string; alt: string };
 };
 
 const ITEMS: Item[] = [
@@ -35,7 +35,7 @@ const ITEMS: Item[] = [
     quiet: "Your way.",
     lead: "Write, organise and come back to it later. Use AI when it helps. Ignore it when it doesn’t.",
     points: NOTE_POINTS,
-    visual: <NoteMock />,
+    phone: { src: "/mobile/notes.png", alt: "The notes screen in the phone app" },
   },
   {
     id: "tasks",
@@ -45,7 +45,7 @@ const ITEMS: Item[] = [
     quiet: "the work.",
     lead: "Lists, priorities and repeats that fit how you actually work, and a keyboard shortcut for nearly everything.",
     points: TASK_POINTS,
-    visual: <TaskMock />,
+    phone: { src: "/mobile/todo.png", alt: "The to-do screen in the phone app" },
     flip: true,
   },
   {
@@ -56,7 +56,7 @@ const ITEMS: Item[] = [
     quiet: "Your record.",
     lead: "A private place to write down your days and come back to them later, kept close to the work.",
     points: JOURNAL_POINTS,
-    visual: <JournalMock />,
+    phone: { src: "/mobile/journal.png", alt: "The journal screen in the phone app" },
   },
   {
     id: "calendar",
@@ -66,7 +66,7 @@ const ITEMS: Item[] = [
     quiet: "your time goes.",
     lead: "Your events and your tasks on the same page, in the view that suits the moment.",
     points: CALENDAR_POINTS,
-    visual: <CalendarMock />,
+    phone: { src: "/mobile/home.png", alt: "The home screen in the phone app" },
     flip: true,
   },
   {
@@ -77,7 +77,7 @@ const ITEMS: Item[] = [
     quiet: "asks first.",
     lead: "Talk to the model you choose, right beside your work. It can draft things for you, and you decide what to keep.",
     points: CHAT_POINTS,
-    visual: <ChatMock />,
+    phone: { src: "/mobile/chat.png", alt: "The chat screen in the phone app" },
   },
 ];
 
@@ -85,27 +85,10 @@ const ITEMS: Item[] = [
 const PIN = 88;
 
 /**
- * One feature: the story on one side, an illustration on the other (they swap sides down the page). The illustration swings in
- * from a 3D angle as it scrolls into view and the points arrive one after another. Hover a point for the detail.
+ * One feature: the story on one side and a phone showing the app on the other (they swap sides down the page), tucked into the
+ * panel's bottom edge. The points arrive one after another; hover one for the detail.
  */
-function Showcase({ tone, eyebrow, title, quiet, lead, points, visual, flip = false }: Omit<Item, "id">) {
-  const art = useRef<HTMLDivElement>(null);
-  useMotion(art, ({ g, root, calm }) => {
-    if (calm) return void showNow(g, root);
-    g.fromTo(
-      root,
-      { rotationY: flip ? -16 : 16, rotationX: 6, x: flip ? -60 : 60, autoAlpha: 0, transformPerspective: 1300 },
-      {
-        rotationY: 0,
-        rotationX: 0,
-        x: 0,
-        autoAlpha: 1,
-        duration: 1.3,
-        ease: "power3.out",
-        scrollTrigger: { trigger: root, start: "top 85%", once: true },
-      },
-    );
-  });
+function Showcase({ tone, eyebrow, title, quiet, lead, points, flip = false, phone }: Omit<Item, "id">) {
   return (
     <div className={WRAP}>
       {/* A solid cream layer under the glass, so a panel being covered by the next one doesn't show through it. */}
@@ -113,8 +96,8 @@ function Showcase({ tone, eyebrow, title, quiet, lead, points, visual, flip = fa
         {/* Dims the panel as the next one covers it, without making it see-through. */}
         <span data-shade aria-hidden className="pointer-events-none absolute inset-0 z-20 rounded-r5 bg-fill-dark opacity-0" />
         <Glass radius="r5" tone={tone} className="overflow-hidden p-[clamp(20px,4vw,56px)]">
-          <div className={`grid items-center gap-[clamp(28px,5vw,64px)] lg:grid-cols-2 ${flip ? "lg:[&>*:first-child]:order-2" : ""}`}>
-            <div className="flex flex-col items-start gap-5">
+          <div className={`flex flex-col items-start gap-5 lg:max-w-[48%] ${flip ? "lg:ml-auto" : ""}`}>
+            <div className="contents">
               <Reveal>
                 <Eyebrow>{eyebrow}</Eyebrow>
               </Reveal>
@@ -140,13 +123,10 @@ function Showcase({ tone, eyebrow, title, quiet, lead, points, visual, flip = fa
                 ))}
               </Reveal>
             </div>
-            <Parallax speed={flip ? -36 : 36}>
-              <div ref={art} data-reveal className="opacity-0">
-                {visual}
-                <p className="mt-3 text-center text-[12px] text-fg-faint">Sample content, shown for illustration.</p>
-              </div>
-            </Parallax>
           </div>
+          {phone && (
+            <PhoneHalf {...phone} className={`hidden w-[clamp(260px,28vw,400px)] lg:block ${flip ? "left-[5%]" : "right-[5%]"} bottom-0`} />
+          )}
         </Glass>
       </div>
     </div>

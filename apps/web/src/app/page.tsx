@@ -1,7 +1,7 @@
 import AuthLink from "../components/auth/AuthLink";
 import { ALL_INTEGRATIONS, FAQS, GROUPS } from "../components/landing/content";
 import { FaqList } from "../components/landing/Faq";
-import { IntegrationsTabs } from "../components/landing/IntegrationsTabs";
+import { IntegrationsCarousel } from "../components/landing/IntegrationsCarousel";
 import { Eyebrow, Lead, Section, SectionHead, Title } from "../components/landing/Kit";
 import { Logo } from "../components/landing/Logo";
 import { Magnetic } from "../components/landing/Magnetic";
@@ -51,9 +51,9 @@ export default function Page() {
           quiet="you already use."
           lead="From inbox to issue tracker, and a model that can grow to the rest. Each one says whether it’s live."
         />
-        <Reveal className="mt-[clamp(28px,4vw,48px)]">
-          <IntegrationsTabs groups={GROUPS} />
-        </Reveal>
+        <div className="mt-[clamp(28px,4vw,48px)]">
+          <IntegrationsCarousel groups={GROUPS} />
+        </div>
       </Section>
 
       <Speed />
