@@ -17,6 +17,7 @@ import {
   faShareNodes,
   faShieldHalved,
   faTableColumns,
+  faUserGroup,
   faUserLock,
   faWandMagicSparkles,
 } from "@fortawesome/free-solid-svg-icons";
@@ -94,6 +95,13 @@ export const JOURNAL_POINTS: [IconDefinition, string, string][] = [
   [faLock, "Private to you", "Your journal is kept apart from the rest of the workspace."],
   [faMicrophone, "Voice and attachments", "Dictate an entry or attach a photo or file."],
   [faCalendarDays, "Browse by calendar", "Jump to any day and see what you wrote."],
+];
+
+export const COLLAB_POINTS: [IconDefinition, string, string][] = [
+  [faUserGroup, "Write together", "Start a shared journal and write in it with the people you invite."],
+  [faEnvelope, "Invite by username or email", "They join when they accept, and an email lets them know they were invited."],
+  [faPenToSquare, "Editor or viewer", "Choose who can write and who can only read. The owner can change it at any time."],
+  [faPaperclip, "Photos and files", "Everyone can add entries with photos and files, and see who wrote what."],
 ];
 
 export const CALENDAR_POINTS: [IconDefinition, string, string][] = [
@@ -186,6 +194,10 @@ export const FAQS: [string, string][] = [
     "With a passkey, with Google (including One Tap), or with a username and password. If you forget a password, a six-digit code to your email lets you reset it.",
   ],
   ["Is my journal private?", "Yes. Journal entries are private to their author, kept apart from the rest of the workspace."],
+  [
+    "Can I write a journal with someone else?",
+    "Yes. Start a shared journal and invite people by username or email. Each person can be an editor or a viewer, and they join only after they accept. Your personal journal stays private to you.",
+  ],
   [
     "Can I bring my existing notes, and take them out again?",
     "Yes. Import your existing work (including from Notion) and export it whenever you need to. You can also export your data from Settings.",

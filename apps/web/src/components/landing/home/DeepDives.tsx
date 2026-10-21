@@ -1,11 +1,12 @@
 "use client";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import { FontAwesomeIcon as FA } from "@fortawesome/react-fontawesome";
 import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import Glass from "../Glass";
-import { CALENDAR_POINTS, CHAT_POINTS, JOURNAL_POINTS, NOTE_POINTS, TASK_POINTS } from "../content";
+import { CALENDAR_POINTS, CHAT_POINTS, COLLAB_POINTS, JOURNAL_POINTS, NOTE_POINTS, TASK_POINTS } from "../content";
 import { Eyebrow, Lead, Title, WRAP } from "../Kit";
 import { useMotion } from "../motion";
+import { CollabScreen } from "./Mocks";
 import PhoneHalf from "./PhoneHalf";
 import { R, Reveal } from "../Reveal";
 import { Tip } from "../Tip";
@@ -23,7 +24,7 @@ type Item = {
   points: Point[];
   flip?: boolean;
   /** A phone screenshot tucked into the panel's bottom edge, showing its top half. */
-  phone?: { src: string; alt: string };
+  phone?: { src?: string; alt: string; screen?: ReactNode };
 };
 
 const ITEMS: Item[] = [
@@ -59,6 +60,17 @@ const ITEMS: Item[] = [
     phone: { src: "/mobile/journal.png", alt: "The journal screen in the phone app" },
   },
   {
+    id: "collaborate",
+    tone: "clay",
+    eyebrow: "Collaborate",
+    title: "Write it",
+    quiet: "together.",
+    lead: "Keep a journal with the people close to you. You choose who can write and who can only read, and they join when they accept.",
+    points: COLLAB_POINTS,
+    phone: { alt: "The shared journal screen in the phone app", screen: <CollabScreen /> },
+    flip: true,
+  },
+  {
     id: "calendar",
     tone: "green",
     eyebrow: "Calendar",
@@ -67,7 +79,6 @@ const ITEMS: Item[] = [
     lead: "Your events and your tasks on the same page, in the view that suits the moment.",
     points: CALENDAR_POINTS,
     phone: { src: "/mobile/home.png", alt: "The home screen in the phone app" },
-    flip: true,
   },
   {
     id: "chat",
@@ -78,6 +89,7 @@ const ITEMS: Item[] = [
     lead: "Talk to the model you choose, right beside your work. It can draft things for you, and you decide what to keep.",
     points: CHAT_POINTS,
     phone: { src: "/mobile/chat.png", alt: "The chat screen in the phone app" },
+    flip: true,
   },
 ];
 
@@ -129,9 +141,12 @@ function Showcase({ tone, eyebrow, title, quiet, lead, points, flip = false, pho
               {/* Phones: room under the text for the half phone, which is centred on the panel's bottom edge. Wide screens: it sits at the side. */}
               <div aria-hidden className="h-[min(250px,70vw)] w-full lg:hidden" />
               <PhoneHalf
-                {...phone}
+                src={phone.src}
+                alt={phone.alt}
                 className={`bottom-0 left-1/2 w-[min(260px,72vw)] -translate-x-1/2 lg:translate-x-0 lg:w-[clamp(260px,28vw,400px)] ${flip ? "lg:left-[5%]" : "lg:left-auto lg:right-[5%]"}`}
-              />
+              >
+                {phone.screen}
+              </PhoneHalf>
             </>
           )}
         </Glass>
@@ -141,7 +156,7 @@ function Showcase({ tone, eyebrow, title, quiet, lead, points, flip = false, pho
 }
 
 /**
- * The five feature panels stack one by one: each pins under the header while the next slides up over it, and the panel being
+ * The six feature panels stack one by one: each pins under the header while the next slides up over it, and the panel being
  * covered settles back (smaller, dimmer) as the next arrives. Pinning is for wide screens; on phones the panels simply follow
  * each other. Because a pinned panel's position changes as you scroll, links to #notes, #tasks… are resolved from the panels'
  * natural positions so they always land on the right one.

@@ -23,6 +23,16 @@ export type Release = {
 export const RELEASES: Release[] = [
   {
     date: "2026-10-21",
+    title: "Version 2.1: collaboration on the home page",
+    summary: "The home page now shows what writing a journal together looks like, in the same phone card as the other features.",
+    tone: "clay",
+    appVersion: "v2.1.0",
+    changes: [
+      { kind: "new", platform: "web", text: "A new Collaborate section on the home page shows shared journals: invite people by username or email, choose who can write and who can only read, and add photos and files." },
+    ],
+  },
+  {
+    date: "2026-10-21",
     title: "The phone previews now show on mobile",
     summary: "The app screenshots on the home page appear on phones too, not only on wide screens.",
     tone: "sand",

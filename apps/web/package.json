@@ -1,7 +1,7 @@
 {
   "name": "@untitled/web",
   "private": true,
-  "version": "2.0.1",
+  "version": "2.1.0",
   "scripts": {
     "dev": "node ../../scripts/web-next.mjs dev",
     "build": "node ../../scripts/web-next.mjs build",

@@ -183,3 +183,53 @@ export function ChatMock() {
     </Window>
   );
 }
+
+/**
+ * The shared-journal screen of the phone app, drawn for the phone card (no screenshot of it yet). Every size is in container units
+ * (cqw), so it scales with the phone. Sample names and text, not real data.
+ */
+export function CollabScreen() {
+  const people: [string, string][] = [
+    ["AK", "at-violet"],
+    ["SR", "at-blue"],
+    ["PM", "at-amber"],
+  ];
+  const entries: [string, string, string, string][] = [
+    ["AK", "at-violet", "Ada", "Booked the flights. Window seats for everyone."],
+    ["SR", "at-blue", "Sam", "Found a quiet place for dinner on Friday."],
+    ["PM", "at-amber", "Priya", "I can drive on Sunday if that helps."],
+  ];
+  return (
+    <div className="@container size-full overflow-hidden bg-page text-fg">
+      <div className="flex h-full flex-col px-[5cqw] pt-[13cqw]">
+        <div className="text-[3.6cqw] text-fg-muted">← Collaboration</div>
+        <div className="mt-[2cqw] flex items-center justify-between gap-[2cqw]">
+          <div className="font-serif text-[8.4cqw] leading-none tracking-[-0.02em]">Weekend away</div>
+          <div className="flex -space-x-[2cqw]">
+            {people.map(([i, c]) => (
+              <span key={i} className={`${c} tint grid size-[8cqw] place-items-center rounded-full text-[3cqw] font-semibold ring-[0.6cqw] ring-white/80`}>
+                {i}
+              </span>
+            ))}
+          </div>
+        </div>
+        <div className="mt-[1.5cqw] text-[3.4cqw] text-fg-subtle">3 entries · 3 people</div>
+        <div className="mt-[4cqw] flex flex-col gap-[3cqw]">
+          {entries.map(([i, c, name, text]) => (
+            <div key={name} className="rounded-[3.5cqw] bg-surface p-[3.6cqw] shadow-e1">
+              <div className="flex items-center gap-[2cqw] text-[3.4cqw] text-fg-subtle">
+                <span className={`${c} tint grid size-[7cqw] place-items-center rounded-full text-[2.8cqw] font-semibold`}>{i}</span>
+                <b className="font-medium text-fg">{name}</b>
+                <span>today</span>
+              </div>
+              <p className="mt-[2cqw] text-[3.8cqw] leading-snug text-fg-muted">{text}</p>
+            </div>
+          ))}
+        </div>
+        <div className="mt-auto mb-[6cqw] rounded-pill bg-surface px-[4cqw] py-[3.2cqw] text-[3.6cqw] text-fg-faint shadow-[inset_0_0_0_1px_var(--line)]">
+          Write something for everyone here…
+        </div>
+      </div>
+    </div>
+  );
+}
