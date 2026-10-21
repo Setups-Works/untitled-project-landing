@@ -240,6 +240,22 @@ export async function selectPeople(c: PoolClient, ids: string[]) {
   return new Map(rows.map((r) => [r.id, r]));
 }
 
+export async function findUserIdByEmail(c: PoolClient, email: string) {
+  const { rows } = await c.query<{ id: string }>("select id from auth.users where lower(email) = $1 and not banned", [email]);
+  return rows[0]?.id ?? null;
+}
+
+/** Name and address for the notification email. Never returned to a client. */
+export async function selectContact(c: PoolClient, id: string) {
+  const { rows } = await c.query<{ name: string | null; email: string }>("select name, email from auth.users where id = $1", [id]);
+  return rows[0] ?? null;
+}
+
+export async function selectJournalName(c: PoolClient, id: string) {
+  const { rows } = await c.query<{ name: string }>("select name from public.shared_journals where id = $1", [id]);
+  return rows[0]?.name ?? null;
+}
+
 export async function findUserIdByUsername(c: PoolClient, username: string) {
   const { rows } = await c.query<{ id: string }>("select id from auth.users where lower(username) = $1 and not banned", [username]);
   return rows[0]?.id ?? null;

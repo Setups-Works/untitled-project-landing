@@ -15,6 +15,19 @@ export const usernameInput = z
       ),
   );
 
+const emailInput = z.string().email("Enter a valid email address.").max(254);
+const looksLikeEmail = (v: string) => /^[^@\s]+@[^@\s]+$/.test(v);
+
+/** Who to invite: a username (as above) or an email address. Usernames can't contain "@", so the two never overlap. Resolves to the normalised text. */
+export const inviteTarget = z
+  .string()
+  .trim()
+  .superRefine((v, ctx) => {
+    const r = looksLikeEmail(v) ? emailInput.safeParse(v) : usernameInput.safeParse(v);
+    if (!r.success) for (const i of r.error.issues) ctx.addIssue({ code: "custom", message: i.message });
+  })
+  .transform((v) => (looksLikeEmail(v) ? v.toLowerCase() : usernameInput.parse(v)));
+
 export const inviteRole = z.enum(["editor", "viewer"]);
 const attachment = z.object({
   path: z.string().max(400),
@@ -25,7 +38,8 @@ const attachment = z.object({
 const date = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Use a date like 2026-10-20.");
 
 export const journalName = z.object({ name: z.string().trim().min(1, "Give the journal a name.").max(LIMIT.nameMax) });
-export const inviteBody = z.object({ username: usernameInput, role: inviteRole });
+/** `username` holds a username or an email address (the field keeps its name so existing apps keep working). */
+export const inviteBody = z.object({ username: inviteTarget, role: inviteRole });
 export const roleBody = z.object({ role: inviteRole });
 export const respondBody = z.object({ action: z.enum(["accept", "decline"]) });
 export const entryCreate = z.object({

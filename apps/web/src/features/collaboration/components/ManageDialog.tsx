@@ -30,9 +30,11 @@ export default function ManageDialog({ id, onClose }: { id: string; onClose: () 
   async function invite(username: string, role: "editor" | "viewer") {
     setErr("");
     setNote("");
-    const ok = await act.invite(id, username, role);
-    if (ok) setNote(`Invitation sent to @${username.trim().replace(/^@/, "")}. They join when they accept.`);
-    return Boolean(ok);
+    const sent = await act.invite(id, username, role);
+    const who = username.trim().replace(/^@/, "");
+    // For an email address the answer is the same whether or not it has an account, so the message doesn't claim it was delivered.
+    if (sent) setNote(who.includes("@") ? `If ${who} has an account, they’ve been emailed an invitation. They join when they accept.` : `Invitation sent to @${who}. They join when they accept.`);
+    return Boolean(sent);
   }
 
   async function rename() {

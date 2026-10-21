@@ -13,6 +13,8 @@ import { ConflictError, ForbiddenError, NotFoundError, RateLimitError, Validatio
 import { underLimit } from "../../rateLimit";
 import * as repo from "../../repositories/collaboration.repository";
 import { deleteObjects } from "../../storage";
+import { sendMail } from "../../mail";
+import { serverEnv } from "../../../config/env";
 import type { FeedQuery } from "./collaboration.schema";
 
 // Shared journals: named journals several people write in. Owner / editor / viewer, invite by username, accept to join.
@@ -126,26 +128,62 @@ async function removeFiles(paths: string[]) {
 
 /** Invite someone by username. They are not added until they accept. */
 export async function inviteByUsername(userId: string, journalId: string, username: string, role: SharedJournalInviteRole) {
+  return invite(userId, journalId, (c) => repo.findUserIdByUsername(c, username), "No one has that username.", role);
+}
+
+/**
+ * Invite someone by email address. The answer is the same whether or not an account uses that address (`id` is null when none does),
+ * so this can't be used to find out who has an account.
+ */
+export async function inviteByEmail(userId: string, journalId: string, email: string, role: SharedJournalInviteRole) {
+  return invite(userId, journalId, (c) => repo.findUserIdByEmail(c, email), null, role);
+}
+
+async function invite(
+  userId: string,
+  journalId: string,
+  find: (c: Parameters<Parameters<typeof withOwner>[0]>[0]) => Promise<string | null>,
+  notFound: string | null,
+  role: SharedJournalInviteRole,
+): Promise<{ id: string | null }> {
   await requireOwner(userId, journalId);
   if (!(await underLimit(`invite:${userId}`, LIMIT.invitesPerHour, 3600)))
     throw new RateLimitError("You’ve sent a lot of invitations. Try again in a little while.");
-  return withOwner(async (c) => {
+  const made = await withOwner(async (c) => {
     // The owner connection bypasses RLS, so every check below is ours to make.
-    const inviteeId = await repo.findUserIdByUsername(c, username);
-    if (!inviteeId) throw new NotFoundError("No one has that username.");
+    const inviteeId = await find(c);
+    if (!inviteeId) {
+      if (notFound) throw new NotFoundError(notFound);
+      return null;
+    }
     if (inviteeId === userId) throw new ValidationError("You’re already in this journal.");
     if (await repo.isMemberOrOwner(c, journalId, inviteeId)) throw new ConflictError("They’re already in this journal.");
     if ((await repo.countMembersAndInvites(c, journalId)) + 1 >= LIMIT.maxPeople)
       throw new ConflictError(`A journal holds up to ${LIMIT.maxPeople} people.`);
     try {
       const id = await repo.insertInvite(c, { journalId, inviterId: userId, inviteeId, role });
-      return { id };
+      const [to, from, journal] = await Promise.all([
+        repo.selectContact(c, inviteeId),
+        repo.selectContact(c, userId),
+        repo.selectJournalName(c, journalId),
+      ]);
+      return { id, to, from, journal };
     } catch (e) {
       // The partial unique index allows one open invitation per person.
       if ((e as { code?: string }).code === "23505") throw new ConflictError("They already have an invitation to this journal.");
       throw e;
     }
   });
+  if (!made) return { id: null };
+  // The invitation is saved either way; a mail problem must not fail it (they also see it the next time they open the app).
+  if (made.to)
+    void sendMail(
+      made.to.email,
+      "You’re invited to a shared journal",
+      `${made.from?.name || "Someone"} invited you to write in the shared journal “${made.journal ?? "Shared journal"}” as ${role === "editor" ? "an editor" : "a viewer"}. Open the app to accept or decline.`,
+      { label: "View invitation", url: `${serverEnv().authUrl.replace(/\/$/, "")}/dashboard/journal/collaborate` },
+    ).catch(() => undefined);
+  return { id: made.id };
 }
 
 export async function cancelInvite(userId: string, journalId: string, inviteId: string) {
