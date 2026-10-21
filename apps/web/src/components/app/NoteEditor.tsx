@@ -27,6 +27,14 @@ import {
   faCheck,
   faEye,
   faPen,
+  faFeatherPointed,
+  faCompress,
+  faExpand,
+  faAlignLeft,
+  faListCheck,
+  faSpellCheck,
+  faPenNib,
+  faSliders,
 } from "@fortawesome/free-solid-svg-icons";
 import type { ApiClient } from "../../lib/api/client";
 import type { Attachment, Note, NoteVersion } from "../../lib/workspace";
@@ -37,6 +45,9 @@ import { usePrompt } from "../ui/Confirm";
 import AttachmentImage from "../ui/AttachmentImage";
 import AudioWave from "../ui/AudioWave";
 import Markdown from "./Markdown";
+import NoteAiPanel from "./NoteAiPanel";
+import { useAiProviders } from "../../features/ai/useAiProviders";
+import { useNoteAi, type NoteAiAction } from "../../features/ai/useNoteAi";
 
 const SLASH = [
   { k: "h1", t: "Heading 1", s: "# " },
@@ -106,6 +117,9 @@ export default function NoteEditor({
   const [range, setRange] = useState<[number, number]>([0, 0]);
   const selected = range[1] > range[0] ? body.slice(range[0], range[1]) : "";
   const { prompt: askLink, dialog: linkDialog } = usePrompt();
+  const { providers, provider } = useAiProviders();
+  const ai = useNoteAi(provider);
+  const aiReady = providers.some((p) => p.id === provider && p.available && p.runtime === "server");
 
   const value = useMemo(() => ({ title, body }), [title, body]);
   const status = useAutosave(
@@ -198,6 +212,48 @@ export default function NoteEditor({
     el.setSelectionRange(s, e);
     put(`[${text || "link"}](${url})`);
   };
+  /* ---- AI actions: work on the selection, or the whole note when nothing is selected ---- */
+  const AI_ACTIONS: { k: NoteAiAction; label: string; icon: Parameters<typeof FA>[0]["icon"] }[] = [
+    { k: "improve", label: "Improve writing", icon: faFeatherPointed },
+    { k: "fix", label: "Fix spelling & grammar", icon: faSpellCheck },
+    { k: "shorter", label: "Make shorter", icon: faCompress },
+    { k: "longer", label: "Make longer", icon: faExpand },
+    { k: "summarize", label: "Summarize", icon: faAlignLeft },
+    { k: "actions", label: "Find action items", icon: faListCheck },
+    { k: "continue", label: "Continue writing", icon: faPenNib },
+  ];
+  const runAi = async (action: NoteAiAction) => {
+    const part: [number, number] = selected ? range : [0, body.length];
+    const text = body.slice(part[0], part[1]);
+    if (!text.trim()) return setMsg("Write or select some text first.");
+    setMsg("");
+    let instruction: string | undefined;
+    if (action === "custom") {
+      instruction =
+        (await askLink({
+          title: "Ask the AI",
+          body: selected ? "What should the AI do with the selected text?" : "What should the AI do with this note?",
+          label: "Instruction",
+          placeholder: "e.g. Turn this into an email to my team",
+          confirmLabel: "Run",
+          validate: (v) => (v.length > 500 ? "Keep it under 500 characters." : null),
+        })) ?? undefined;
+      if (!instruction) return;
+    }
+    void ai.run(action, text, part, instruction);
+  };
+  const applyAi = (mode: "replace" | "insert") => {
+    const r = ai.result;
+    if (!r?.text) return;
+    // The textarea only takes focus while it is showing the source; put() also keeps the browser's undo working.
+    setEditing(true);
+    requestAnimationFrame(() => {
+      if (mode === "replace") put(r.text, r.from, r.to);
+      else put(`\n\n${r.text}`, r.to, r.to);
+      ai.clear();
+    });
+  };
+
   const history = (cmd: "undo" | "redo") => {
     ta.current?.focus();
     document.execCommand(cmd);
@@ -390,7 +446,30 @@ export default function NoteEditor({
         {tb("Undo", faRotateLeft, () => history("undo"))}
         {tb("Redo", faRotateRight, () => history("redo"))}
         <span className="ne-gap" />
-        {tb("AI actions", faWandMagicSparkles, () => {}, { disabled: true, title: "Connect an AI provider to use AI actions" })}
+        {aiReady ? (
+          <Menu
+            label="AI actions"
+            trigger={<FA icon={faWandMagicSparkles} />}
+            className="ne-more"
+          >
+            <MenuLabel>{selected ? "AI on the selection" : "AI on the whole note"}</MenuLabel>
+            {AI_ACTIONS.map((a) => (
+              <MenuItem key={a.k} onSelect={() => void runAi(a.k)}>
+                <span>
+                  <FA icon={a.icon} /> {a.label}
+                </span>
+              </MenuItem>
+            ))}
+            <MenuSeparator />
+            <MenuItem onSelect={() => void runAi("custom")}>
+              <span>
+                <FA icon={faSliders} /> Ask the AI…
+              </span>
+            </MenuItem>
+          </Menu>
+        ) : (
+          tb("AI actions", faWandMagicSparkles, () => {}, { disabled: true, title: "Connect an AI provider to use AI actions" })
+        )}
         {tb("Add link", faLink, link)}
         {tb(dictating ? "Stop dictation" : "Dictate", faMicrophone, dictate, {
           disabled: !SpeechCtor,
@@ -481,10 +560,23 @@ export default function NoteEditor({
           </button>
         </div>
       )}
-      {msg && (
+      {(msg || ai.err) && (
         <p className="form-err ne-msg" role="alert">
-          {msg}
+          {msg || ai.err}
         </p>
+      )}
+      {ai.result && (
+        <NoteAiPanel
+          title={AI_ACTIONS.find((a) => a.k === ai.result?.action)?.label ?? "Ask the AI"}
+          text={ai.result.text}
+          busy={ai.busy}
+          canReplace={ai.result.action !== "continue"}
+          replaceLabel={ai.result.to - ai.result.from === body.length ? "Replace note" : "Replace selection"}
+          onReplace={() => applyAi("replace")}
+          onInsert={() => applyAi("insert")}
+          onStop={ai.stop}
+          onClose={ai.clear}
+        />
       )}
 
       <div className="ne-body">

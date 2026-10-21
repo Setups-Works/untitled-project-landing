@@ -71,7 +71,7 @@ export function settleBlocks(full: string, previous: string): string {
 export type ChatReply = { ok: true; stream: ReadableStream<Uint8Array> } | { ok: false; status: number; error: string };
 
 /** Allows `repliesPerMinute` replies per user per minute. Without Redis there is no limit (the provider's own limits still apply). */
-async function underRateLimit(userId: string) {
+export async function underRateLimit(userId: string) {
   const r = redis();
   if (!r) return true;
   try {
