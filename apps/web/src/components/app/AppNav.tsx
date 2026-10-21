@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import type { Prefs } from "../../lib/prefs";
 import PrefsSync from "./PrefsSync";
 import SettingsModal from "./SettingsModal";
+import { settingsHref, tabFromPath, type SettingsTab } from "../../features/settings/tabs";
 import { OPEN_ONBOARDING_EVENT } from "./Onboarding";
 import UniversalSearch, { OPEN_SETTINGS_EVENT } from "./UniversalSearch";
 import { FontAwesomeIcon as FA } from "@fortawesome/react-fontawesome";
@@ -63,13 +64,26 @@ export default function AppNav({
   const path = usePathname();
   const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [settings, setSettings] = useState(false);
-  const closeSettings = useCallback(() => setSettings(false), []);
+  // Settings lives in the address (/dashboard/settings/<section>). Opening it only changes the address, so the page you were
+  // on stays behind the popup; `returnTo` is that page, kept to highlight its tab and to go back to when the popup closes.
+  const settingsTab = tabFromPath(path);
+  const returnTo = useRef<string | null>(null);
+  const openSettings = useCallback((tab: SettingsTab = "profile") => {
+    returnTo.current = window.location.pathname + window.location.search;
+    window.history.pushState(null, "", settingsHref(tab));
+  }, []);
+  const closeSettings = useCallback(() => {
+    if (returnTo.current) window.history.back();
+    else router.push("/dashboard");
+    returnTo.current = null;
+  }, [router]);
+  const pickSettingsTab = useCallback((tab: SettingsTab) => window.history.replaceState(null, "", settingsHref(tab)), []);
   const box = useRef<HTMLDivElement>(null);
 
   // Which section we are on (the tab pill itself lives in SectionTabs).
+  const here = settingsTab ? (returnTo.current ?? "/dashboard").split("?")[0] : path;
   const current = TABS.findIndex((t) =>
-    t.href === "/dashboard" ? path === "/dashboard" : [t.href, ...(t.also ?? [])].some((h) => path.startsWith(h)),
+    t.href === "/dashboard" ? here === "/dashboard" : [t.href, ...(t.also ?? [])].some((h) => here.startsWith(h)),
   );
 
   // On a touch screen, swipe the page sideways to go to the next or previous section.
@@ -89,10 +103,10 @@ export default function AppNav({
 
   // Universal search can open Settings.
   useEffect(() => {
-    const show = () => setSettings(true);
+    const show = () => openSettings();
     window.addEventListener(OPEN_SETTINGS_EVENT, show);
     return () => window.removeEventListener(OPEN_SETTINGS_EVENT, show);
-  }, []);
+  }, [openSettings]);
 
   async function signOut() {
     await clearDrafts(); // unsent text and recordings must not be visible to the next person on this computer
@@ -130,7 +144,7 @@ export default function AppNav({
               role="menuitem"
               onClick={() => {
                 setOpen(false);
-                setSettings(true);
+                openSettings();
               }}
             >
               <FA icon={faGear} /> Settings
@@ -156,7 +170,9 @@ export default function AppNav({
         )}
       </div>
       <PrefsSync prefs={prefs} />
-      {settings && <SettingsModal account={account} prefs={prefs} onClose={closeSettings} />}
+      {settingsTab && (
+        <SettingsModal account={account} prefs={prefs} tab={settingsTab} onTab={pickSettingsTab} onClose={closeSettings} />
+      )}
     </header>
   );
 }

@@ -3,6 +3,7 @@ import * as Dialog from "@radix-ui/react-dialog";
 import { FontAwesomeIcon as FA } from "@fortawesome/react-fontawesome";
 import { faXmark } from "@fortawesome/free-solid-svg-icons";
 import type { Prefs } from "../../lib/prefs";
+import type { SettingsTab } from "../../features/settings/tabs";
 import SettingsView from "./SettingsView";
 
 type Account = {
@@ -18,7 +19,19 @@ type Account = {
 };
 
 /** The Settings popup. Radix Dialog handles the focus trap, Escape (including when a confirm dialog is stacked on top), scroll lock and focus restore. */
-export default function SettingsModal({ account, prefs, onClose }: { account: Account; prefs: Prefs; onClose: () => void }) {
+export default function SettingsModal({
+  account,
+  prefs,
+  tab,
+  onTab,
+  onClose,
+}: {
+  account: Account;
+  prefs: Prefs;
+  tab: SettingsTab;
+  onTab: (tab: SettingsTab) => void;
+  onClose: () => void;
+}) {
   return (
     <Dialog.Root
       open
@@ -38,7 +51,7 @@ export default function SettingsModal({ account, prefs, onClose }: { account: Ac
               </Dialog.Close>
             </div>
             <div className="sm-body">
-              <SettingsView account={account} prefs={prefs} />
+              <SettingsView account={account} prefs={prefs} tab={tab} onTab={onTab} />
             </div>
           </Dialog.Content>
         </Dialog.Overlay>

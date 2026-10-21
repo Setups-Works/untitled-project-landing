@@ -34,8 +34,9 @@ import { deleteMyAccount } from "../../app/dashboard/settings/actions";
 import { useConfirm } from "../ui/Confirm";
 import GiftCard, { saveGiftCard, shareGiftCard } from "./GiftCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/Tabs";
+import type { SettingsTab } from "../../features/settings/tabs";
 
-type Tab = "profile" | "prefs" | "appearance" | "security" | "data" | "danger";
+type Tab = SettingsTab;
 const NAV: { k: Tab; label: string; icon: IconDefinition }[] = [
   { k: "profile", label: "Profile", icon: faUser },
   { k: "prefs", label: "Preferences", icon: faSliders },
@@ -89,7 +90,18 @@ const friendly = (m: string) =>
         ? "For security, please log out and back in, then try again."
         : m;
 
-export default function SettingsView({ account, prefs: initial }: { account: Account; prefs: Prefs }) {
+export default function SettingsView({
+  account,
+  prefs: initial,
+  tab: controlledTab,
+  onTab,
+}: {
+  account: Account;
+  prefs: Prefs;
+  /** The open section and how to change it (the popup keeps it in the address). Without them the view keeps its own. */
+  tab?: SettingsTab;
+  onTab?: (tab: SettingsTab) => void;
+}) {
   const sb = useMemo(api, []);
   const router = useRouter();
   const { ask, dialog } = useConfirm();
@@ -115,7 +127,9 @@ export default function SettingsView({ account, prefs: initial }: { account: Acc
   const [typed, setTyped] = useState("");
   const [delMsg, setDelMsg] = useState<Msg>(null);
   const [busy, setBusy] = useState("");
-  const [tab, setTab] = useState<Tab>("profile");
+  const [ownTab, setOwnTab] = useState<Tab>("profile");
+  const tab = controlledTab ?? ownTab;
+  const setTab = onTab ?? setOwnTab;
   const [avatar, setAvatar] = useState(account.avatarUrl);
   const [avatarMsg, setAvatarMsg] = useState<Msg>(null);
   const [resetTyped, setResetTyped] = useState("");
