@@ -9,7 +9,6 @@ import {
   faCode,
   faRotateLeft,
   faRotateRight,
-  faWandMagicSparkles,
   faLink,
   faMicrophone,
   faTerminal,
@@ -46,6 +45,7 @@ import AttachmentImage from "../ui/AttachmentImage";
 import AudioWave from "../ui/AudioWave";
 import Markdown from "./Markdown";
 import NoteAiPanel from "./NoteAiPanel";
+import AiIcon from "../ui/AiIcon";
 import { useAiProviders } from "../../features/ai/useAiProviders";
 import { useNoteAi, type NoteAiAction } from "../../features/ai/useNoteAi";
 
@@ -449,7 +449,7 @@ export default function NoteEditor({
         {aiReady ? (
           <Menu
             label="AI actions"
-            trigger={<FA icon={faWandMagicSparkles} />}
+            trigger={<AiIcon />}
             className="ne-more"
           >
             <MenuLabel>{selected ? "AI on the selection" : "AI on the whole note"}</MenuLabel>
@@ -468,7 +468,9 @@ export default function NoteEditor({
             </MenuItem>
           </Menu>
         ) : (
-          tb("AI actions", faWandMagicSparkles, () => {}, { disabled: true, title: "Connect an AI provider to use AI actions" })
+          <button type="button" className="ne-btn" aria-label="AI actions" title="Connect an AI provider to use AI actions" disabled>
+            <AiIcon />
+          </button>
         )}
         {tb("Add link", faLink, link)}
         {tb(dictating ? "Stop dictation" : "Dictate", faMicrophone, dictate, {

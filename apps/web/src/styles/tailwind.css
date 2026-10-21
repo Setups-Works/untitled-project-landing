@@ -41,6 +41,8 @@
   --color-clay-fg: var(--clay-fg);
   --color-violet-bg: var(--violet-bg);
   --color-violet-fg: var(--violet-fg);
+  --color-ai-from: var(--ai-from);
+  --color-ai-to: var(--ai-to);
   --color-sand-bg: var(--sand-bg);
   --color-sand-fg: var(--sand-fg);
   --color-orange-fg: var(--orange-fg);

@@ -1,7 +1,8 @@
 "use client";
 import { FontAwesomeIcon as FA } from "@fortawesome/react-fontawesome";
-import { faCheck, faCopy, faStop, faWandMagicSparkles, faXmark } from "@fortawesome/free-solid-svg-icons";
+import { faCheck, faCopy, faStop, faXmark } from "@fortawesome/free-solid-svg-icons";
 import { useState } from "react";
+import AiIcon from "../ui/AiIcon";
 import Markdown from "./Markdown";
 
 /** The AI's answer for a note: shown as it arrives, then applied (replace or insert below), copied or discarded. */
@@ -39,7 +40,7 @@ export default function NoteAiPanel({
   return (
     <section className="mx-4 mb-2 flex max-h-[45%] flex-col gap-2 overflow-hidden rounded-r3 bg-surface p-3 shadow-e1" aria-label="AI result">
       <div className="flex items-center gap-2 text-sm text-fg-muted">
-        <FA icon={faWandMagicSparkles} />
+        <AiIcon className="h-[16px] w-[10px]" />
         <b className="flex-1 font-medium text-fg">{title}</b>
         <button type="button" className="ne-btn" aria-label="Close AI result" onClick={onClose}>
           <FA icon={faXmark} />
