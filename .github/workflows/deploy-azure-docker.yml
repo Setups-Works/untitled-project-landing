@@ -49,17 +49,41 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      # BuildKit cache mounts (the Next.js compiler cache) are not part of the layer cache, so save and restore them
+      # explicitly; without this every deploy compiled the whole app from scratch.
+      - name: Restore Next.js build cache
+        id: next-cache
+        uses: actions/cache@v4
+        with:
+          path: .buildx-cache/next
+          key: next-cache-${{ hashFiles('pnpm-lock.yaml') }}-${{ github.sha }}
+          restore-keys: |
+            next-cache-${{ hashFiles('pnpm-lock.yaml') }}-
+            next-cache-
+
+      - name: Inject Next.js build cache into BuildKit
+        uses: reproducible-containers/buildkit-cache-dance@v3
+        with:
+          cache-map: |
+            {
+              ".buildx-cache/next": "/app/apps/web/.next/cache"
+            }
+          skip-extraction: false
+
       - name: Build and push image
         uses: docker/build-push-action@v6
         with:
           context: .
           platforms: linux/amd64
           push: true
+          # Attestation manifests only slow the push and the pull on Azure; nothing here consumes them.
+          provenance: false
+          sbom: false
           tags: |
             nitheeshdr/untitled-workspace:${{ github.sha }}
             nitheeshdr/untitled-workspace:latest
           cache-from: type=gha
-          cache-to: type=gha,mode=max
+          cache-to: type=gha,mode=max,ignore-error=true
 
       - name: Sign in to Azure
         uses: azure/login@v3

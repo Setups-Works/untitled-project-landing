@@ -1,9 +1,12 @@
-node_modules
+**/node_modules
 .turbo
 .next
 apps/web/.next
-apps/mobile/android
-apps/mobile/ios
+# The web image never needs the mobile app or marketing assets (only mobile's package.json, for the pnpm workspace).
+apps/mobile/*
+!apps/mobile/package.json
+marketing
+.buildx-cache
 **/build
 .git
 .github
