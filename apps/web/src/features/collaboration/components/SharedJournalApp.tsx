@@ -93,21 +93,22 @@ export default function SharedJournalApp({ id }: { id: string }) {
           >
             <FA icon={faArrowLeft} aria-hidden /> Collaboration
           </Link>
-          <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="min-w-0">
               <h1 className="h3">{journal?.name ?? " "}</h1>
               <small>{journal ? `${journal.entry_count} ${journal.entry_count === 1 ? "entry" : "entries"}` : " "}</small>
             </div>
             {journal && (
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-3 self-center">
                 <RolePill role={journal.role} />
-                <ul className="flex -space-x-2" aria-label={`${journal.members.length} people`}>
+                {/* Not a <ul>: the card's global "ap-card ul" rule would stack the avatars in a column. */}
+                <div className="flex items-center -space-x-2" role="group" aria-label={`${journal.members.length} people`}>
                   {journal.members.slice(0, AVATARS_SHOWN).map((m) => (
-                    <li key={m.person.id} className="rounded-full ring-2 ring-white/80">
+                    <span key={m.person.id} className="flex rounded-full ring-2 ring-white/80">
                       <PersonAvatar person={m.person} size="sm" />
-                    </li>
+                    </span>
                   ))}
-                </ul>
+                </div>
                 {journal.members.length > AVATARS_SHOWN && (
                   <span className="text-[12.5px] text-fg-subtle">+{journal.members.length - AVATARS_SHOWN}</span>
                 )}
