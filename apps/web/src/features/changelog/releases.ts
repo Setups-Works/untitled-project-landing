@@ -23,6 +23,13 @@ export type Release = {
 export const RELEASES: Release[] = [
   {
     date: "2026-10-21",
+    title: "A new AI icon",
+    summary: "The AI button in notes now uses the grainy blue-to-coral pill.",
+    tone: "violet",
+    changes: [{ kind: "improved", platform: "web", text: "The AI button in the note editor has a new look: a grainy blue-to-coral pill." }],
+  },
+  {
+    date: "2026-10-21",
     title: "Switch between your journal and shared journals",
     summary: "Personal and Collaboration now sit side by side at the top of the Journal pages, like the Plan pages.",
     tone: "blue",
