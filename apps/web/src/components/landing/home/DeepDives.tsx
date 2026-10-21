@@ -125,7 +125,14 @@ function Showcase({ tone, eyebrow, title, quiet, lead, points, flip = false, pho
             </div>
           </div>
           {phone && (
-            <PhoneHalf {...phone} className={`hidden w-[clamp(260px,28vw,400px)] lg:block ${flip ? "left-[5%]" : "right-[5%]"} bottom-0`} />
+            <>
+              {/* Phones: room under the text for the half phone, which is centred on the panel's bottom edge. Wide screens: it sits at the side. */}
+              <div aria-hidden className="h-[min(250px,70vw)] w-full lg:hidden" />
+              <PhoneHalf
+                {...phone}
+                className={`bottom-0 left-1/2 w-[min(260px,72vw)] -translate-x-1/2 lg:translate-x-0 lg:w-[clamp(260px,28vw,400px)] ${flip ? "lg:left-[5%]" : "lg:left-auto lg:right-[5%]"}`}
+              />
+            </>
           )}
         </Glass>
       </div>

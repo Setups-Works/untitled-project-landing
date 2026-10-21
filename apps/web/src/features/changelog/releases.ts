@@ -23,6 +23,13 @@ export type Release = {
 export const RELEASES: Release[] = [
   {
     date: "2026-10-21",
+    title: "The phone previews now show on mobile",
+    summary: "The app screenshots on the home page appear on phones too, not only on wide screens.",
+    tone: "sand",
+    changes: [{ kind: "improved", platform: "web", text: "The iPhone previews of Notes, To-do, Journal, Chat and Home on our home page now show on phones and tablets as well." }],
+  },
+  {
+    date: "2026-10-21",
     title: "A new AI icon",
     summary: "The AI button in notes now uses the grainy blue-to-coral pill.",
     tone: "violet",
