@@ -99,6 +99,7 @@ function Routes() {
         <Stack.Screen name="journal/collaborate" />
         <Stack.Screen name="journal/shared/[id]" />
         <Stack.Screen name="task/[id]" options={{ presentation: "modal" }} />
+        <Stack.Screen name="reader/[id]" options={{ presentation: "modal" }} />
         <Stack.Screen name="health/[metric]" options={{ presentation: "modal" }} />
         <Stack.Screen name="profile" options={{ presentation: "modal" }} />
       </Stack.Protected>

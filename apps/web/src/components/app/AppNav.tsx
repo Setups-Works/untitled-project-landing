@@ -14,7 +14,7 @@ import {
   faBookOpen,
   faComments,
   faListCheck,
-  faHeartPulse,
+  faBriefcase,
   faShieldHalved,
   faRightFromBracket,
   faGear,
@@ -31,9 +31,9 @@ const TABS = [
   { href: "/dashboard", t: "Home", icon: faHouse },
   { href: "/dashboard/journal", t: "Journal", icon: faBookOpen },
   { href: "/dashboard/chat", t: "Chat", icon: faComments },
-  // To-do, Notes and Calendar share one tab; the switch at the top of each page moves between them (components/app/PlanSwitch.tsx).
-  { href: "/dashboard/todo", t: "Plan", icon: faListCheck, also: ["/dashboard/notes", "/dashboard/calendar"] },
-  { href: "/dashboard/health", t: "Health", icon: faHeartPulse },
+  // To-do, Notes, Calendar and Health share one tab; the switch at the top of each page moves between them (components/app/PlanSwitch.tsx).
+  { href: "/dashboard/todo", t: "Plan", icon: faListCheck, also: ["/dashboard/notes", "/dashboard/calendar", "/dashboard/health"] },
+  { href: "/dashboard/workspace", t: "Workspace", icon: faBriefcase },
 ];
 
 type Account = {

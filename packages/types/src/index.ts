@@ -121,6 +121,39 @@ export type HealthDay = {
   synced_at: string;
 };
 
+/** A feed the person follows (Workspace → Reader). `unread` is counted on the server. */
+export type RssFeed = {
+  id: string;
+  url: string;
+  site_url: string | null;
+  title: string;
+  description: string;
+  image_url: string | null;
+  last_fetched_at: string | null;
+  last_error: string | null;
+  created_at: string;
+  unread: number;
+};
+
+/** One article, as plain text. `content` is only sent when a single article is opened. */
+export type RssItem = {
+  id: string;
+  feed_id: string;
+  feed_title: string;
+  feed_image_url: string | null;
+  title: string;
+  link: string | null;
+  summary: string;
+  content?: string;
+  image_url: string | null;
+  author: string | null;
+  published_at: string;
+  is_read: boolean;
+  is_starred: boolean;
+};
+
+export type RssFilter = "all" | "unread" | "starred";
+
 export type ListResponse<T> = { data: T[]; limit: number; offset: number };
 export type ItemResponse<T> = { data: T };
 

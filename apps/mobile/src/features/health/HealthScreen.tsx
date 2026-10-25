@@ -32,7 +32,7 @@ import { Banner } from "@/components/ui/Banner";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Icon, type IconName } from "@/components/ui/Icon";
-import { Screen } from "@/components/ui/Screen";
+import { Screen, type ScreenEdges } from "@/components/ui/Screen";
 import { EmptyState, ErrorState, LoadingState } from "@/components/ui/States";
 import { Palette, Radius, Space, Tints } from "@/constants/theme";
 import { errorMessage } from "@/lib/api";
@@ -48,7 +48,7 @@ const WIDE_COLUMN = 1100;
 
 const ACTION_ICON: Record<HealthAction, IconName> = { ask: "wand-magic-sparkles", journal: "book-open", note: "pen-to-square" };
 
-export function HealthScreen() {
+export function HealthScreen({ edges }: { edges?: ScreenEdges }) {
   const conn = useHealthConnection();
   const daysQ = useHealthDays();
   const { width } = useWindowDimensions();
@@ -90,7 +90,7 @@ export function HealthScreen() {
   const toChat = (action: HealthAction) => askChat(healthPrompt(action, range));
 
   return (
-    <Screen onRefresh={refresh} refreshing={conn.syncing} contentStyle={wide ? styles.wide : undefined}>
+    <Screen edges={edges} onRefresh={refresh} refreshing={conn.syncing} contentStyle={wide ? styles.wide : undefined}>
       <View style={styles.head}>
         <AppText variant="display">Health</AppText>
         <AppText variant="small">

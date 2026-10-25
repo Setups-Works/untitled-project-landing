@@ -13,6 +13,7 @@ export const FEATURES = {
   chatSharing: true,
   universalSearch: true,
   adminPanel: true,
+  rssReader: true, // Workspace → Reader: follow feeds and read articles
 
   // Planned — see docs/PHASES.md
   workspaces: false, // Phase 1: shared workspaces and membership

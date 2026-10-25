@@ -40,6 +40,14 @@ export const qk = {
   },
   calendar: { all: ["calendar"] as const, events: ["calendar", "events"] as const },
   health: { all: ["health"] as const, days: (span: number) => ["health", "days", span] as const },
+  rss: {
+    all: ["rss"] as const,
+    feeds: ["rss", "feeds"] as const,
+    lists: ["rss", "items"] as const,
+    items: (feed: string, filter: string, q: string) => ["rss", "items", feed, filter, q] as const,
+    item: (id: string) => ["rss", "item", id] as const,
+    refresh: ["rss-refresh"] as const, // outside qk.rss.all on purpose: a data change must not trigger another network refresh
+  },
   profile: ["profile"] as const,
   aiProviders: ["ai", "providers"] as const,
 } as const;

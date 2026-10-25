@@ -77,3 +77,8 @@ PostgreSQL 16 (Docker). **All tables have Row-Level Security enabled.** Migratio
 - Index every column you filter or sort by in lists (e.g. `(user_id, due_date)`).
 - A policy of `auth.uid() is not null` is **not** access control.
 - Tokens/OAuth credentials are never stored — Composio holds them; we keep connection ids.
+
+## RSS reader
+
+- `rss_feeds` — a person's subscriptions: `url` (unique per user), `site_url`, `title`, `description`, `image_url`, `last_fetched_at`, `last_error`. RLS: owner only.
+- `rss_items` — articles as plain text: `guid` (unique per feed), `title`, `link`, `summary`, `content`, `image_url`, `author`, `published_at`, `is_read`, `is_starred`. RLS: owner only, and the feed must belong to the same user. Trimmed to the newest `RSS.itemsPerFeed` per feed (starred ones are kept).

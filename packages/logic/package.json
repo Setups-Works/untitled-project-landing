@@ -20,6 +20,10 @@
       "types": "./src/health.ts",
       "default": "./src/health.ts"
     },
+    "./rss": {
+      "types": "./src/rss.ts",
+      "default": "./src/rss.ts"
+    },
     "./tasks": {
       "types": "./src/tasks.ts",
       "default": "./src/tasks.ts"

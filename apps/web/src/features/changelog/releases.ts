@@ -22,6 +22,20 @@ export type Release = {
  */
 export const RELEASES: Release[] = [
   {
+    date: "2026-10-25",
+    title: "Version 2.2: a Reader and a Workspace tab",
+    summary: "Follow the sites you like and read them in one place, and find Health inside Plan.",
+    tone: "green",
+    appVersion: "v2.2.0",
+    changes: [
+      { kind: "new", platform: "web", text: "A new Reader in the Workspace tab: add a feed or just a website address, then read articles with their picture and description, search them, and filter by unread or starred." },
+      { kind: "new", platform: "app", text: "The Workspace tab has the same Reader: follow feeds, search, star articles and open them to read in full." },
+      { kind: "new", platform: "web", text: "Workspace now has a switcher between the Workspace page, which is coming soon, and the Reader." },
+      { kind: "improved", platform: "web", text: "Health moved into Plan, next to To-do, Notes and Calendar." },
+      { kind: "improved", platform: "app", text: "Health moved into the Plan tab, and Workspace takes its place in the tab bar. Links to Health still work." },
+    ],
+  },
+  {
     date: "2026-10-21",
     title: "Version 2.1: collaboration on the home page",
     summary: "The home page now shows what writing a journal together looks like, in the same phone card as the other features.",
