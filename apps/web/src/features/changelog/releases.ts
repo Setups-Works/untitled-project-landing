@@ -23,6 +23,17 @@ export type Release = {
 export const RELEASES: Release[] = [
   {
     date: "2026-10-25",
+    title: "Version 2.2.1: a sidebar for the Reader in the app",
+    summary: "The Reader in the app now has the same sidebar as the web, and it stays up to date when you come back to it.",
+    tone: "mint",
+    appVersion: "v2.2.1",
+    changes: [
+      { kind: "new", platform: "app", text: "The Reader has a sidebar like the web: add a feed, switch between all, unread and starred articles, and pick a feed from your list with its logo and unread count. It opens from the menu button on phones and stays open on tablets." },
+      { kind: "improved", platform: "app", text: "The Reader catches up with new feeds and articles whenever you reopen the app." },
+    ],
+  },
+  {
+    date: "2026-10-25",
     title: "Version 2.2: a Reader and a Workspace tab",
     summary: "Follow the sites you like and read them in one place, and find Health inside Plan.",
     tone: "green",
