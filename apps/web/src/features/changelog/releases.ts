@@ -23,6 +23,18 @@ export type Release = {
 export const RELEASES: Release[] = [
   {
     date: "2026-10-26",
+    title: "Version 2.4.1: pricing in the app",
+    summary: "The app now has its own pricing page, so you can see and compare the plans without leaving it.",
+    tone: "gold",
+    appVersion: "v2.4.1",
+    changes: [
+      { kind: "new", platform: "app", text: "A pricing page in the app: the three plans with their prices in rupees, what each includes, how they compare, and a button to choose one." },
+      { kind: "new", platform: "app", text: "Home shows a Choose how you pay for AI card until you pick a plan. You can drag it like the other Home sections." },
+      { kind: "improved", platform: "app", text: "Settings → Plan and billing has a Compare plans button that opens the pricing page." },
+    ],
+  },
+  {
+    date: "2026-10-26",
     title: "Version 2.4: plans and billing",
     summary: "Choose how you pay for AI: a subscription, pay as you go, or your own API key. Change or cancel any time.",
     tone: "amber",
