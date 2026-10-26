@@ -6,9 +6,8 @@ import {
   faArrowUp,
   faChevronLeft,
   faChevronRight,
+  faEllipsis,
   faPaperclip,
-  faPen,
-  faShareNodes,
   faTableColumns,
   faTrash,
 } from "@fortawesome/free-solid-svg-icons";
@@ -23,6 +22,7 @@ import type { Attachment, Entry } from "../../lib/workspace";
 import Markdown from "./Markdown";
 import JournalCalendar from "./JournalCalendar";
 import { useConfirm } from "../ui/Confirm";
+import Menu, { MenuItem } from "../ui/Menu";
 import FilePreviewList from "../ui/FilePreviewList";
 import AttachmentImage from "../ui/AttachmentImage";
 import AudioWave from "../ui/AudioWave";
@@ -36,6 +36,15 @@ const COLS = "id,entry_date,body,created_at,updated_at,kind,attachments,share_to
 const DAY_TONES = TONES.filter((t) => t !== "sand");
 /** A stable colour for a date (its day-of-month picks the tint), so neighbouring days differ and a date never changes colour. */
 const dayTone = (iso: string) => DAY_TONES[Number(iso.slice(8, 10)) % DAY_TONES.length];
+/** "5 M", "3 H", "2 D", "1 W": how long ago an entry was written, in the quiet mono style of the card header. */
+function shortAge(iso: string) {
+  const m = Math.max(0, (Date.now() - new Date(iso).getTime()) / 60_000);
+  if (m < 1) return "now";
+  if (m < 60) return `${Math.floor(m)} M`;
+  if (m < 1440) return `${Math.floor(m / 60)} H`;
+  if (m < 10_080) return `${Math.floor(m / 1440)} D`;
+  return `${Math.floor(m / 10_080)} W`;
+}
 const EMPTY_ENTRIES: Entry[] = []; // stable references while a query loads
 const EMPTY_COUNTS: Record<string, number> = {};
 const MAX_BYTES = 10 * 1024 * 1024;
@@ -298,34 +307,38 @@ export default function JournalView() {
           </div>
         </header>
 
-        <div className="jr-list" aria-live="polite">
+        <div className="jr-list flex flex-col" aria-live="polite">
           {ready && n === 0 && (
             <p className="ap-none jr-empty">
               {date === today ? "Nothing written yet today. What’s on your mind?" : "No entries on this day."}
             </p>
           )}
           {entries.map((e) => (
-            <article key={e.id} className="jr-entry" {...ctxProps("entry", e.id)}>
-              <div className="jr-meta">
-                <time dateTime={e.created_at}>{fmtTime(e.created_at)}</time>
-                <span className="jr-acts">
-                  <button
-                    className="icon-btn"
-                    aria-label="Edit entry"
-                    onClick={() => {
+            <article
+              key={e.id}
+              className={`liquid-flat mt-3 first:mt-auto rounded-r3 px-5 pt-4 pb-[18px] [backdrop-filter:var(--glass-blur)] max-[700px]:px-4`}
+              {...ctxProps("entry", e.id)}
+            >
+              <div className="flex items-center gap-3">
+                <time dateTime={e.created_at} className="font-serif text-[26px] leading-none tracking-[-0.02em] text-fg">
+                  {fmtTime(e.created_at)}
+                </time>
+                <i className="h-px min-w-4 flex-1 bg-line-strong" aria-hidden />
+                <span className="font-mono text-[11px] tracking-[0.1em] text-fg-subtle uppercase">{shortAge(e.created_at)}</span>
+                <Menu label="Entry options" trigger={<FA icon={faEllipsis} />}>
+                  <MenuItem
+                    onSelect={() => {
                       setEditing(e.id);
                       setDraft(e.body);
                     }}
                   >
-                    <FA icon={faPen} />
-                  </button>
-                  <button className="icon-btn" aria-label="Share entry" onClick={() => setSharing(e)}>
-                    <FA icon={faShareNodes} />
-                  </button>
-                  <button className="icon-btn" aria-label="Delete entry" onClick={() => remove(e)}>
-                    <FA icon={faTrash} />
-                  </button>
-                </span>
+                    Edit
+                  </MenuItem>
+                  <MenuItem onSelect={() => setSharing(e)}>Share</MenuItem>
+                  <MenuItem danger onSelect={() => remove(e)}>
+                    Delete
+                  </MenuItem>
+                </Menu>
               </div>
               {editing === e.id ? (
                 <div className="jr-edit">
@@ -350,7 +363,11 @@ export default function JournalView() {
                   </div>
                 </div>
               ) : (
-                e.body && <Markdown text={e.body} />
+                e.body && (
+                  <div className="mt-3 [&_.md]:text-[15.5px] [&_.md]:leading-[1.65] [&_.md]:text-fg">
+                    <Markdown text={e.body} />
+                  </div>
+                )
               )}
               {e.attachments.length > 0 && (
                 <ul className="jr-files">

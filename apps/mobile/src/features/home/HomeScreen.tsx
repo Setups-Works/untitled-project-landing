@@ -2,7 +2,7 @@ import type { Note } from "@untitled/types";
 import { ago, isOpen, isOverdue } from "@untitled/logic";
 import { Image } from "expo-image";
 import { router } from "expo-router";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 import { Pressable, StyleSheet, View } from "react-native";
 
 import { AppText } from "@/components/ui/AppText";
@@ -20,7 +20,9 @@ import { TaskRow } from "@/features/tasks/TaskRow";
 import { useTasks } from "@/features/tasks/queries";
 import { useToggleTask } from "@/features/tasks/useToggleTask";
 import { useAppState, useAuth } from "@/providers/AppState";
+import { ReorderableList } from "@/components/ui/ReorderableList";
 import { PersonalityInsightsCard } from "./PersonalityInsightsCard";
+import { useHomeOrder } from "./useHomeOrder";
 
 /** Mobile overview of the journal streak, today's tasks, and recent notes. */
 export function HomeScreen() {
@@ -30,6 +32,7 @@ export function HomeScreen() {
   const journalQ = useJournal();
   const notesQ = useNotes();
   const toggle = useToggleTask();
+  const [order, saveOrder] = useHomeOrder();
   const today = useMemo(() => isoDate(), []);
   const [refreshing, setRefreshing] = useState(false);
   const [avatarCookie, setAvatarCookie] = useState<string | null>(null);
@@ -37,10 +40,15 @@ export function HomeScreen() {
 
   useEffect(() => {
     let active = true;
-    void auth.getCookie().then((cookie) => {
-      if (active) setAvatarCookie(cookie);
-    }).catch(() => undefined);
-    return () => { active = false; };
+    void auth
+      .getCookie()
+      .then((cookie) => {
+        if (active) setAvatarCookie(cookie);
+      })
+      .catch(() => undefined);
+    return () => {
+      active = false;
+    };
   }, [auth]);
 
   const refresh = useCallback(async () => {
@@ -56,11 +64,15 @@ export function HomeScreen() {
   const header = (
     <View style={styles.header}>
       <View style={styles.headerText}>
-        <AppText variant="heading" style={styles.greeting}>{greeting()},</AppText>
+        <AppText variant="heading" style={styles.greeting}>
+          {greeting()},
+        </AppText>
         <AppText variant="bodyStrong" accessibilityRole="header" style={styles.name}>
           {first ? first.toLocaleUpperCase() : "YOUR DAY"}
         </AppText>
-        <AppText variant="small" color={Palette.fgSubtle}>{longDate()}</AppText>
+        <AppText variant="small" color={Palette.fgSubtle}>
+          {longDate()}
+        </AppText>
       </View>
       <Pressable
         accessibilityRole="button"
@@ -124,11 +136,14 @@ export function HomeScreen() {
     .sort((left, right) => new Date(right.updated_at).getTime() - new Date(left.updated_at).getTime())
     .slice(0, 3);
 
-  return (
-    <Screen onRefresh={refresh} refreshing={refreshing}>
-      {header}
-
-      <Card tone="green" liquidTint accessibilityLabel={`Journal streak: ${streak} days. ${todayLogged ? "Logged today" : "Not logged today"}`} style={styles.streakCard}>
+  const sections: Record<string, ReactNode> = {
+    streak: (
+      <Card
+        tone="green"
+        liquidTint
+        accessibilityLabel={`Journal streak: ${streak} days. ${todayLogged ? "Logged today" : "Not logged today"}`}
+        style={styles.streakCard}
+      >
         <View style={styles.cardHeader}>
           <AppText variant="bodyStrong">Journal streak</AppText>
           <AppText variant="label" color={todayLogged ? Palette.greenFg : Palette.fgSubtle}>
@@ -137,8 +152,12 @@ export function HomeScreen() {
         </View>
         <View style={styles.streakSummary}>
           <View style={styles.streakNumber}>
-            <AppText variant="display" style={styles.streakValue}>{streak}</AppText>
-            <AppText variant="body" color={Palette.fgMuted}>days</AppText>
+            <AppText variant="display" style={styles.streakValue}>
+              {streak}
+            </AppText>
+            <AppText variant="body" color={Palette.fgMuted}>
+              days
+            </AppText>
           </View>
           <AppText variant="small" color={Palette.fgMuted} align="right" style={styles.streakHint}>
             {streak ? `${Math.max(0, 7 - streak)} more for a full week.` : "Write an entry to start your streak."}
@@ -155,84 +174,129 @@ export function HomeScreen() {
                 accessibilityLabel={`${new Date(`${date}T00:00:00`).toLocaleDateString(undefined, { weekday: "long" })}${active ? ", journal entry saved" : ", no journal entry"}`}
                 style={[styles.weekDay, active ? styles.weekDayActive : null, isToday && !active ? styles.weekDayToday : null]}
               >
-                <AppText variant="small" color={active ? Palette.onDark : Palette.fgSubtle} style={styles.weekLabel}>{label}</AppText>
+                <AppText variant="small" color={active ? Palette.onDark : Palette.fgSubtle} style={styles.weekLabel}>
+                  {label}
+                </AppText>
               </View>
             );
           })}
         </View>
       </Card>
-
-      <View style={styles.sectionHeader}>
-        <AppText variant="bodyStrong" style={styles.sectionTitle}>Today · {remaining} left</AppText>
-        <SectionLink title="Open" onPress={() => router.navigate("/todo")} />
-      </View>
-      <Card tone="blue" liquidTint style={styles.taskCard}>
-        {todayTasks.length ? todayTasks.map((task) => (
-          <TaskRow
-            key={task.id}
-            task={task}
-            today={today}
-            onToggle={toggle}
-            onOpen={(item) => router.push({ pathname: "/task/[id]", params: { id: item.id } })}
-          />
-        )) : (
-          <AppText variant="small" color={Palette.fgSubtle}>
-            {overdue.length ? `${overdue.length} overdue. Open To-do to review your tasks.` : "No tasks for today. Open To-do to plan ahead."}
+    ),
+    tasks: (
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <AppText variant="bodyStrong" style={styles.sectionTitle}>
+            Today · {remaining} left
           </AppText>
-        )}
-      </Card>
-
-      <View style={styles.sectionHeader}>
-        <View style={styles.notesHeading}>
-          <AppText variant="bodyStrong" style={styles.sectionTitle}>Notes</AppText>
-          <AppText variant="label">{notesQ.data.length} saved</AppText>
+          <SectionLink title="Open" onPress={() => router.navigate("/todo")} />
         </View>
-        <SectionLink title="Open" onPress={() => router.navigate("/notes")} />
+        <Card tone="blue" liquidTint style={styles.taskCard}>
+          {todayTasks.length ? (
+            todayTasks.map((task) => (
+              <TaskRow
+                key={task.id}
+                task={task}
+                today={today}
+                onToggle={toggle}
+                onOpen={(item) => router.push({ pathname: "/task/[id]", params: { id: item.id } })}
+              />
+            ))
+          ) : (
+            <AppText variant="small" color={Palette.fgSubtle}>
+              {overdue.length
+                ? `${overdue.length} overdue. Open To-do to review your tasks.`
+                : "No tasks for today. Open To-do to plan ahead."}
+            </AppText>
+          )}
+        </Card>
       </View>
-      <Card tone="amber" liquidTint style={styles.notesCard}>
-        {recentNotes.length ? recentNotes.map((note, index) => (
-          <View key={note.id}>
-            {index > 0 ? <View style={styles.separator} /> : null}
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={`Open note: ${noteTitle(note)}`}
-              onPress={() => router.push({ pathname: "/note/[id]", params: { id: note.id } })}
-              style={({ pressed }) => [styles.noteRow, pressed ? styles.pressed : null]}
-            >
-              <View style={styles.noteBullet} />
-              <AppText variant="bodyStrong" numberOfLines={2} style={styles.noteTitle}>{noteTitle(note)}</AppText>
-              <AppText variant="small" color={Palette.fgSubtle} style={styles.noteAge}>{ago(note.updated_at)}</AppText>
-            </Pressable>
+    ),
+    notes: (
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <View style={styles.notesHeading}>
+            <AppText variant="bodyStrong" style={styles.sectionTitle}>
+              Notes
+            </AppText>
+            <AppText variant="label">{notesQ.data.length} saved</AppText>
           </View>
-        )) : (
-          <AppText variant="small" color={Palette.fgSubtle}>No notes yet. Save an idea from Notes.</AppText>
-        )}
-      </Card>
-
-      <View style={styles.sectionHeader}>
-        <AppText variant="bodyStrong" style={styles.sectionTitle}>Today’s journal</AppText>
-        <SectionLink title="Open" onPress={() => router.navigate("/journal")} />
+          <SectionLink title="Open" onPress={() => router.navigate("/notes")} />
+        </View>
+        <Card tone="amber" liquidTint style={styles.notesCard}>
+          {recentNotes.length ? (
+            recentNotes.map((note, index) => (
+              <View key={note.id}>
+                {index > 0 ? <View style={styles.separator} /> : null}
+                <Pressable
+                  accessibilityRole="button"
+                  accessibilityLabel={`Open note: ${noteTitle(note)}`}
+                  onPress={() => router.push({ pathname: "/note/[id]", params: { id: note.id } })}
+                  style={({ pressed }) => [styles.noteRow, pressed ? styles.pressed : null]}
+                >
+                  <View style={styles.noteBullet} />
+                  <AppText variant="bodyStrong" numberOfLines={2} style={styles.noteTitle}>
+                    {noteTitle(note)}
+                  </AppText>
+                  <AppText variant="small" color={Palette.fgSubtle} style={styles.noteAge}>
+                    {ago(note.updated_at)}
+                  </AppText>
+                </Pressable>
+              </View>
+            ))
+          ) : (
+            <AppText variant="small" color={Palette.fgSubtle}>
+              No notes yet. Save an idea from Notes.
+            </AppText>
+          )}
+        </Card>
       </View>
-      {entries.filter((entry) => entry.entry_date === today).slice(0, 1).map((entry) => (
-        <Card
-          key={entry.id}
-          tone="violet"
-          liquidTint
-          onPress={() => router.push({ pathname: "/journal/[id]", params: { id: entry.id } })}
-          accessibilityLabel="Open today’s journal entry"
-        >
-          <AppText variant="small" color={Palette.fgSubtle}>{timeOf(entry.created_at)}</AppText>
-          <AppText variant="body" numberOfLines={3}>{entry.body || "Voice or attachment"}</AppText>
-          <AttachmentGallery attachments={entry.attachments} />
-        </Card>
-      ))}
-      {!todayLogged ? (
-        <Card tone="violet" liquidTint onPress={() => router.navigate("/journal")} accessibilityLabel="Write today’s journal">
-          <AppText variant="small" color={Palette.fgSubtle}>Write your first entry for today.</AppText>
-        </Card>
-      ) : null}
+    ),
+    journal: (
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <AppText variant="bodyStrong" style={styles.sectionTitle}>
+            Today’s journal
+          </AppText>
+          <SectionLink title="Open" onPress={() => router.navigate("/journal")} />
+        </View>
+        {entries
+          .filter((entry) => entry.entry_date === today)
+          .slice(0, 1)
+          .map((entry) => (
+            <Card
+              key={entry.id}
+              tone="violet"
+              liquidTint
+              onPress={() => router.push({ pathname: "/journal/[id]", params: { id: entry.id } })}
+              accessibilityLabel="Open today’s journal entry"
+            >
+              <AppText variant="small" color={Palette.fgSubtle}>
+                {timeOf(entry.created_at)}
+              </AppText>
+              <AppText variant="body" numberOfLines={3}>
+                {entry.body || "Voice or attachment"}
+              </AppText>
+              <AttachmentGallery attachments={entry.attachments} />
+            </Card>
+          ))}
+        {!todayLogged ? (
+          <Card tone="violet" liquidTint onPress={() => router.navigate("/journal")} accessibilityLabel="Write today’s journal">
+            <AppText variant="small" color={Palette.fgSubtle}>
+              Write your first entry for today.
+            </AppText>
+          </Card>
+        ) : null}
+      </View>
+    ),
+    insights: <PersonalityInsightsCard />,
+  };
 
-      <PersonalityInsightsCard />
+  return (
+    <Screen onRefresh={refresh} refreshing={refreshing}>
+      {header}
+
+      <ReorderableList gap={Space.lg} onReorder={saveOrder} items={order.map((id) => ({ id, node: sections[id] ?? null }))} />
     </Screen>
   );
 }
@@ -240,14 +304,24 @@ export function HomeScreen() {
 function SectionLink({ title, onPress }: { title: string; onPress: () => void }) {
   return (
     <Pressable accessibilityRole="button" onPress={onPress} hitSlop={8} style={styles.sectionLink}>
-      <AppText variant="label" color={Palette.greenFg}>{title}</AppText>
+      <AppText variant="label" color={Palette.greenFg}>
+        {title}
+      </AppText>
       <Icon name="arrow-up-right-from-square" size={13} color={Palette.greenFg} />
     </Pressable>
   );
 }
 
 function noteTitle(note: Note) {
-  return note.title.trim() || note.body.split("\n").find((line) => line.trim())?.replace(/^[#>*\-\s]+/, "").slice(0, 80) || "Untitled";
+  return (
+    note.title.trim() ||
+    note.body
+      .split("\n")
+      .find((line) => line.trim())
+      ?.replace(/^[#>*\-\s]+/, "")
+      .slice(0, 80) ||
+    "Untitled"
+  );
 }
 
 const styles = StyleSheet.create({
@@ -255,7 +329,14 @@ const styles = StyleSheet.create({
   headerText: { flex: 1, gap: Space.xs },
   greeting: { ...Font.serifItalic, fontSize: 25, lineHeight: 29 },
   name: { fontSize: 30, lineHeight: 34, letterSpacing: -0.7, textTransform: "uppercase" },
-  avatar: { width: 42, height: 42, borderRadius: Radius.pill, backgroundColor: Palette.fillDark, alignItems: "center", justifyContent: "center" },
+  avatar: {
+    width: 42,
+    height: 42,
+    borderRadius: Radius.pill,
+    backgroundColor: Palette.fillDark,
+    alignItems: "center",
+    justifyContent: "center",
+  },
   avatarImage: { width: "100%", height: "100%", borderRadius: Radius.pill },
   pressed: { opacity: 0.72 },
   streakCard: { gap: Space.md, padding: Space.lg },
@@ -265,10 +346,18 @@ const styles = StyleSheet.create({
   streakValue: { fontSize: 58, lineHeight: 62 },
   streakHint: { maxWidth: "54%" },
   week: { flexDirection: "row", gap: Space.sm },
-  weekDay: { flex: 1, height: 36, alignItems: "center", justifyContent: "center", borderRadius: Radius.r1, backgroundColor: Palette.glassHi },
+  weekDay: {
+    flex: 1,
+    height: 36,
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: Radius.r1,
+    backgroundColor: Palette.glassHi,
+  },
   weekDayActive: { backgroundColor: Palette.greenFg },
   weekDayToday: { borderWidth: 1, borderColor: Palette.greenFg },
   weekLabel: { textTransform: "uppercase" },
+  section: { gap: Space.lg },
   sectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: Space.md },
   sectionTitle: { fontSize: 18, lineHeight: 24 },
   sectionLink: { minHeight: 40, flexDirection: "row", alignItems: "center", gap: Space.xs, paddingHorizontal: Space.xs },

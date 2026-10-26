@@ -1,7 +1,7 @@
 {
   "name": "untitled-project",
   "private": true,
-  "version": "2.2.1",
+  "version": "2.3.0",
   "packageManager": "pnpm@12.11.2",
   "engines": { "node": ">=22.13.0" },
   "scripts": {

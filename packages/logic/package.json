@@ -35,6 +35,10 @@
     "./files": {
       "types": "./src/files.ts",
       "default": "./src/files.ts"
+    },
+    "./homeLayout": {
+      "types": "./src/homeLayout.ts",
+      "default": "./src/homeLayout.ts"
     }
   },
   "scripts": {

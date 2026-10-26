@@ -22,6 +22,22 @@ export type Release = {
  */
 export const RELEASES: Release[] = [
   {
+    date: "2026-10-26",
+    title: "Version 2.3: a calmer Home you can rearrange",
+    summary: "Home is rebuilt in clean liquid glass, shows more of your workspace, and you can drag its cards into the order you like.",
+    tone: "violet",
+    appVersion: "v2.3.0",
+    changes: [
+      { kind: "new", platform: "web", text: "Drag the cards on Home into your own order using the grip on each card, or focus the grip and press the up and down arrow keys. Your order is remembered in this browser." },
+      { kind: "new", platform: "app", text: "Touch and hold a section on Home, then drag it up or down to rearrange it. The order is remembered on your phone." },
+      { kind: "new", platform: "web", text: "Home now shows today’s schedule, your latest Reader articles with the unread count, today’s steps and sleep, and a note when a shared journal invitation is waiting." },
+      { kind: "improved", platform: "web", text: "Home has a new minimal look: neutral liquid-glass cards, a serif greeting, one place to add today’s tasks and one for your journal, and quick links across the top." },
+      { kind: "improved", platform: "web", text: "Home works better on phones: the quick links scroll sideways and the cards stack in a single column." },
+      { kind: "improved", platform: "web", text: "Journal entries are now separate glass cards with the time, how long ago you wrote them and a menu for edit, share and delete." },
+      { kind: "improved", platform: "web", text: "The Journal page fits the screen: your entries sit above the writing box, which stays in view." },
+    ],
+  },
+  {
     date: "2026-10-25",
     title: "Version 2.2.1: a sidebar for the Reader in the app",
     summary: "The Reader in the app now has the same sidebar as the web, and it stays up to date when you come back to it.",

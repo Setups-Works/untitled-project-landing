@@ -11766,10 +11766,12 @@
       display: block;
     }
   }
+  /* Fills the screen under the top bar. Entries sit just above the compose box (chat style) and scroll when there are many. */
   .jr-main.ap-card {
     display: flex;
     flex-direction: column;
-    min-height: calc(100dvh - 120px);
+    height: calc(100dvh - 240px);
+    min-height: 420px;
   }
   .jr-head {
     padding: 22px 26px 16px;
@@ -12059,6 +12061,7 @@
       background: #ffffff80;
     }
     .jr-main.ap-card {
+      height: auto;
       min-height: calc(100dvh - 260px);
     }
     .jr-head {

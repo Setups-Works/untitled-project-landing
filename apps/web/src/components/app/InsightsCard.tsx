@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { FontAwesomeIcon as FA } from "@fortawesome/react-fontawesome";
 import type { IconDefinition } from "@fortawesome/fontawesome-svg-core";
 import {
@@ -33,7 +33,7 @@ const ICONS: Record<Observation["icon"], IconDefinition> = {
 };
 
 /** Personality insights, worked out from the user's own journal, notes and tasks. Nothing leaves the browser. */
-export default function InsightsCard() {
+export default function InsightsCard({ handle }: { handle?: ReactNode }) {
   const sb = useMemo(api, []);
   const [data, setData] = useState<{ tasks: InTask[]; entries: InEntry[]; notes: InNote[] } | null>(null);
   const [err, setErr] = useState(false);
@@ -64,36 +64,39 @@ export default function InsightsCard() {
       <span>
         <FA icon={faWandMagicSparkles} /> Personality insights
       </span>
-      {result?.enough && (
-        <span className="ap-pager">
-          <button className="ne-btn" aria-label="Previous page" disabled={page === 0} onClick={() => setPage(0)}>
-            <FA icon={faChevronLeft} />
-          </button>
-          <button className="ne-btn" aria-label="Next page" disabled={page === 1} onClick={() => setPage(1)}>
-            <FA icon={faChevronRight} />
-          </button>
-        </span>
-      )}
+      <span className="flex items-center gap-1.5">
+        {result?.enough && (
+          <span className="ap-pager">
+            <button className="ne-btn" aria-label="Previous page" disabled={page === 0} onClick={() => setPage(0)}>
+              <FA icon={faChevronLeft} />
+            </button>
+            <button className="ne-btn" aria-label="Next page" disabled={page === 1} onClick={() => setPage(1)}>
+              <FA icon={faChevronRight} />
+            </button>
+          </span>
+        )}
+        {handle}
+      </span>
     </div>
   );
 
   if (err)
     return (
-      <section className="ap-card at-gold">
+      <section className="ap-card liquid-flat [backdrop-filter:var(--glass-blur)]">
         {head}
         <p className="ap-none">Couldn’t load your insights right now.</p>
       </section>
     );
   if (!result)
     return (
-      <section className="ap-card at-gold">
+      <section className="ap-card liquid-flat [backdrop-filter:var(--glass-blur)]">
         {head}
         <p className="ap-none">Reading your workspace…</p>
       </section>
     );
   if (!result.enough)
     return (
-      <section className="ap-card at-gold">
+      <section className="ap-card liquid-flat [backdrop-filter:var(--glass-blur)]">
         {head}
         <div className="ap-empty">
           <p>
@@ -116,7 +119,7 @@ export default function InsightsCard() {
     );
 
   return (
-    <section className="ap-card at-gold" aria-label="Personality insights">
+    <section className="ap-card liquid-flat [backdrop-filter:var(--glass-blur)]" aria-label="Personality insights">
       {head}
       {page === 0 ? (
         <div className="ap-pers">
