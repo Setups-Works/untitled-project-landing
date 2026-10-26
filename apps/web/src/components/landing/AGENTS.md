@@ -50,3 +50,5 @@ numbers that the docs and code don't support, and don't invent testimonials.
 - A server component must not hand a client component's element to something that clones it. `Tip` wraps children in a span instead.
 - `Reveal` delays are in **milliseconds**; GSAP's own `delay` is seconds.
 - Sticky stacks (`home/DeepDives.tsx`) resolve `#anchor` links from natural positions; keep ids on the direct children of the stack.
+
+**Pricing page:** `app/pricing/page.tsx` is dynamic and reads the plans from the database (`listPublicPlans()`), so a price edited in Admin → Plans shows there without a deploy. Never hard-code a price, allowance or plan name on it; the compare table (`CompareTable`, any number of plans) is built from the plan rows. It says when payments are not switched on (`FEATURES.payments`). See `docs/BILLING.md`.

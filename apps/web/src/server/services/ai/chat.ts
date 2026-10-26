@@ -1,5 +1,9 @@
 import "server-only";
-import { AiProviderError, parseChoice, type AiChunk, type AiMessage } from "../../providers/ai";
+import { estimateTokens } from "@untitled/logic/billing";
+import { AiProviderError, parseChoice, type AiChunk, type AiMessage, type AiUsage } from "../../providers/ai";
+import { customProvider } from "../../providers/ai/custom";
+import { ServiceError } from "../../errors";
+import { aiAccessFor } from "../billing/billing.service";
 import { redis } from "../../redis";
 import { userDb } from "../../db/builders";
 import { calendarFor } from "../../../lib/dates";
@@ -96,11 +100,22 @@ export async function startChatReply(opts: {
   localDate: string;
   signal?: AbortSignal;
 }): Promise<ChatReply> {
-  const { provider, model } = parseChoice(opts.providerId);
-  if (!provider || provider.runtime !== "server" || !provider.isAvailable())
+  // The person's plan decides how AI is paid for: their own key, or ours counted against an allowance or by use.
+  let access: Awaited<ReturnType<typeof aiAccessFor>>;
+  try {
+    access = await aiAccessFor(opts.userId);
+  } catch (e) {
+    if (e instanceof ServiceError) return { ok: false, status: e.status, error: e.message };
+    throw e;
+  }
+  const chosen = parseChoice(opts.providerId);
+  const byo = access.byo;
+  const provider = byo ? customProvider : chosen.provider;
+  const model = byo ? byo.model : chosen.model;
+  if (!provider || (!byo && (provider.hidden || provider.runtime !== "server" || !provider.isAvailable())))
     return { ok: false, status: 400, error: "That AI isn’t available on this server." };
   // Only models the provider itself lists may be used, so a crafted id can't pick an arbitrary model.
-  if (model && !(await provider.models?.().catch(() => []))?.some((m) => m.id === model))
+  if (!byo && model && !(await provider.models?.().catch(() => []))?.some((m) => m.id === model))
     return { ok: false, status: 400, error: "That model isn’t available." };
   if (!(await underRateLimit(opts.userId)))
     return { ok: false, status: 429, error: "You’re sending messages very fast. Wait a moment and try again." };
@@ -122,7 +137,10 @@ export async function startChatReply(opts: {
     { role: "system", content: `${CHAT_PROMPT.system} ${calendarFor(opts.localDate)}${health ? `\n${health}` : ""}` },
     ...rows.map((m) => ({ role: m.role, content: m.body.slice(0, LIMITS.charsPerMessage) })),
   ];
-  const it = provider.stream({ messages, model, signal: opts.signal })[Symbol.asyncIterator]();
+  const it = provider
+    .stream({ messages, model, signal: opts.signal, ...(byo ? { credentials: { apiKey: byo.apiKey, baseUrl: byo.baseUrl } } : {}) })
+    [Symbol.asyncIterator]();
+  const promptChars = messages.reduce((n, m) => n + m.content.length, 0);
 
   // Pull the first piece before replying, so a configuration or rate-limit problem becomes a proper error response.
   let step: IteratorResult<AiChunk>;
@@ -143,6 +161,7 @@ export async function startChatReply(opts: {
   };
 
   let cancelled = false;
+  let usage: AiUsage | undefined;
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
       let completed = false;
@@ -152,6 +171,7 @@ export async function startChatReply(opts: {
             full += step.value.text;
             controller.enqueue(enc.encode(step.value.text));
           }
+          if (step.value.type === "done") usage = step.value.usage;
           step = await it.next();
         }
         completed = step.done;
@@ -165,6 +185,10 @@ export async function startChatReply(opts: {
           full = settleBlocks(full, before);
         }
         await save().catch(() => undefined);
+        // Count what the answer used, even a stopped one; providers that don't report usage get an estimate.
+        await access
+          .record(usage ?? { inputTokens: estimateTokens(promptChars), outputTokens: estimateTokens(full.length) }, provider.id)
+          .catch(() => undefined);
         try {
           controller.close();
         } catch {

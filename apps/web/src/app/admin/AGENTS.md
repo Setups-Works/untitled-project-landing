@@ -9,6 +9,7 @@
 | `/admin`               | Overview stats and charts                           | auth admin API, row counts, `profiles`                     |
 | `/admin/users`         | Search/filter/sort/page, CSV, invite, detail drawer | `components/admin/UsersTable.tsx`, actions in `actions.ts` |
 | `/admin/usage`         | Item counts per user (ids only)                     | scans tables (to move into SQL: UNT-35)                    |
+| `/admin/plans`         | Plans: prices, allowances, wording; who is on which plan | `components/admin/PlansEditor.tsx`, `SubscribersTable.tsx`, actions in `plans/actions.ts`; `billing_plans`, `user_billing`, `ai_usage` (counts and token totals only) — see `docs/BILLING.md` |
 | `/admin/announcements` | Banners for all users                               | `announcements`                                            |
 | `/admin/audit`         | Admin action log                                    | `admin_audit`                                              |
 

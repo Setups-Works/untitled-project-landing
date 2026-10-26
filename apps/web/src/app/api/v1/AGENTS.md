@@ -11,7 +11,8 @@ api/v1/
   journal/[id]/share   (turn the public link of one entry on or off)
   shared-journals/…  shared-journal-invites/…   (built: collaboration, via server/api/handler.ts and the collaboration service)
   workspaces/…  integrations/…  ai/{chat,providers,messages,actions}/route.ts
-  billing/webhook/route.ts        (Stripe, signature-verified)
+  billing/route.ts, billing/{plan,cancel,resume,ai-key}/route.ts   (built: your plan, usage, own key — services/billing; see docs/BILLING.md)
+  billing/webhook/route.ts        (payment provider, signature-verified — not built: payments are off)
   jobs/<name>/route.ts            (CRON_SECRET only)
   webhooks/composio/route.ts      (verified)
 ```

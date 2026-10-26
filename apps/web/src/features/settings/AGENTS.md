@@ -1,8 +1,8 @@
 # features/settings
 
-**Does:** the Settings popup (opened from the avatar menu): Profile (name, username, email, picture), Preferences (time format, default note category, week start, To-do start page), Appearance (density, reduce motion), Security (password, passkeys, sessions), Your data (JSON/CSV/Markdown export), Danger zone (reset workspace, delete account). **Track B. Built.**
+**Does:** the Settings popup (opened from the avatar menu): Profile (name, username, email, picture), Preferences (time format, default note category, week start, To-do start page), Appearance (density, reduce motion), **Plan and billing** (see `features/billing`, `docs/BILLING.md`), Security (password, passkeys, sessions), Your data (JSON/CSV/Markdown export), Danger zone (reset workspace, delete account). **Track B. Built.**
 
-**Addresses:** every section has its own URL — `/dashboard/settings/{profile,preferences,appearance,security,data,danger}` (`/dashboard/settings` opens Profile). `tabs.ts` maps sections ↔ slugs; `AppNav` opens the popup with `history.pushState` so the page behind stays put, and Back or ✕ returns to it. Add a section by extending `tabs.ts` and `SettingsView`.
+**Addresses:** every section has its own URL — `/dashboard/settings/{profile,preferences,appearance,billing,security,data,danger}` (`/dashboard/settings` opens Profile). `tabs.ts` maps sections ↔ slugs; `AppNav` opens the popup with `history.pushState` so the page behind stays put, and Back or ✕ returns to it. Add a section by extending `tabs.ts` and `SettingsView`.
 
 **Today (legacy):** `components/app/{SettingsView,SettingsModal,PrefsSync}.tsx`, `lib/prefs.ts`, `app/dashboard/settings/actions.ts`.
 

@@ -58,6 +58,16 @@ Rotation: change the value in `.env.selfhost` / your secret manager and recreate
 - 10 MB limit (bucket) plus type checks in UI; Phase 2 adds server-side MIME validation and rejects executables (UNT-67).
 - Never render uploaded HTML/SVG inline; images and audio use `<img>`/`<audio>` via signed URLs; other files open in a new tab with `rel="noopener noreferrer"`.
 
+## Plans, usage and saved API keys
+
+Full design: `docs/BILLING.md`.
+
+- A person cannot write their own plan, usage or prices: `user_billing`, `ai_usage` and `billing_plans` have no client write path (grants revoked, tested in `tests/db/billing.test.ts`); the billing service changes them after checking the caller.
+- **A saved AI key is a secret.** It is stored AES-256-GCM sealed with a key derived from `BETTER_AUTH_SECRET` and bound to the user id; `user_ai_keys` is unreadable by `authenticated`; the browser only gets the last four characters. Never log a key or return it. Rotating `BETTER_AUTH_SECRET` makes saved keys unreadable (people re-enter them).
+- The own-key provider can only call the fixed hosts in `BYO_PROVIDERS` (`packages/logic/src/billing.ts`). **Never build that address from user input** (SSRF), and never pass a provider's error body on.
+- Every AI entry point must call `aiAccessFor()` first (plan check, allowance, own key) and `record()` after. Only token counts are stored, never prompts or answers.
+- Admin plan changes require `assertAdmin()` and are written to `admin_audit`.
+
 ## AI and tools (Phase 4)
 
 - Tool output and external content are data, not instructions (prompt-injection rules in the prompt library, UNT-84).
@@ -87,4 +97,4 @@ Found a vulnerability or leaked secret? Tell the tech lead immediately, rotate f
 
 ### Service-role usage (keep this list current)
 
-`apps/web/src/server/session.ts` `adminDb()` / `withOwner()` (admin panel, share page, announcements, audit) · `apps/web/src/app/admin/actions.ts` · `apps/web/src/app/dashboard/settings/actions.ts` (delete account) · `apps/web/src/app/share/[token]/page.tsx`.
+`apps/web/src/server/session.ts` `adminDb()` / `withOwner()` (admin panel, share page, announcements, audit) · `apps/web/src/server/repositories/billing.repository.ts` (writes to plans, a person's plan, usage and saved keys; reached only from `services/billing` after the caller is checked) · `apps/web/src/app/admin/plans/actions.ts` · `apps/web/src/app/admin/actions.ts` · `apps/web/src/app/dashboard/settings/actions.ts` (delete account) · `apps/web/src/app/share/[token]/page.tsx`.

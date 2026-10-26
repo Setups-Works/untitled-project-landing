@@ -1,10 +1,11 @@
 /** The Settings sections. Each has its own address, e.g. /dashboard/settings/security. */
-export type SettingsTab = "profile" | "prefs" | "appearance" | "security" | "data" | "danger";
+export type SettingsTab = "profile" | "prefs" | "appearance" | "billing" | "security" | "data" | "danger";
 
 const SLUGS: Record<SettingsTab, string> = {
   profile: "profile",
   prefs: "preferences",
   appearance: "appearance",
+  billing: "billing",
   security: "security",
   data: "data",
   danger: "danger",

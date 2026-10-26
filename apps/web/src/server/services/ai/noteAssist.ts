@@ -1,5 +1,9 @@
 import "server-only";
-import { AiProviderError, defaultProvider, parseChoice, type AiChunk, type AiMessage } from "../../providers/ai";
+import { estimateTokens } from "@untitled/logic/billing";
+import { AiProviderError, defaultProvider, parseChoice, type AiChunk, type AiMessage, type AiUsage } from "../../providers/ai";
+import { customProvider } from "../../providers/ai/custom";
+import { ServiceError } from "../../errors";
+import { aiAccessFor } from "../billing/billing.service";
 import { underRateLimit } from "./chat";
 import { NOTE_ASSIST_PROMPT, type NoteAction } from "./prompts/noteAssist";
 
@@ -19,12 +23,26 @@ export async function startNoteAssist(opts: {
   providerId?: string;
   signal?: AbortSignal;
 }): Promise<NoteAssistResult> {
+  // The person's plan decides how AI is paid for: their own key, or ours counted against an allowance or by use.
+  let access: Awaited<ReturnType<typeof aiAccessFor>>;
+  try {
+    access = await aiAccessFor(opts.userId);
+  } catch (e) {
+    if (e instanceof ServiceError) return { ok: false, status: e.status, error: e.message };
+    throw e;
+  }
+  const byo = access.byo;
   const picked = opts.providerId ? parseChoice(opts.providerId) : null;
-  const provider = picked?.provider && picked.provider.runtime === "server" && picked.provider.isAvailable() ? picked.provider : defaultProvider();
+  const provider = byo
+    ? customProvider
+    : picked?.provider && !picked.provider.hidden && picked.provider.runtime === "server" && picked.provider.isAvailable()
+      ? picked.provider
+      : defaultProvider();
   if (!provider) return { ok: false, status: 400, error: "Connect an AI provider to use AI actions." };
   // Only models the provider itself lists may be used, so a crafted id can't pick an arbitrary model.
-  const model =
-    picked?.provider === provider && picked.model && (await provider.models?.().catch(() => []))?.some((m) => m.id === picked.model)
+  const model = byo
+    ? byo.model
+    : picked?.provider === provider && picked.model && (await provider.models?.().catch(() => []))?.some((m) => m.id === picked.model)
       ? picked.model
       : undefined;
   if (!(await underRateLimit(opts.userId))) return { ok: false, status: 429, error: "Too many AI requests. Wait a moment and try again." };
@@ -33,7 +51,10 @@ export async function startNoteAssist(opts: {
     { role: "system", content: NOTE_ASSIST_PROMPT.system },
     { role: "user", content: `${NOTE_ASSIST_PROMPT.task(opts.action, opts.instruction)}\n\n<note>\n${opts.text.slice(0, MAX_CHARS)}\n</note>` },
   ];
-  const it = provider.stream({ messages, model, temperature: 0.4, signal: opts.signal })[Symbol.asyncIterator]();
+  const it = provider
+    .stream({ messages, model, temperature: 0.4, signal: opts.signal, ...(byo ? { credentials: { apiKey: byo.apiKey, baseUrl: byo.baseUrl } } : {}) })
+    [Symbol.asyncIterator]();
+  const promptChars = messages.reduce((n, m) => n + m.content.length, 0);
 
   // Pull the first piece before replying, so a configuration or rate-limit problem becomes a proper error response.
   let step: IteratorResult<AiChunk>;
@@ -45,16 +66,25 @@ export async function startNoteAssist(opts: {
   }
 
   const enc = new TextEncoder();
+  let written = 0;
+  let usage: AiUsage | undefined;
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
       try {
         while (!step.done) {
-          if (step.value.type === "text") controller.enqueue(enc.encode(step.value.text));
+          if (step.value.type === "text") {
+            written += step.value.text.length;
+            controller.enqueue(enc.encode(step.value.text));
+          }
+          if (step.value.type === "done") usage = step.value.usage;
           step = await it.next();
         }
       } catch {
         /* a broken stream keeps whatever was already written */
       } finally {
+        await access
+          .record(usage ?? { inputTokens: estimateTokens(promptChars), outputTokens: estimateTokens(written) }, provider.id)
+          .catch(() => undefined);
         try {
           controller.close();
         } catch {

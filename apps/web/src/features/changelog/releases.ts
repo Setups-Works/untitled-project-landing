@@ -23,6 +23,20 @@ export type Release = {
 export const RELEASES: Release[] = [
   {
     date: "2026-10-26",
+    title: "Version 2.4: plans and billing",
+    summary: "Choose how you pay for AI: a subscription, pay as you go, or your own API key. Change or cancel any time.",
+    tone: "amber",
+    appVersion: "v2.4.0",
+    changes: [
+      { kind: "new", platform: "web", text: "A new Plan and billing section in Settings: pick a subscription, pay as you go, or bring your own key, see this period’s AI use, and cancel or switch whenever you like. A subscription runs to the end of its month; the other plans stop right away." },
+      { kind: "new", platform: "app", text: "Plan and billing is in the app’s Settings too, with the same plans, your AI use, your own key and cancel." },
+      { kind: "new", platform: "web", text: "With the bring your own key plan you connect OpenAI, Groq, OpenRouter, Together, Mistral or DeepSeek with your own key. It’s stored encrypted, never shown again, and you can remove it any time." },
+      { kind: "improved", platform: "web", text: "The pricing page now shows the three plans with their prices in rupees, what each includes and how they compare." },
+      { kind: "improved", platform: "web", text: "Plans are marked as free to choose for now: payments aren’t switched on yet, so nobody is charged." },
+    ],
+  },
+  {
+    date: "2026-10-26",
     title: "Version 2.3: a calmer Home you can rearrange",
     summary: "Home is rebuilt in clean liquid glass, shows more of your workspace, and you can drag its cards into the order you like.",
     tone: "violet",

@@ -98,13 +98,7 @@ export function AccessMatrix({ rows }: { rows: { what: string; who: string; note
 }
 
 /** Plan comparison: `true` is a tick, `false` a dash, a string is shown as is. */
-export function CompareTable({
-  plans,
-  rows,
-}: {
-  plans: [string, string];
-  rows: { label: string; a: boolean | string; b: boolean | string }[];
-}) {
+export function CompareTable({ plans, rows }: { plans: string[]; rows: { label: string; values: (boolean | string)[] }[] }) {
   const cell = (v: boolean | string) =>
     typeof v === "string" ? (
       <span className="text-[14.5px] font-medium text-fg">{v}</span>
@@ -142,8 +136,11 @@ export function CompareTable({
                 <th scope="row" className="px-5 py-3.5 text-[15px] font-normal text-fg sm:px-6">
                   {r.label}
                 </th>
-                <td className="px-4 py-3.5 text-center">{cell(r.a)}</td>
-                <td className="px-4 py-3.5 text-center">{cell(r.b)}</td>
+                {plans.map((p, i) => (
+                  <td key={p} className="px-4 py-3.5 text-center">
+                    {cell(r.values[i] ?? false)}
+                  </td>
+                ))}
               </tr>
             ))}
           </tbody>

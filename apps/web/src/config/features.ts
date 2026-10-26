@@ -25,7 +25,8 @@ export const FEATURES = {
   automations: false, // Phase 5
   notifications: false, // Phase 5
   insightsAi: false, // Phase 5: AI-written insights (today they are computed locally)
-  billing: false, // Phase 6: Free vs Pro enforcement
+  billing: true, // Plans: subscription, pay as you go, bring your own key (Settings → Plan and billing, Admin → Plans)
+  payments: false, // A payment provider is not connected yet: plan changes are recorded and nobody is charged
 } as const;
 
 export type FeatureName = keyof typeof FEATURES;

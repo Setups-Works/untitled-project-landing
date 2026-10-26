@@ -14,6 +14,7 @@ import {
   faFileLines,
   faImage,
   faPalette,
+  faWallet,
   faRightFromBracket,
   faShieldHalved,
   faSliders,
@@ -35,12 +36,14 @@ import { useConfirm } from "../ui/Confirm";
 import GiftCard, { saveGiftCard, shareGiftCard } from "./GiftCard";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/Tabs";
 import type { SettingsTab } from "../../features/settings/tabs";
+import BillingPanel from "../../features/billing/BillingPanel";
 
 type Tab = SettingsTab;
 const NAV: { k: Tab; label: string; icon: IconDefinition }[] = [
   { k: "profile", label: "Profile", icon: faUser },
   { k: "prefs", label: "Preferences", icon: faSliders },
   { k: "appearance", label: "Appearance", icon: faPalette },
+  { k: "billing", label: "Plan and billing", icon: faWallet },
   { k: "security", label: "Security", icon: faShieldHalved },
   { k: "data", label: "Your data", icon: faDatabase },
   { k: "danger", label: "Danger zone", icon: faTrash },
@@ -654,6 +657,15 @@ export default function SettingsView({
               </div>
               <Status m={prefMsg} />
             </div>
+          </section>
+        </TabsContent>
+
+        <TabsContent value="billing" asChild>
+          <section className="ap-card at-green" aria-labelledby="st-billing">
+            <div className="ap-card-h">
+              <span id="st-billing">Plan and billing</span>
+            </div>
+            <BillingPanel />
           </section>
         </TabsContent>
 

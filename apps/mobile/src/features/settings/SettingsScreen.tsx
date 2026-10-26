@@ -19,6 +19,7 @@ import { TextField } from "@/components/ui/TextField";
 import { Palette, Radius, Tints } from "@/constants/theme";
 import { mobileEnv } from "@/config/env";
 import { dbQuery } from "@/features/chat/db";
+import { BillingSection } from "@/features/billing/BillingSection";
 import { useAccountSettings } from "./queries";
 import { SETTINGS_SECTIONS, type SettingsPrefs, type SettingsSection } from "./types";
 import { useUpdate } from "@/features/updates/UpdateProvider";
@@ -419,6 +420,8 @@ export function SettingsScreen() {
           </View>
         </Card>
       ) : null}
+
+      {section === "billing" ? <BillingSection /> : null}
 
       {section === "security" ? (
         <Card tone="mint" style={styles.card}>

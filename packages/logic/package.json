@@ -39,6 +39,10 @@
     "./homeLayout": {
       "types": "./src/homeLayout.ts",
       "default": "./src/homeLayout.ts"
+    },
+    "./billing": {
+      "types": "./src/billing.ts",
+      "default": "./src/billing.ts"
     }
   },
   "scripts": {

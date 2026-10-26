@@ -48,6 +48,7 @@ export const qk = {
     item: (id: string) => ["rss", "item", id] as const,
     refresh: ["rss-refresh"] as const, // outside qk.rss.all on purpose: a data change must not trigger another network refresh
   },
+  billing: { me: ["billing", "me"] as const }, // the signed-in person's plan, usage and own-key setup
   profile: ["profile"] as const,
   aiProviders: ["ai", "providers"] as const,
 } as const;

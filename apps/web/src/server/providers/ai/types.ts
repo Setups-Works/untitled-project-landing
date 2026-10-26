@@ -14,6 +14,8 @@ export type AiRequest = {
   maxTokens?: number;
   /** Lets the caller cancel a streaming request (user pressed Stop, navigated away). */
   signal?: AbortSignal;
+  /** For providers that run on a person's own key: their key and the provider's fixed address, for this one request only. */
+  credentials?: { apiKey: string; baseUrl: string };
 };
 
 export type AiUsage = { inputTokens: number; outputTokens: number };
@@ -34,6 +36,8 @@ export interface AiProvider {
    * "client" providers (Puter.js) run in the browser and must be called from client code.
    */
   readonly runtime: "server" | "client";
+  /** True for providers the plan chooses, which never appear in the model picker. */
+  readonly hidden?: boolean;
   /** False until the provider is implemented and configured. The UI greys unavailable providers out. */
   isAvailable(): boolean;
   /** The models a person can pick from, when the provider offers several. Absent = one fixed model. */

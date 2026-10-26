@@ -158,3 +158,38 @@ export type ListResponse<T> = { data: T[]; limit: number; offset: number };
 export type ItemResponse<T> = { data: T };
 
 export type TaskList = { id: string; name: string; color: string; created_at: string };
+
+export type PlanId = "subscription" | "payg" | "byo";
+
+/** A plan on offer, as an admin has set it up. Prices are in the smallest unit of `currency` (paise for INR, so 74900 is ₹749). */
+export type BillingPlan = {
+  id: PlanId;
+  name: string;
+  tagline: string;
+  price_cents: number;
+  currency: string;
+  interval: "month" | "year" | "none";
+  /** Tokens included in each billing period (subscription); 0 means none. */
+  included_tokens: number;
+  /** What each million tokens cost on pay as you go, in the smallest unit of `currency`. */
+  token_price_cents_per_million: number;
+  features: string[];
+  active: boolean;
+  sort: number;
+};
+
+/** The signed-in person's plan, this period's AI use and their own-key setup. Never contains the key itself. */
+export type MyBilling = {
+  plans: BillingPlan[];
+  plan: BillingPlan | null;
+  status: "none" | "active" | "canceled";
+  period_start: string | null;
+  period_end: string | null;
+  cancel_at_period_end: boolean;
+  tokens_used: number;
+  /** What this period's use costs on pay as you go, in the smallest unit of the plan's currency; 0 on other plans. */
+  cost_cents: number;
+  byo: { provider: string | null; model: string | null; hint: string | null };
+  /** False until a payment provider is connected: plan changes are recorded but nobody is charged. */
+  payments_connected: boolean;
+};

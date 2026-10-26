@@ -134,6 +134,7 @@ Three developers and several AI agents write UI here. To keep it one product, th
 | `docs/TEAM_AND_WORKFLOW.md` | Branching, PRs, reviews, environments, releases                                                                                                                                 |
 | `docs/CURRENT_STATE.md`     | You want to know what exists today and where it lives                                                                                                                           |
 | `docs/DATA_MODEL.md`        | You touch the database                                                                                                                                                          |
+| `docs/BILLING.md`           | You touch plans, prices, AI access or limits, the Plan and billing tab, the admin Plans page or the pricing page — the three plans, the rules, security of saved API keys, how to connect payments |
 | `docs/SELF_HOSTING.md`      | You run, deploy or back up the stack (Docker, env, storage, auth, Supabase data import)                                                                                         |
 | `docs/SECURITY.md`          | You touch auth, uploads, sharing, admin, AI tools or secrets                                                                                                                    |
 | `docs/DESIGN_LANGUAGE.md`   | **You build or change any UI** — fonts, colours, glass, buttons, tints, reference screens, mistakes to avoid, how it is enforced                                                |
