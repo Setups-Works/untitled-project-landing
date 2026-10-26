@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useAppState } from "@/providers/AppState";
 
 /** The Home sections in their default order. */
-export const HOME_SECTIONS = ["streak", "tasks", "notes", "journal", "insights"] as const;
+export const HOME_SECTIONS = ["streak", "plans", "tasks", "notes", "journal", "insights"] as const;
 
 /** The order a person dragged the Home sections into, kept on this device per account. */
 export function useHomeOrder() {

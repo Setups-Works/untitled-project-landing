@@ -7,7 +7,7 @@
 **Rules**
 
 - Add a section: add its id to `HOME_SECTIONS` and an entry to `sections` in `HomeScreen`; saved orders pick it up at the end.
-- A section whose node is `null` is skipped.
+- A section whose node is `null` is skipped (the `plans` card is `null` once a plan is chosen).
 - The hold-to-drag keeps normal scrolling and taps working; do not replace it with an immediate pan.
 - Honour "Reduce motion" (the rows skip their slide animation).
 - There is no auto-scroll while dragging near the screen edge yet. Not yet verified on a physical device: try it on iOS and Android after changing the list.

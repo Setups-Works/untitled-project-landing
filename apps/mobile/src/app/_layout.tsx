@@ -102,6 +102,7 @@ function Routes() {
         <Stack.Screen name="reader/[id]" options={{ presentation: "modal" }} />
         <Stack.Screen name="health/[metric]" options={{ presentation: "modal" }} />
         <Stack.Screen name="profile" options={{ presentation: "modal" }} />
+        <Stack.Screen name="pricing" options={{ presentation: "modal" }} />
       </Stack.Protected>
     </Stack>
   );

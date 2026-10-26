@@ -1,5 +1,6 @@
-import { BYO_PROVIDERS, byoProvider, formatMoney, formatTokens, priceLine } from "@untitled/logic";
+import { BYO_PROVIDERS, byoProvider, formatMoney, formatTokens } from "@untitled/logic";
 import type { MyBilling } from "@untitled/types";
+import { router } from "expo-router";
 import { useState } from "react";
 import { StyleSheet, View } from "react-native";
 
@@ -8,10 +9,10 @@ import { Banner } from "@/components/ui/Banner";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { useConfirm } from "@/components/ui/Confirm";
-import { Icon } from "@/components/ui/Icon";
 import { PickerField } from "@/components/ui/PickerField";
 import { TextField } from "@/components/ui/TextField";
 import { Palette, Radius } from "@/constants/theme";
+import { PlanCard } from "./PlanCard";
 import { useBilling, useBillingActions } from "./queries";
 
 const day = (iso: string) => new Date(iso).toLocaleDateString(undefined, { month: "long", day: "numeric", year: "numeric" });
@@ -103,27 +104,11 @@ export function BillingSection() {
           </View>
           {!b.payments_connected ? <Banner kind="info">Payments aren’t connected yet, so choosing or changing a plan doesn’t charge you.</Banner> : null}
 
-          {b.plans.map((p) => {
-            const current = b.plan?.id === p.id;
-            return (
-              <View key={p.id} style={[styles.plan, current ? styles.planCurrent : null]}>
-                <View style={styles.planHead}>
-                  <AppText variant="bodyStrong">{p.name}</AppText>
-                  {current ? <AppText variant="label" color={Palette.greenFg}>Current</AppText> : null}
-                </View>
-                <AppText variant="heading">{priceLine(p)}</AppText>
-                <AppText variant="small" color={Palette.fgMuted}>{p.tagline}</AppText>
-                {p.id === "subscription" && p.included_tokens > 0 ? <AppText variant="small" color={Palette.fgSubtle}>{formatTokens(p.included_tokens)} AI tokens included each month</AppText> : null}
-                {p.features.map((f) => (
-                  <View key={f} style={styles.feature}>
-                    <Icon name="check" size={12} color={Palette.greenFg} />
-                    <AppText variant="small" style={styles.flex}>{f}</AppText>
-                  </View>
-                ))}
-                <Button title={current ? "Your plan" : "Choose this plan"} kind={current ? "secondary" : "primary"} disabled={current || busy} loading={choose.isPending && choose.variables === p.id} onPress={() => choose.mutate(p.id)} />
-              </View>
-            );
-          })}
+          {b.plans.map((p) => (
+            <PlanCard key={p.id} plan={p} current={b.plan?.id === p.id} busy={busy} loading={choose.isPending && choose.variables === p.id} onChoose={() => choose.mutate(p.id)} />
+          ))}
+          <Button title="Compare plans" kind="ghost" icon="arrow-up-right-from-square" onPress={() => router.push("/pricing")} />
+
 
           {b.plan?.id === "byo" ? <KeyForm billing={b} onError={setErr} /> : null}
 
@@ -151,9 +136,5 @@ export function BillingSection() {
 const styles = StyleSheet.create({
   card: { gap: 12 },
   flex: { flex: 1 },
-  plan: { gap: 8, padding: 14, borderRadius: Radius.r3, borderWidth: 1, borderColor: Palette.line, backgroundColor: Palette.glassHi },
-  planCurrent: { borderColor: Palette.greenFg },
-  planHead: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-  feature: { flexDirection: "row", alignItems: "center", gap: 8 },
   key: { gap: 12, padding: 14, borderRadius: Radius.r3, backgroundColor: Palette.surfaceMuted },
 });

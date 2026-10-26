@@ -22,6 +22,7 @@ import { useToggleTask } from "@/features/tasks/useToggleTask";
 import { useAppState, useAuth } from "@/providers/AppState";
 import { ReorderableList } from "@/components/ui/ReorderableList";
 import { PersonalityInsightsCard } from "./PersonalityInsightsCard";
+import { useBilling } from "@/features/billing/queries";
 import { useHomeOrder } from "./useHomeOrder";
 
 /** Mobile overview of the journal streak, today's tasks, and recent notes. */
@@ -33,6 +34,7 @@ export function HomeScreen() {
   const notesQ = useNotes();
   const toggle = useToggleTask();
   const [order, saveOrder] = useHomeOrder();
+  const billingQ = useBilling();
   const today = useMemo(() => isoDate(), []);
   const [refreshing, setRefreshing] = useState(false);
   const [avatarCookie, setAvatarCookie] = useState<string | null>(null);
@@ -183,6 +185,14 @@ export function HomeScreen() {
         </View>
       </Card>
     ),
+    // Only until a plan is chosen; after that the card disappears and the section is skipped.
+    plans:
+      billingQ.data && !billingQ.data.plan ? (
+        <Card tone="gold" liquidTint onPress={() => router.push("/pricing")} accessibilityLabel="Choose a plan">
+          <AppText variant="bodyStrong">Choose how you pay for AI</AppText>
+          <AppText variant="small" color={Palette.fgMuted}>A subscription, pay as you go, or your own key. See the plans and prices.</AppText>
+        </Card>
+      ) : null,
     tasks: (
       <View style={styles.section}>
         <View style={styles.sectionHeader}>

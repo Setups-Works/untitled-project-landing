@@ -40,7 +40,7 @@ apps/web/src/app/api/v1/billing/                 GET /, POST plan | cancel | res
 apps/web/src/features/billing/                   queries.ts + BillingPanel.tsx (Settings → Plan and billing)
 apps/web/src/app/admin/plans/ + components/admin/{PlansEditor,SubscribersTable}.tsx   Admin → Plans
 apps/web/src/app/pricing/page.tsx                the public pricing page, read from the database on every request
-apps/mobile/src/features/billing/                the same screen in the phone app (Settings → Plan and billing)
+apps/mobile/src/features/billing/                the phone app: Settings → Plan and billing, and the pricing screen (route /pricing, from Home and Settings)
 ```
 
 Data flow, as everywhere: `component → queries.ts → api-client → /api/v1/billing → service → repository → PostgreSQL`.
